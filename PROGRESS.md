@@ -7,6 +7,102 @@ reader knowing about.
 
 ---
 
+# PHASE 3 — FINAL SUMMARY (handoff document, 2026-08-12)
+
+**Read this section first.** Everything below it is the chronological checkpoint-by-checkpoint log —
+useful for "why was this decision made," not needed to understand where things stand today. This
+section is that.
+
+## Status: all three tracks' schema work is done. Gate G1 is not yet cleared.
+
+Those are two different facts and worth keeping separate:
+
+- **Done:** all 17 Phase 3 domain tables exist, migrate cleanly, and roll back cleanly, across all
+  three tracks. Full quality gate is green.
+- **Not yet done:** Gate G1 (`phases.md`/`planning.md`) clears only when all three tracks' migrations
+  are **merged to `main`** and `migrate:fresh --seed` is green **on `main`**. Nothing here is on
+  `main` yet — see "Git state" below. Don't report G1 as cleared until it actually is.
+
+## Who built what
+
+| Track | Owner | Tables | Status |
+|---|---|---|---|
+| **A — Domain trunk** | Govind | `categories`, `courses`, `course_instructor`, `modules`, `lessons`, `media_files` | ✅ Complete, merged to `main` (`c036e44`, `43e0134`) |
+| **B — Surfaces & assessment** | Srivathsa | `assessments`, `questions`, `question_options`, `assessment_attempts`, `attempt_answers` | ✅ Complete, this branch |
+| **C — Infrastructure & commerce** | Srivathsa (handoff from Shashank, confirmed 2026-08-12) | `webhook_events`, `email_logs`, `orders`, `payments`, `enrollments`, `lesson_progress` | ✅ Complete, this branch |
+
+**28 tables total** (7 framework + 4 identity + 17 Phase 3 domain), **15 enums**, **15 models**, **15
+factories**, **6 policies** (`AssessmentPolicy`, `OrderPolicy`, `PaymentPolicy`, `EnrollmentPolicy`,
+`AttemptPolicy`, plus Track A's four) — three tables (`webhook_events`, `email_logs`,
+`lesson_progress`) confirmed by checking architecture.md directly to need none, not assumed.
+
+## Gate status
+
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 412/412 passed, 838 assertions
+```
+All 24 migrations verified to both run and roll back cleanly (`migrate:rollback --step=24`, then
+restored). One pre-existing Pest warning throughout this entire session, confirmed unrelated to any
+of this work (reproduced with all Track B/C changes stashed out) but never actually diagnosed —
+harmless as far as tested, but genuinely unknown. Worth a look whenever someone has a spare five
+minutes; not blocking anything.
+
+## The complete "still open" list
+
+**Deferred authorization branches — both documented in-code, both denying rather than guessing:**
+1. `AssessmentPolicy`'s instructor branch (deferred Checkpoint 1) — **now buildable**, `Course` model
+   landed on `main` since. Nobody has picked it up.
+2. `AttemptPolicy`'s instructor "read within scope" branch (deferred Track B Checkpoint 4) — **not
+   yet buildable**, needs a way to resolve an assessment's owning course through the polymorphic
+   `assessable` relation (Lesson → Module → Course), which doesn't exist yet.
+
+**Answer-key reveal mechanism not built:** `QuestionPresenter` (named in architecture.md §6.4 and
+§12.2) is Phase 8 work. `QuestionOption::$hidden = ['is_correct']` is only the defence-in-depth
+baseline built this phase — it blocks accidental serialization, but the actual policy-aware,
+authorized reveal (honoring `AnswerRevealPolicy` and submission state) does not exist yet.
+
+**Docs still stale, by explicit instruction, not oversight:** `planning.md` §21.2's ownership table
+and `docs/tracks/TRACK-C-SHASHANK.md` both still name Shashank as Track C's sole owner. The
+2026-08-12 full handoff (Shashank off all of Phase 3, Srivathsa owns both B and C, Shashank resumes
+at Phase 4) is recorded here and nowhere else yet. Whoever reconciles this should treat this file as
+the source of truth for what actually happened, not the stale docs.
+
+**The natural Phase 3 convergence task, unblocked but not started:** the track brief calls this out
+explicitly — "`DevelopmentSeeder`, `lms:progress:rebuild`, `lms:counters:rebuild` — these need every
+model to exist, so they are the natural convergence task" for "whoever finishes first." Every model
+now exists. Nobody has built any of the three.
+
+**Git state, as of this summary:**
+- Committed locally: `5658345` — "Phase 3: Track C complete + Track B Checkpoints 4-5" (55 files),
+  on top of `c07faf9` (the merge of Track A's catalogue slice).
+- **Push to `origin/phase/03-assessment-schema` did NOT complete.** It hung and was killed after a
+  2-minute timeout; `git ls-remote origin phase/03-assessment-schema` afterward returned nothing,
+  confirming the branch never reached `origin`. Read access (`ls-remote`, `fetch`) works fine, so
+  this isn't a broad connectivity problem — it looks like the push (a write, requiring
+  authentication) is blocked on an interactive credential prompt (Windows Git Credential Manager,
+  `credential.helper = helper-selector`) that a non-interactive tool session cannot complete. Same
+  root cause `planning.md` §2 already flagged once before ("git cannot prompt for credentials from
+  this shell"). **Needs a human to run the push** — from a terminal where the credential prompt can
+  actually be answered.
+- No PR opened yet — waiting on the push above.
+
+## What to do next (for whoever reads this — Srivathsa or Shashank)
+
+1. Run `git push -u origin phase/03-assessment-schema` from an interactive terminal.
+2. Open the PR — 55 files, both Track B and Track C, touches one shared file
+   (`app/Providers/AppServiceProvider.php`) — worth the second set of eyes this was written for.
+3. Get it merged to `main`, then confirm Gate G1 by running `migrate:fresh --seed` and `composer
+   check` **on `main`**, not just on this branch.
+4. Update `planning.md` §21.2 and `docs/tracks/TRACK-C-SHASHANK.md` to reflect the actual ownership.
+5. Decide who picks up the still-open list above, and when.
+
+---
+
+---
+
 ## Ownership note — Track C reassignment (2026-08-12)
 
 **Confirmed directly by Srivathsa in-session, not yet reflected in the committed docs.** Srivathsa
