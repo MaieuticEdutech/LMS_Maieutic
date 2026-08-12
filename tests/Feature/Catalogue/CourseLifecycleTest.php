@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Actions\Catalog\ArchiveCourse;
 use App\Actions\Catalog\CreateCourse;
 use App\Actions\Catalog\DeleteCourse;
+use App\Actions\Catalog\DeleteLesson;
+use App\Actions\Catalog\DeleteModule;
 use App\Actions\Catalog\PublishCourse;
 use App\Actions\Catalog\UnpublishCourse;
 use App\Actions\Catalog\UpdateCourse;
@@ -184,6 +186,40 @@ it('soft deletes a course and queues its file cleanup', function (): void {
 
 it('never permits permanent deletion through the policy', function (): void {
     expect($this->admin->can('forceDelete', Course::factory()->create()))->toBeFalse();
+});
+
+/*
+| Cleanup is queued at EVERY level that can orphan a file, not just the
+| course. A lesson soft-deleted on its own leaves its media referenced by a
+| row nobody can reach — bytes paid for forever. The job is dispatched
+| afterCommit so a rolled-back delete never destroys live files.
+*/
+it('queues media cleanup when a lesson is deleted', function (): void {
+    Queue::fake();
+
+    $module = Module::factory()->forCourse(Course::factory()->create())->create();
+    $lesson = Lesson::factory()->forModule($module)->create();
+    $lessonId = (int) $lesson->id;
+
+    app(DeleteLesson::class)->handle($lesson, $this->admin);
+
+    Queue::assertPushed(
+        App\Jobs\Media\DeleteOrphanedMedia::class,
+        static fn (App\Jobs\Media\DeleteOrphanedMedia $job): bool => $job->attachableType === Lesson::class
+            && $job->attachableId === $lessonId,
+    );
+});
+
+it('queues cleanup for every lesson when a module is deleted', function (): void {
+    Queue::fake();
+
+    $module = Module::factory()->forCourse(Course::factory()->create())->create();
+    Lesson::factory()->forModule($module)->count(3)->create();
+
+    app(DeleteModule::class)->handle($module, $this->admin);
+
+    // One job per lesson: the module itself holds no media, its lessons do.
+    Queue::assertPushed(App\Jobs\Media\DeleteOrphanedMedia::class, 3);
 });
 
 /*

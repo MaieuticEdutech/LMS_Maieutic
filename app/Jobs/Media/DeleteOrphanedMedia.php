@@ -55,9 +55,14 @@ class DeleteOrphanedMedia implements ShouldQueue
     /**
      * @param  class-string<Course|Lesson>  $attachableType
      */
+    /**
+     * Public readonly, not private: the payload IS the contract (seam S-4),
+     * and dispatching cleanup for the wrong id would delete a different
+     * lesson's files. Tests assert on these; readonly still forbids mutation.
+     */
     public function __construct(
-        private readonly string $attachableType,
-        private readonly int $attachableId,
+        public readonly string $attachableType,
+        public readonly int $attachableId,
     ) {}
 
     public function handle(MediaStorageService $storage): void
