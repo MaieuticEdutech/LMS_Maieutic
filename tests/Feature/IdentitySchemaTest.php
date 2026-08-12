@@ -11,7 +11,6 @@ use App\Services\Settings\SettingsRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use LogicException;
 
 /*
 |--------------------------------------------------------------------------
