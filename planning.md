@@ -29,13 +29,13 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Phase 2 — Identity, Authentication & RBAC: COMPLETE** (2026-08-12) |
+| **Current phase** | **Phase 3 — Core Domain Schema. Track A slice COMPLETE; Tracks B and C not started** (2026-08-12) |
 | **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
 | **Phase 1 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
-| **Phase 2 status** | 🟢 Complete. Definition of Done satisfied; quality gates green. |
-| **Next phase** | **Phase 3 — Core Domain Schema & Models.** **NOT STARTED.** Awaiting go-ahead. |
-| Code written | Foundation + identity. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. 11 tables: 7 framework + `users`, `instructor_profiles`, `settings`, `audit_logs`. **No Phase 3 domain tables** (asserted by test). |
-| Repository | Branch `main`. Remote `origin` configured to github.com/maieutic22-max/LMS — **not yet pushed** (git cannot prompt for credentials from this shell). |
+| **Phase 2 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
+| **Phase 3 status** | 🟡 In progress. **Track A (Govind) complete**; Track B (Srivathsa) and Track C (Shashank) not started. Gate **G1** does not clear until all three are merged. |
+| Code written | Foundation, identity, catalogue. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **17 tables**: 7 framework + 4 identity + 6 catalogue/media. **No Track B or C tables** (asserted by test). |
+| Repository | Branch `main`, pushed to **github.com/MaieuticEdutech/LMS_Maieutic**. Two Phase 3 commits are **local only** — `c036e44` must be pushed to unblock Shashank. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
 | Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
@@ -873,7 +873,7 @@ is doing *what now*.
 
 | Track | Owner | Current phase | Blocked by |
 |---|---|---|---|
-| **A — Domain trunk** | **Govind** | Phase 3 — catalogue + media (`100100`–`100150`) | Nothing. **Head of the chain — two people wait on this** |
+| **A — Domain trunk** | **Govind** | 🟢 **Phase 3 slice COMPLETE** (`c036e44`, `43e0134`) | Nothing. **`c036e44` must be PUSHED — Shashank is blocked until it is on `main`** |
 | **B — Surfaces** | **Srivathsa** | Phase 3 — assessment (`100300`–`100340`) | `assessment_attempts` waits on Shashank's `enrollments`. The other four are unblocked |
 | **C — Infrastructure** | **Shashank** | Phase 3 — commerce + progress (`100200`–`100230`, `100400`–`100410`) | `orders`/`enrollments`/`lesson_progress` wait on Govind's `courses` + `lessons`. `webhook_events` and `email_logs` are unblocked |
 
