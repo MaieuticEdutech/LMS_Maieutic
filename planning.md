@@ -29,20 +29,21 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Phase 3 — Core Domain Schema. Track A slice COMPLETE; Tracks B and C not started** (2026-08-12) |
+| **Current phase** | **Round 1. Phase 3 COMPLETE (gate G1 cleared); Phase 5 backend COMPLETE. Phase 5 frontend and Phase 4 with Track B** (2026-08-12) |
 | **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
 | **Phase 1 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
 | **Phase 2 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
-| **Phase 3 status** | 🟡 In progress. **Track A (Govind) complete**; Track B (Srivathsa) and Track C (Shashank) not started. Gate **G1** does not clear until all three are merged. |
-| Code written | Foundation, identity, catalogue. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **17 tables**: 7 framework + 4 identity + 6 catalogue/media. **No Track B or C tables** (asserted by test). |
+| **Phase 3 status** | 🟢 **Complete, 2026-08-12.** Gate **G1 CLEARED** — all 28 tables on `main`, `migrate:fresh` green. Track A merged in PR #1's base; Tracks B and C merged together in **PR #2** (`8848bba`). See the pairing note in §21.7. |
+| **Phase 5 status** | 🟡 **Backend complete** (PR #1, `b8643f3`) — actions, content-type registry, media pipeline, publish validator, counters, sanitiser. **Frontend outstanding** with Track B: Builder screens, public catalogue and course detail. |
+| Code written | Foundation, identity, catalogue, full domain schema, Phase 5 backend. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **28 tables**: 7 framework + 4 identity + 6 catalogue/media + 11 commerce/assessment/progress. |
 | Repository | Branch `main`, **fully pushed** to github.com/MaieuticEdutech/LMS_Maieutic. Nothing outstanding locally. |
 | CI | 🟢 **Green.** First run failed on two workflow bugs (Vite manifest missing in the test job; `composer audit` with no `vendor/`); both fixed in `7993da5` and verified. This closes the Phase 1 outstanding item — CI is now proven, not merely authored. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
-| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
+| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **524/524**, 1,093 assertions — measured on merged `main` (`8848bba`), not on either branch alone |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
 | Outstanding verification items | (1) ~~CI never executed~~ — 🟢 **CLOSED**, green on `7993da5`. (2) **Vite HMR not interactively verified** — still open, does not block anything. (3) **Branch protection not enabled on `main`** — until it is, the PR rules in §21.6 are documentation rather than enforcement. |
 | Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
-| **Blocking parallel work** | The repository has **never been pushed**. Three people cannot work without a shared remote, and the push is also what starts CI running on pull requests. See §21.8. |
+| **Blocking parallel work** | 🟢 **Cleared.** Remote live, two PRs merged, CI green on both. **One open risk:** Shashank has no independent working environment — Track C's Phase 3 slice was written on Srivathsa's machine (§21.7). Two machines cannot sustain three tracks. |
 
 ### 2.1 Phase status ledger
 
@@ -53,9 +54,9 @@ Update this table at the close of every phase. Nothing else in this document tra
 | 0 | Planning & Architecture | 🟢 Complete | 2026-08-12 | Four documents produced; customer decisions incorporated; signed off |
 | 1 | Project Foundation | 🟢 Complete | 2026-08-12 | Laravel 13.25.0 / PHP 8.5.9 / PostgreSQL 17.10. Larastan level 8, Pest 16/16. Commit `5aac4cb` |
 | 2 | Identity, Authentication & RBAC | 🟢 Complete | 2026-08-12 | Fortify (ADR-013) with LMS-owned views. Status gate inside `authenticateUsing`. Pest 142/142 |
-| 3 | Core Domain Schema & Models | ⚪ **Next** | — | No `is_free`, no `is_preview`. Creates the remaining 17 domain tables |
-| 4 | Admin Shell & Administration Area | ⚪ Not started | — | |
-| 5 | Course Builder & Content Management | ⚪ Not started | — | PD-12 resolved. PD-05 defaults stand |
+| 3 | Core Domain Schema & Models | 🟢 Complete | 2026-08-12 | All 28 tables on `main`. **G1 cleared.** Track A `43e0134`; Tracks B+C `8848bba` (PR #2), written jointly on one machine |
+| 4 | Admin Shell & Administration Area | 🟡 In progress | — | Track B. **Blocks Phase 5's Builder screens** — merge early |
+| 5 | Course Builder & Content Management | 🟡 **Backend complete** | — | Backend merged `b8643f3` (PR #1): 17 actions, registry + 6 handlers, media pipeline, validator, counters, sanitiser. Pest 309 of the suite's 524. **Frontend with Track B.** AC-16's drag-and-drop and the public pages remain |
 | 6 | Enrollment Core & Protected Delivery | ⚪ Not started | — | High risk — access gate. No preview path |
 | 7 | Student Learning Experience | ⚪ Not started | — | |
 | 8 | Assessment Engine | ⚪ Not started | — | |
@@ -854,9 +855,17 @@ round; the round boundary is where merges settle.
 
 **The one soft dependency worth planning around:** Phase 5's *Course Builder UI* lives inside
 Srivathsa's Phase 4 admin shell. So in Round 1, Govind builds Phase 5's **backend first** — the
-content type registry, media pipeline, `MediaPathResolver`, course actions, publish validator and
-the public catalogue — none of which need the shell. The Builder screens go in once Srivathsa
-merges it. That turns a hard block into a sequencing preference.
+content type registry, media pipeline, `MediaPathResolver`, course actions, publish validator —
+none of which need the shell. The Builder screens go in once Srivathsa merges it. That turns a
+hard block into a sequencing preference.
+
+**Correction, 2026-08-12 — the public catalogue is Track B, not Track A.** An earlier revision of
+this paragraph listed the public catalogue among Govind's Round 1 work, which contradicted §21.2.2:
+every Blade and Livewire file belongs to Srivathsa. Two owners for one file is how a second button
+component gets written.
+
+**§21.2.2 is correct.** The public catalogue and course detail pages are **Srivathsa's**, delivered
+with Phase 5's frontend. Govind's Phase 5 scope was backend only, and is complete.
 
 ### 21.2.4 Workload balance
 
@@ -936,28 +945,41 @@ is doing *what now*.
 **Last updated: 2026-08-12.** Update this table whenever a track changes state — it is the one
 place that answers "what is everyone doing right now, and what is stopping them".
 
-**Current round: 0** — finishing Phase 3. Gate **G1** clears when all 17 tables are on `main`.
+**Current round: 1.** Gate **G1 CLEARED** 2026-08-12 — all 28 tables on `main`, `migrate:fresh`
+green, Pest 524/524 on the merged tree.
 
 | Track | Owner | Doing now | Status | Blocked by | Next |
 |---|---|---|---|---|---|
-| **A — Domain core & money** | **Govind** | Phase 3 catalogue slice → then **Phase 5 backend** | 🟢 **Complete & pushed** (`c036e44`, `43e0134`) | **Nothing.** May start Phase 5's backend immediately — it needs no admin shell | 5 → 6 → 7 → 9 → 12 |
-| **B — Surfaces & assessment** | **Srivathsa** | Phase 3 assessment slice (`100300`–`100340`) | ⚪ **Not started** | **Nothing for 3 of 5 tables.** `assessments`, `questions`, `question_options` have no cross-track FK — start today. Only `assessment_attempts` waits, on Shashank's `enrollments` | 4 → 8 → 10 → 15 |
-| **C — Infrastructure, commerce & reporting** | **Shashank** | Phase 3 commerce slice (`100200`–`100230`, `100400`–`100410`) | ⚪ **Not started** | **Nothing — fully unblocked.** Govind's `courses` and `lessons` are on `main` as of `c036e44`. All six tables available | 11 → 13 → 16 → 17 |
+| **A — Domain core & money** | **Govind** | Phase 5 backend → **Phase 6 Enrollment & Access** | 🟢 **Phase 5 backend merged** (PR #1, `b8643f3`). 309 tests | **Nothing.** `enrollments` landed in PR #2, which was the only blocker. Phase 6 may start now | 6 → 7 → 9 → 12 |
+| **B — Surfaces & assessment** | **Srivathsa** | **Phase 4 admin shell** | 🟢 Phase 3 assessment slice merged (PR #2, `8848bba`) | **Nothing.** Also now owns Phase 5's frontend — Builder screens **and** the public catalogue/detail pages (decision recorded in §21.2.3) | 4 → 5 frontend → 8 → 10 → 15 |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | **Phase 11 Queues & Mail** | 🟡 Phase 3 commerce slice merged, but **written on Srivathsa's machine** — no commits under his own identity | **His own environment.** See the risk note below | 11 → 13 → 16 → 17 |
+
+> **⚠ Risk — one machine, two developers.** Track C's entire Phase 3 slice (`orders`, `payments`,
+> `webhook_events`, `enrollments`, `lesson_progress`, `email_logs`) was written on Srivathsa's
+> machine and merged inside PR #2 rather than as a separate Track C pull request.
+>
+> The schema is correct and fully tested, so nothing needs redoing. But the track model assumes
+> **three independent working copies**, and right now there are two. Consequences if it persists:
+> two tracks run at one track's speed; Track C's authorship is invisible in git history; and the
+> P-1 rule "branch per task" cannot hold when two tracks share a branch.
+>
+> **Action:** Shashank completes his own setup (`README.md`, plus his own `lms_dev` / `lms_test`
+> databases per §20.1) before Phase 11 begins. Until then, treat Round 1 as two tracks, not three.
 
 #### What each person's next action is, concretely
 
 | Owner | Next action |
 |---|---|
-| **Govind** | Start Phase 5 **backend only** — `ContentTypeRegistry` + 5 handlers, `MediaStorageService`, `MediaPathResolver`, `FileValidationService`, catalogue Actions, `CoursePublishValidator`, public catalogue pages. The Builder UI waits on Srivathsa's shell |
-| **Srivathsa** | Clone, set up, then write `assessments` → `questions` → `question_options` (migrations, models, enums, factories, policies). **Then Phase 4's admin shell — Govind's Phase 5 UI is blocked on it, so merge it early** |
-| **Shashank** | Clone, set up, then all six commerce/progress tables. **Push `enrollments` (`100230`) promptly — Srivathsa's `assessment_attempts` waits on it** |
+| **Govind** | **Phase 6 — Enrollment Core & Protected Delivery.** Build `GrantEnrollment` and `EnrollmentAccessService` — both single-owner (§21.3) — plus the media delivery route behind a policy check. Admin-granted enrollments only; payment attaches in Phase 12 |
+| **Srivathsa** | **Phase 4 admin shell first, and merge it early** — Phase 5's Builder screens sit inside it. Then Phase 5's frontend: Builder UI, drag-and-drop reorder (AC-16), publish checklist, and the public catalogue + course detail pages (metadata only — AC-01) |
+| **Shashank** | **Set up his own machine first** (see risk note), then **Phase 11 — Queues, Mail & Notifications**. Fully unblocked: `email_logs` is on `main` and it needs no domain code from anyone |
 
 #### Round board
 
 | Round | Govind | Srivathsa | Shashank |
 |---|---|---|---|
-| **0 ← now** | ✅ done | Phase 3 assessment | Phase 3 commerce |
-| 1 | 5 Course Builder | 4 Admin Shell | 11 Queues & Mail |
+| 0 | ✅ done | ✅ done | ✅ done (on B's machine) |
+| **1 ← now** | ✅ 5 backend done → **6** | **4** Admin Shell → 5 frontend | **11** Queues & Mail |
 | 2 | 6 Enrollment & Access | 8 Assessment authoring | 16 Deployment |
 | 3 | 7 Student | 8 Attempt runner | 13 Reporting |
 | 4 | 9 Progress → 12 Payments | 10 Instructor | 17 Hardening |

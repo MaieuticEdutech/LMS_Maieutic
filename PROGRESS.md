@@ -15,6 +15,19 @@ section is that.
 
 ## Status: all three tracks' schema work is done. Gate G1 is not yet cleared.
 
+> **UPDATE 2026-08-12, after merge — G1 IS NOW CLEARED.** This section was correct when written.
+> It has since been superseded by events: PR #1 (Phase 5 backend) and PR #2 (this branch) are both
+> merged to `main` at `8848bba`. Verified on the merged tree, not on either branch alone:
+> 28 tables, `migrate:fresh` green, Pint clean, Larastan level 8 zero errors,
+> **Pest 524/524, 1,093 assertions**. Zero file overlap between the two branches; nothing lost in
+> the merge.
+>
+> The insistence below on not reporting G1 clear until it actually was, was the right call — it
+> just happened.
+>
+> **`planning.md` §21.7 is the live tracker from here on.** This file is the Phase 3 checkpoint
+> log: read it for *why* a decision was made, not for current status. Two trackers drift; one wins.
+
 Those are two different facts and worth keeping separate:
 
 - **Done:** all 17 Phase 3 domain tables exist, migrate cleanly, and roll back cleanly, across all
