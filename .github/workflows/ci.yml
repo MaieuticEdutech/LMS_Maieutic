@@ -141,8 +141,12 @@ jobs:
 
       # NFR-SEC-20: dependencies are scanned for known vulnerabilities, and a
       # critical advisory must be patched before release.
+      #
+      # --locked audits composer.lock directly, so this job needs no
+      # `composer install` and no vendor/ directory. Without it the job failed
+      # with "No installed packages found" — caught by the first CI run.
       - name: Composer audit
-        run: composer audit --no-interaction
+        run: composer audit --locked --no-interaction
 
       - name: Set up Node
         uses: actions/setup-node@v4
