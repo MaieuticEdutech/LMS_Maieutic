@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\ActivateUserAfterEmailVerification;
+use App\Models\AssessmentAttempt;
+use App\Policies\AttemptPolicy;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModels();
         $this->configureDates();
         $this->configureEvents();
+        $this->configureAuthorization();
     }
 
     /**
@@ -100,5 +104,27 @@ class AppServiceProvider extends ServiceProvider
     private function configureDates(): void
     {
         Date::use(\Carbon\CarbonImmutable::class);
+    }
+
+    /**
+     * Explicit policy registration where Laravel's naming-convention
+     * auto-discovery does not apply.
+     *
+     * Every other policy in this codebase follows the convention
+     * ({Model}Policy) and needs no entry here — see
+     * tests/Feature/Catalogue/PolicyRegistrationTest.php for why that
+     * matters: auto-discovery fails SILENTLY, so an unregistered policy
+     * denies everything with no error anywhere.
+     *
+     * `AssessmentAttempt` → `AttemptPolicy` is the one mismatch: convention
+     * would look for `AssessmentAttemptPolicy`, but architecture.md §8.3 and
+     * the track brief both name the class `AttemptPolicy` — shorter, and
+     * consistent with how every document in this project already refers to
+     * it — so the mapping is registered explicitly here rather than renaming
+     * the policy to satisfy a convention nobody else follows.
+     */
+    private function configureAuthorization(): void
+    {
+        Gate::policy(AssessmentAttempt::class, AttemptPolicy::class);
     }
 }

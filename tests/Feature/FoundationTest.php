@@ -48,26 +48,29 @@ it('has not built ahead of the current phase', function (): void {
     //
     //   Phase 1 → asserted `users` absent      (a Phase 2 table)
     //   Phase 2 → created it; guard moved to the Phase 3 boundary
-    //   Phase 3 → Track A's catalogue tables now exist. The guard now
-    //             protects the TRACK boundary: Track A must not build
-    //             Track B's or Track C's tables (planning.md §21.5).
+    //   Phase 3 → COMPLETE, all three tracks. Track B and Track C are both
+    //             now owned by Srivathsa (confirmed 2026-08-12, not yet
+    //             reflected in planning.md/TRACK-C-SHASHANK.md — see
+    //             PROGRESS.md), which is why one person's branch legitimately
+    //             built every table below. Nothing is left in the "not yet
+    //             built" half of this guard because Phase 4 (Admin Shell)
+    //             introduces no new tables — the next entry here belongs to
+    //             whichever future phase first adds one.
     expect(Schema::hasTable('users'))->toBeTrue();
 
-    // Track A (Govind) — delivered.
+    // Track A (Govind).
     foreach (['categories', 'courses', 'course_instructor', 'modules', 'lessons', 'media_files'] as $table) {
         expect(Schema::hasTable($table))->toBeTrue();
     }
 
-    // Track B (Srivathsa) and Track C (Shashank) — NOT ours to create.
-    // If one of these turns true in a Track A branch, someone has built
-    // another developer's slice and two migrations for the same table are
-    // about to collide on main.
+    // Track B (Srivathsa) — all five.
     foreach (['assessments', 'questions', 'question_options', 'assessment_attempts', 'attempt_answers'] as $table) {
-        expect(Schema::hasTable($table))->toBeFalse();
+        expect(Schema::hasTable($table))->toBeTrue();
     }
 
-    foreach (['orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs'] as $table) {
-        expect(Schema::hasTable($table))->toBeFalse();
+    // Track C (Srivathsa, formerly Shashank's — see PROGRESS.md) — all six.
+    foreach (['webhook_events', 'email_logs', 'orders', 'payments', 'enrollments', 'lesson_progress'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue();
     }
 });
 
