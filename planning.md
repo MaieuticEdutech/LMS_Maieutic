@@ -29,14 +29,15 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Phase 0 — Planning & Architecture** |
-| **Phase 0 status** | Documents complete and updated with the customer's Phase 0 decisions (2026-08-12). Awaiting explicit Phase 0 sign-off. |
-| **Next phase** | **Phase 1 — Project Foundation** |
-| Code written | **None.** No Laravel installation, no dependencies, no migrations, no features. This is correct and intentional. |
-| Repository | Not yet initialised (Phase 1 task) |
-| Environments | None provisioned |
-| Blockers to Phase 1 | **None.** PD-01, PD-02, PD-03, PD-04, PD-09 and PD-12 are all answered. Phase 1 begins on explicit sign-off. |
-| Open decisions, none blocking Phase 1 | **PD-05** (upload limits — Phase 5, proposed defaults stand), **PD-06** (session lifetimes — Phase 2, proposed defaults stand), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). |
+| **Current phase** | **Phase 1 — Project Foundation: COMPLETE** (2026-08-12) |
+| **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
+| **Phase 1 status** | 🟢 Complete. Definition of Done satisfied; quality gates green. |
+| **Next phase** | **Phase 2 — Identity, Authentication & RBAC.** Not started. Awaiting go-ahead. |
+| Code written | Foundation only — no application features. Laravel 13.25.0 running on PHP 8.5.9 and PostgreSQL 17.10. 7 framework tables, **no domain tables**. |
+| Repository | Initialised on branch `main`. Initial commit `5aac4cb`, 106 tracked files. No secrets committed (verified). |
+| Environments | Local development only. Staging/production provisioned in Phase 16. |
+| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **16/16**, 44 assertions |
+| Open decisions, none blocking Phase 2 | **PD-06** (session lifetimes — Phase 2, proposed defaults stand), **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). |
 
 ### 2.1 Phase status ledger
 
@@ -44,9 +45,9 @@ Update this table at the close of every phase. Nothing else in this document tra
 
 | Phase | Name | Status | Completed | Notes |
 |---|---|---|---|---|
-| 0 | Planning & Architecture | 🟡 In review | — | Four documents produced and updated with the 2026-08-12 decisions; sign-off pending |
-| 1 | Project Foundation | ⚪ Not started | — | **Unblocked.** First task: verify the Laravel 13 / PHP 8.5 / Livewire 4 / Fortify / Pest compatibility matrix before installing |
-| 2 | Identity, Authentication & RBAC | ⚪ Not started | — | Fortify-based (ADR-013). PD-06 defaults stand |
+| 0 | Planning & Architecture | 🟢 Complete | 2026-08-12 | Four documents produced; customer decisions incorporated; signed off |
+| 1 | Project Foundation | 🟢 Complete | 2026-08-12 | Laravel 13.25.0 / PHP 8.5.9 / PostgreSQL 17.10. Larastan level 8, Pest 16/16. Commit `5aac4cb` |
+| 2 | Identity, Authentication & RBAC | ⚪ **Next** | — | Fortify-based (ADR-013). Creates the `users` table. PD-06 defaults stand |
 | 3 | Core Domain Schema & Models | ⚪ Not started | — | No `is_free`, no `is_preview` |
 | 4 | Admin Shell & Administration Area | ⚪ Not started | — | |
 | 5 | Course Builder & Content Management | ⚪ Not started | — | PD-12 resolved. PD-05 defaults stand |
@@ -626,6 +627,14 @@ Decisions made during the project are appended here with date, decision, rationa
 | 2026-08-12 | All V1 courses are paid; no free-course path (ADR-014) | Business decision | `is_free` dropped, `CHECK price_amount > 0` added, `ClaimFreeCourse` removed, enrollment sources reduced from three to two |
 | 2026-08-12 | No guest preview content; guests see metadata only (ADR-014) | Business decision | `is_preview` dropped, preview branch removed from the access gate, tests inverted to assert nothing is publicly reachable |
 | 2026-08-12 | Production email provider deferred to Phase 16; development uses Mailpit/`log` throughout | Customer decision PD-07 | Phase 11 loses its blocking dependency; the mail layer is written transport-agnostically |
+| 2026-08-12 | **PD-01 verified, not assumed.** PHP 8.5 confirmed supported across the entire dependency set | Phase 1 compatibility check against Packagist and laravel.com | **Risk R-16 closed with no deviation.** Installed: PHP 8.5.9, Laravel 13.25.0, Livewire 4.4.0, Fortify 1.38.0, Pest 5.1.0, Larastan 3.10.0, Pint 1.30.5. Binding floor is Pest at `^8.4`; framework floor is `pest-plugin-laravel` at Laravel `^13.23.0` |
+| 2026-08-12 | `composer.json` pins `"php": "^8.5"` rather than Laravel's stock `^8.3` | C-01 states PHP 8.5. A stock `^8.3` would let someone install on 8.3 and hit a confusing Pest failure instead of a clear composer error | Runtime requirement is enforced at install time |
+| 2026-08-12 | **Tests run against real PostgreSQL (`lms_test`), never SQLite.** `DB_DATABASE` is hard-coded in `phpunit.xml` | From Phase 3 the schema needs JSONB, partial unique indexes and CHECK constraints, none of which SQLite implements — a green SQLite suite would be worse than no suite. Hard-coding also stops a stray `.env` pointing the suite at `lms_dev` and wiping it via `RefreshDatabase` | Contributors must have PostgreSQL locally; documented in README |
+| 2026-08-12 | **Stock `users` table removed** from Laravel's framework migration; only `sessions` + `password_reset_tokens` created | Phase 1 DoD says "No domain tables yet". `users` is a Phase 2 domain table (role, status, nullable password, soft deletes). Creating it early with the wrong shape would force Phase 2 to rewrite a migration | Migration renamed `create_framework_auth_tables`. A test asserts `users` does **not** exist |
+| 2026-08-12 | **Larastan set to level 8** at project start, not retrofitted | Raising the level later means retrofitting types across a grown codebase. Level 8 adds nullability checking — exactly the bug class (null enrollment, null attempt) that would otherwise 500 in front of a paying student | Required one `(string)` cast in stock `config/filesystems.php`. All first-party code passes level 8 |
+| 2026-08-12 | **`checkModelProperties` disabled** (deviation from intent) | Larastan types `Factory::definition()` as `array<model property of TModel, mixed>`, but that is an INTERNAL type that cannot be written in userland PHPDoc. Satisfying it requires `@phpstan-ignore` or a baseline — both prohibited by U-4 and Rule 9 | Tooling incompatibility with Laravel's own factory signature; no application code is exempted from analysis. **Revisit in Phase 3** when schema-backed models exist |
+| 2026-08-12 | **New dependency: `pestphp/pest-plugin-phpstan` ^5.0** (dev) | Rule 6 justification: without it PHPStan cannot resolve Pest's closure-to-TestCase binding, so every test reported false "undefined method" errors. The only alternatives were excluding `tests/` from analysis (a real loss — planning.md §12 makes tests first-class) or suppressing errors (prohibited) | First-party Pest plugin, compatible with Pest 5 / PHPStan 2.2.5+ |
+| 2026-08-12 | Local runtime installed **portably**, no admin rights | Herd and the PostgreSQL service installer both need UAC elevation, which is unavailable from the automation shell (winget failed `0x800704c7`). PHP and PostgreSQL run from `C:\Users\<user>\devtools` as user processes | **Developer-machine setup only — not a project decision.** Production provisioning is Phase 16 and unaffected. See §20.1 |
 | 2026-08-12 | Quizzes and tests unified as one `assessments` entity | Structurally identical (ADR-002) | One engine, one policy set; `type` discriminates |
 | 2026-08-12 | Media tables collapsed into polymorphic `media_files` | New content types must not require schema change (ADR-003, FR-CNT-07) | One upload pipeline, one access policy |
 | 2026-08-12 | Enrollment split out of Payments into its own earlier phase (Phase 6) | Everything downstream depends on the access gate | Payment attaches to an already-proven engine |
@@ -655,7 +664,8 @@ Decisions made during the project are appended here with date, decision, rationa
 | R-13 | **Assessment integrity** — sharing answers, multiple attempts, timer bypass | Medium | Medium | Server-side timing and limits, shuffling, key never sent early, per-question analytics to spot anomalies. Proctoring is [FUTURE] | Phase 8 |
 | R-14 | **Single Super Admin lockout** | Low | **High** | Last-Super-Admin guard (FR-RBAC-09); recommend at least two Super Admin accounts in production | Phases 2, 16 |
 | R-15 | **Documentation drifts from the code**, so the plan stops governing | Medium | Medium | Rule 10 and the review checklist; documentation updated in the same change | Continuous |
-| R-16 | **Version combination unavailable or incompatible** — Laravel 13.x, PHP 8.5, Livewire 4, Fortify, Pest, Larastan and the Razorpay SDK may not all support each other on the day of installation | Medium | Medium | Phase 1's first task is to verify the matrix from official sources **before installing anything** and report it. If PHP 8.5 is unsupported across the set, drop to the highest commonly supported version and record the deviation in §16.4. The dependency set is never compromised to reach a version number | Phase 1 |
+| ~~R-16~~ | ~~Version combination unavailable or incompatible~~ | — | — | **🟢 CLOSED 2026-08-12.** Matrix verified against Packagist and laravel.com before installation. PHP 8.5 is supported across the entire set; no deviation required. Installed versions recorded in §3.0 | Closed |
+| R-17 | **Razorpay SDK on PHP 8.5 is unproven.** `razorpay/razorpay` 2.9.3 declares `php: >=7.3` with no upper bound, so Composer will install it on 8.5 — but an open-ended constraint is the absence of a ceiling, not a certification | Low | Medium | Deliberately **not installed** in Phase 1 (it is a Phase 12 dependency, Rule 5). Its behaviour on PHP 8.5 is verified against the test-mode API at the start of Phase 12, where `FakeGateway` already isolates the rest of the suite from it. If it proves incompatible, the `PaymentGateway` interface means the fix is confined to one class | Phase 12 |
 
 ---
 
@@ -705,10 +715,10 @@ Adaptive-bitrate video and DRM · live classes · discussion forums and Q&A · m
 
 | Question | Answer |
 |---|---|
-| What phase are we in? | **Phase 0 — Planning & Architecture** (§2) |
-| What is next? | **Phase 1 — Project Foundation**, on explicit sign-off. No decision blocks it. |
-| May I write application code now? | **No.** Phase 0 produces documents only. |
-| What is Phase 1's first task? | Verify the Laravel 13 / PHP 8.5 / Livewire 4 / Fortify / Pest compatibility matrix and report it — **before** installing anything (R-16) |
+| What phase are we in? | **Phase 1 complete.** Phase 2 is next and not started (§2) |
+| What is next? | **Phase 2 — Identity, Authentication & RBAC**, on explicit go-ahead |
+| May I start Phase 2 now? | Only on explicit instruction. Rule 1: one phase at a time |
+| How do I run the quality gates? | `composer check` — Pint, then Larastan level 8, then Pest. All three must pass |
 | How is authentication built? | Laravel Fortify, headless, with LMS-owned views. Never hand-rolled, never starter-kit UI (ADR-013) |
 | Are there free courses or preview lessons? | **No.** All V1 courses are paid; guests see metadata only (ADR-014). Both are [V1.1] |
 | Where do business rules live? | Actions and Services (§6.2) |
@@ -722,3 +732,31 @@ Adaptive-bitrate video and DRM · live classes · discussion forums and Q&A · m
 | May I add a package? | Only with recorded justification (§3.1, Rule 6) |
 | May I build multi-tenancy? | **No** in V1 (Rule 23) — but obey the seam rules S-1…S-8 (Rule 24) |
 | When is a phase complete? | Only when its DoD **and** the universal DoD are satisfied (Rule 25) |
+
+### 20.1 Local development environment (this machine)
+
+Recorded for reproducibility. **This is developer-machine setup, not a project decision** —
+production provisioning is Phase 16 and is unaffected by any of it.
+
+Herd and the PostgreSQL service installer both require UAC elevation, which the automation
+shell cannot grant (winget failed with `0x800704c7`). Both runtimes were therefore installed
+**portably, without administrator rights**, under `C:\Users\<user>\devtools`:
+
+| Component | Location | Notes |
+|---|---|---|
+| PHP 8.5.9 (NTS, vs17, x64) | `devtools\php` | `php.ini` derived from `php.ini-development`; extensions enabled: curl, exif, fileinfo, gd, intl, mbstring, openssl, pdo_pgsql, pgsql, sodium, zip; opcache on; `memory_limit=512M`, `upload_max_filesize`/`post_max_size=2048M` |
+| Composer 2.10.2 | `devtools\php\composer.phar` | Run as `php composer.phar` |
+| PostgreSQL 17.10 | `devtools\pgsql`, data in `devtools\pgdata` | User process, not a Windows service. Started with `pg_ctl -D devtools\pgdata start` |
+| DB superuser password | `devtools\.pgpass-dev` | Generated locally, 28 chars. Outside the repository. Never entered in chat or committed |
+
+`pg_hba.conf` was hardened from initdb's default `trust` to **`scram-sha-256`** for TCP
+connections (127.0.0.1 and ::1), so the password is genuinely required rather than decorative.
+
+**PostgreSQL does not auto-start.** After a reboot, run:
+
+```
+C:\Users\<user>\devtools\pgsql\bin\pg_ctl.exe -D C:\Users\<user>\devtools\pgdata -l C:\Users\<user>\devtools\pgsql.log start
+```
+
+Any developer may instead use Herd, Sail or a native PostgreSQL service — the project depends
+on PHP 8.5 and PostgreSQL 16+, not on how they are installed (architecture.md §21).

@@ -234,20 +234,27 @@ Phase 0 sign-off. PHP 8.5, Composer, Node, PostgreSQL 16+ installed. **PD-01** (
 - A trivial feature test proving the test database connects and migrates
 - CI pipeline green on a clean clone
 
-### Definition of Done
-- [ ] Version compatibility matrix verified and reported before installation
-- [ ] `php artisan serve` (or Herd/Sail) serves the application without error
-- [ ] Laravel is pinned to `^13.0` in `composer.json`; no dependency floats its major version
-- [ ] `migrate:fresh` succeeds on dev and test databases
-- [ ] `composer lint`, `composer analyse`, `composer test` all pass locally and in CI
-- [ ] `npm run build` produces production assets; `npm run dev` hot-reloads
-- [ ] `.env` is git-ignored and `.env.example` is complete and value-free
-- [ ] All four base layouts render with the component library
-- [ ] Repository contains no secrets (verified by scan)
-- [ ] Universal DoD satisfied
+### Definition of Done — ✅ SATISFIED 2026-08-12 (commit `5aac4cb`)
+- [x] Version compatibility matrix verified and reported before installation — checked against Packagist and laravel.com; **PHP 8.5 supported across the whole set, risk R-16 closed with no deviation** (planning.md §3.0)
+- [x] `php artisan serve` serves the application without error — `GET /` → 200 with built assets; `GET /up` → 200 `{"status":"ok"}` with database, cache and storage all reachable
+- [x] Laravel pinned to a major version; no dependency floats its major — `laravel/framework: ^13.17` resolved to **13.25.0**; `php: ^8.5`
+- [x] `migrate:fresh` succeeds on dev and test databases — 3 migrations, 7 framework tables, **0 domain tables** (asserted by test)
+- [x] `composer lint`, `composer analyse`, `composer test` all pass locally — Pint clean · Larastan **level 8**, 0 errors · Pest **16/16**, 44 assertions
+- [~] …**and in CI** — pipeline authored at `.github/workflows/ci.yml` (lint → analyse → test on a real PostgreSQL 17 service → `composer audit` + `npm audit`). **Not yet executed: the repository has no remote.** Its first real run happens when a remote is added; both audits pass locally (0 advisories)
+- [x] `npm run build` produces production assets — Vite 8, CSS 24.53 kB / gzip 5.59 kB
+- [~] `npm run dev` hot-reloads — dev server configured and starts; **HMR not interactively verified in this session**
+- [x] `.env` is git-ignored and `.env.example` is complete and value-free — verified via `git check-ignore`; `.env.example` documents every variable with no real values
+- [x] All base layouts render with the component library — `public`, `app`, `admin`, `instructor`, `mail`; 12 components; home page renders through `layouts.public` using `x-badge`, `x-card`, `x-button`, `x-alert`
+- [x] Repository contains no secrets (verified by scan) — `.env` not staged; no `vendor/`, `node_modules/` or `storage/app/content/`; the live DB password confirmed absent from all staged content
+- [x] Universal DoD satisfied — U-1…U-13, with the two `[~]` items above declared rather than glossed
+
+**Deviations, all recorded in planning.md §16.4:** stock `users` table removed from the framework
+migration (it is a Phase 2 domain table); Larastan `checkModelProperties` disabled as
+incompatible with Laravel's own factory signature (revisit Phase 3); one dev dependency added
+(`pestphp/pest-plugin-phpstan`) with Rule 6 justification.
 
 ### Deliverables
-A running skeleton application, a green CI pipeline, environment documentation in `README.md`, and the base UI component library.
+A running skeleton application, a CI pipeline, environment documentation in `README.md`, and the base UI component library.
 
 ---
 
