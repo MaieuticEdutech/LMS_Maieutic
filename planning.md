@@ -35,11 +35,12 @@ Build a professional, secure, maintainable Learning Management System that lets 
 | **Phase 2 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
 | **Phase 3 status** | 🟡 In progress. **Track A (Govind) complete**; Track B (Srivathsa) and Track C (Shashank) not started. Gate **G1** does not clear until all three are merged. |
 | Code written | Foundation, identity, catalogue. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **17 tables**: 7 framework + 4 identity + 6 catalogue/media. **No Track B or C tables** (asserted by test). |
-| Repository | Branch `main`, pushed to **github.com/MaieuticEdutech/LMS_Maieutic**. Two Phase 3 commits are **local only** — `c036e44` must be pushed to unblock Shashank. |
+| Repository | Branch `main`, **fully pushed** to github.com/MaieuticEdutech/LMS_Maieutic. Nothing outstanding locally. |
+| CI | 🟢 **Green.** First run failed on two workflow bugs (Vite manifest missing in the test job; `composer audit` with no `vendor/`); both fixed in `7993da5` and verified. This closes the Phase 1 outstanding item — CI is now proven, not merely authored. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
 | Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
-| Outstanding verification items | (1) **CI never executed** — pipeline authored in Phase 1, awaiting a push to the remote. (2) **Vite HMR not interactively verified.** Neither blocks Phase 3; carried forward per customer instruction. |
+| Outstanding verification items | (1) ~~CI never executed~~ — 🟢 **CLOSED**, green on `7993da5`. (2) **Vite HMR not interactively verified** — still open, does not block anything. (3) **Branch protection not enabled on `main`** — until it is, the PR rules in §21.6 are documentation rather than enforcement. |
 | Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
 | **Blocking parallel work** | The repository has **never been pushed**. Three people cannot work without a shared remote, and the push is also what starts CI running on pull requests. See §21.8. |
 
@@ -932,11 +933,36 @@ Amends §10 for parallel work:
 Maintained alongside the phase ledger in §2.1. The ledger records what is *done*; this records who
 is doing *what now*.
 
-| Track | Owner | Current phase | Blocked by |
+**Last updated: 2026-08-12.** Update this table whenever a track changes state — it is the one
+place that answers "what is everyone doing right now, and what is stopping them".
+
+**Current round: 0** — finishing Phase 3. Gate **G1** clears when all 17 tables are on `main`.
+
+| Track | Owner | Doing now | Status | Blocked by | Next |
+|---|---|---|---|---|---|
+| **A — Domain core & money** | **Govind** | Phase 3 catalogue slice → then **Phase 5 backend** | 🟢 **Complete & pushed** (`c036e44`, `43e0134`) | **Nothing.** May start Phase 5's backend immediately — it needs no admin shell | 5 → 6 → 7 → 9 → 12 |
+| **B — Surfaces & assessment** | **Srivathsa** | Phase 3 assessment slice (`100300`–`100340`) | ⚪ **Not started** | **Nothing for 3 of 5 tables.** `assessments`, `questions`, `question_options` have no cross-track FK — start today. Only `assessment_attempts` waits, on Shashank's `enrollments` | 4 → 8 → 10 → 15 |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | Phase 3 commerce slice (`100200`–`100230`, `100400`–`100410`) | ⚪ **Not started** | **Nothing — fully unblocked.** Govind's `courses` and `lessons` are on `main` as of `c036e44`. All six tables available | 11 → 13 → 16 → 17 |
+
+#### What each person's next action is, concretely
+
+| Owner | Next action |
+|---|---|
+| **Govind** | Start Phase 5 **backend only** — `ContentTypeRegistry` + 5 handlers, `MediaStorageService`, `MediaPathResolver`, `FileValidationService`, catalogue Actions, `CoursePublishValidator`, public catalogue pages. The Builder UI waits on Srivathsa's shell |
+| **Srivathsa** | Clone, set up, then write `assessments` → `questions` → `question_options` (migrations, models, enums, factories, policies). **Then Phase 4's admin shell — Govind's Phase 5 UI is blocked on it, so merge it early** |
+| **Shashank** | Clone, set up, then all six commerce/progress tables. **Push `enrollments` (`100230`) promptly — Srivathsa's `assessment_attempts` waits on it** |
+
+#### Round board
+
+| Round | Govind | Srivathsa | Shashank |
 |---|---|---|---|
-| **A — Domain trunk** | **Govind** | 🟢 **Phase 3 slice COMPLETE** (`c036e44`, `43e0134`) | Nothing. **`c036e44` must be PUSHED — Shashank is blocked until it is on `main`** |
-| **B — Surfaces** | **Srivathsa** | Phase 3 — assessment (`100300`–`100340`) | `assessment_attempts` waits on Shashank's `enrollments`. The other four are unblocked |
-| **C — Infrastructure** | **Shashank** | Phase 3 — commerce + progress (`100200`–`100230`, `100400`–`100410`) | `orders`/`enrollments`/`lesson_progress` wait on Govind's `courses` + `lessons`. `webhook_events` and `email_logs` are unblocked |
+| **0 ← now** | ✅ done | Phase 3 assessment | Phase 3 commerce |
+| 1 | 5 Course Builder | 4 Admin Shell | 11 Queues & Mail |
+| 2 | 6 Enrollment & Access | 8 Assessment authoring | 16 Deployment |
+| 3 | 7 Student | 8 Attempt runner | 13 Reporting |
+| 4 | 9 Progress → 12 Payments | 10 Instructor | 17 Hardening |
+| 5 | 14 Security — all three together | | |
+| 6 | | 15 UI/UX Polish | |
 
 **Per-developer Claude Code briefs** live in `docs/tracks/` and are loaded through a git-ignored
 `CLAUDE.local.md` containing one import line. Root `CLAUDE.md` holds the shared rules and the
