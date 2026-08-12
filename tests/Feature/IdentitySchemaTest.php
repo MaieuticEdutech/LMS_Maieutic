@@ -27,14 +27,24 @@ it('creates the phase 2 tables', function (string $table): void {
     expect(Schema::hasTable($table))->toBeTrue();
 })->with(['users', 'instructor_profiles', 'settings', 'audit_logs']);
 
-it('has not created any phase 3 domain table outside this track', function (string $table): void {
-    // Phase 2 must not build ahead (Rule 5). Courses, enrollments and
-    // payments belong to Tracks A and C and are not this track's to create.
-    // `assessments` is deliberately absent from this list: Track B created it
-    // in Phase 3 (see AssessmentSchemaTest) — the same inversion recorded for
-    // `users` between Phase 1 and Phase 2 (phases.md deviations).
+it('has not created another track\'s tables', function (string $table): void {
+    // Track A must not build Track B's or Track C's slice (planning.md §21.5).
+    // Two developers creating the same migration is the most expensive
+    // mistake available on this project, so it is asserted rather than
+    // trusted to discipline.
+    //
+    // `assessments`, `questions` and `question_options` are deliberately
+    // absent from this list: Track B created them in Phase 3 (see
+    // AssessmentSchemaTest, QuestionSchemaTest, QuestionOptionSchemaTest) —
+    // the same inversion recorded for `users` between Phase 1 and Phase 2
+    // (phases.md deviations).
     expect(Schema::hasTable($table))->toBeFalse();
-})->with(['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments']);
+})->with([
+    // Track B — Srivathsa (remaining)
+    'assessment_attempts', 'attempt_answers',
+    // Track C — Shashank
+    'orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs',
+]);
 
 /*
 | CHECK CONSTRAINTS (ADR-012). The database refuses an illegal role or status

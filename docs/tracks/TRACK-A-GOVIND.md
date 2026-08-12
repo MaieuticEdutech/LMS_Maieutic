@@ -15,14 +15,34 @@ Srivathsa and Shashank are both waiting on you on day one. Push early, push in p
 
 ### Your phases, in order
 
-| Phase | Name |
-|---|---|
-| **3** | Core Domain Schema — catalogue + media slice *(current)* |
-| 5 | Course Builder & Content Management |
-| **6** | **Enrollment Core & Protected Delivery — single-owner** |
-| 7 | Student Learning Experience |
-| 9 | Progress Tracking |
-| **12** | **Payments & Automated Enrollment — single-owner, later** |
+| Phase | Name | Round |
+|---|---|---|
+| **3** | Core Domain Schema — catalogue + media slice | 0 ✅ **done** |
+| **5** | Course Builder & Content Management | 1 |
+| **6** | **Enrollment Core & Protected Delivery — single-owner** | 2 |
+| **7** | Student Learning Experience | 3 |
+| **9** | Progress Tracking | 4 |
+| **12** | **Payments & Automated Enrollment — single-owner** | 4 |
+| **14** | Security Hardening — *with Srivathsa and Shashank* | 5 |
+
+### Directories you own outright
+
+`app/Actions/{Catalog,Content,Enrollment,Billing}` · `app/Services/{Content,Media,Enrollment,Billing,Progress}`
+· `routes/media.php` · `routes/webhooks.php` · `database/migrations` ordering · `bootstrap/app.php`
+
+Nobody else edits these (planning.md §21.2.2).
+
+### ⚠️ Build Phase 5's BACKEND first
+
+The Course Builder **UI** lives inside Srivathsa's Phase 4 admin shell, which does not exist yet.
+Do not wait for it — build the parts that need no shell:
+
+`ContentTypeRegistry` and its five handlers · `MediaStorageService` · **`MediaPathResolver`** ·
+`FileValidationService` · the course/module/lesson Actions · `CoursePublishValidator` ·
+the public catalogue and course detail pages
+
+The Builder screens go in once he merges the shell. That turns a hard block into a sequencing
+preference.
 
 ---
 

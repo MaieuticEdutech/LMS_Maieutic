@@ -42,22 +42,38 @@ it('connects to a real postgresql database and has migrated', function (): void 
 });
 
 it('has not built ahead of the current phase', function (): void {
-    // Phase 1 asserted `users` did NOT exist, because it is a Phase 2 domain
-    // table. Phase 2 has since created it with the LMS schema (role, status,
-    // nullable password), so that assertion is now inverted — deliberately,
-    // and recorded in the Phase 2 report rather than quietly deleted.
+    // This guard moves forward with each phase rather than being deleted, so
+    // "we did not build ahead" stays continuously asserted rather than being
+    // checked once and forgotten.
     //
-    // The guard itself still matters: it now protects the Phase 3 boundary.
-    //
-    // `assessments` is deliberately absent from the "not yet built" list
-    // below: Track B created it in Phase 3 (see AssessmentSchemaTest), the
-    // same kind of inversion recorded for `users` above. The other Phase 3
-    // domain tables (Tracks A and C) are not this track's to create and stay
-    // guarded here until their own tracks land them.
+    //   Phase 1 → asserted `users` absent      (a Phase 2 table)
+    //   Phase 2 → created it; guard moved to the Phase 3 boundary
+    //   Phase 3 → Track A's catalogue tables now exist, and so do three of
+    //             Track B's five (`assessments`, `questions`,
+    //             `question_options` — see AssessmentSchemaTest,
+    //             QuestionSchemaTest and QuestionOptionSchemaTest, the same
+    //             kind of inversion recorded for `users` above). The guard
+    //             now protects the TRACK boundary: nobody builds a table
+    //             that isn't theirs (planning.md §21.5).
     expect(Schema::hasTable('users'))->toBeTrue();
-    expect(Schema::hasTable('assessments'))->toBeTrue();
 
-    foreach (['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments'] as $table) {
+    // Track A (Govind) — delivered.
+    foreach (['categories', 'courses', 'course_instructor', 'modules', 'lessons', 'media_files'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue();
+    }
+
+    // Track B (Srivathsa) — assessments, questions, question_options
+    // delivered; the attempt tables still wait on Track C's enrollments.
+    foreach (['assessments', 'questions', 'question_options'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue();
+    }
+
+    foreach (['assessment_attempts', 'attempt_answers'] as $table) {
+        expect(Schema::hasTable($table))->toBeFalse();
+    }
+
+    // Track C (Shashank) — not started.
+    foreach (['orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs'] as $table) {
         expect(Schema::hasTable($table))->toBeFalse();
     }
 });

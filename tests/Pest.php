@@ -31,6 +31,9 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
+// Vite is disabled for the whole Feature suite in Tests\TestCase::setUp().
+// See that class for why.
+
 /*
 |--------------------------------------------------------------------------
 | Custom expectations

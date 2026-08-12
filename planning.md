@@ -29,17 +29,18 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Phase 2 — Identity, Authentication & RBAC: COMPLETE** (2026-08-12) |
+| **Current phase** | **Phase 3 — Core Domain Schema. Track A slice COMPLETE; Tracks B and C not started** (2026-08-12) |
 | **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
 | **Phase 1 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
-| **Phase 2 status** | 🟢 Complete. Definition of Done satisfied; quality gates green. |
-| **Next phase** | **Phase 3 — Core Domain Schema & Models.** **NOT STARTED.** Awaiting go-ahead. |
-| Code written | Foundation + identity. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. 11 tables: 7 framework + `users`, `instructor_profiles`, `settings`, `audit_logs`. **No Phase 3 domain tables** (asserted by test). |
-| Repository | Branch `main`. Remote `origin` configured to github.com/maieutic22-max/LMS — **not yet pushed** (git cannot prompt for credentials from this shell). |
+| **Phase 2 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
+| **Phase 3 status** | 🟡 In progress. **Track A (Govind) complete**; Track B (Srivathsa) and Track C (Shashank) not started. Gate **G1** does not clear until all three are merged. |
+| Code written | Foundation, identity, catalogue. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **17 tables**: 7 framework + 4 identity + 6 catalogue/media. **No Track B or C tables** (asserted by test). |
+| Repository | Branch `main`, **fully pushed** to github.com/MaieuticEdutech/LMS_Maieutic. Nothing outstanding locally. |
+| CI | 🟢 **Green.** First run failed on two workflow bugs (Vite manifest missing in the test job; `composer audit` with no `vendor/`); both fixed in `7993da5` and verified. This closes the Phase 1 outstanding item — CI is now proven, not merely authored. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
 | Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
-| Outstanding verification items | (1) **CI never executed** — pipeline authored in Phase 1, awaiting a push to the remote. (2) **Vite HMR not interactively verified.** Neither blocks Phase 3; carried forward per customer instruction. |
+| Outstanding verification items | (1) ~~CI never executed~~ — 🟢 **CLOSED**, green on `7993da5`. (2) **Vite HMR not interactively verified** — still open, does not block anything. (3) **Branch protection not enabled on `main`** — until it is, the PR rules in §21.6 are documentation rather than enforcement. |
 | Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
 | **Blocking parallel work** | The repository has **never been pushed**. Three people cannot work without a shared remote, and the push is also what starts CI running on pull requests. See §21.8. |
 
@@ -800,15 +801,76 @@ deliberately rather than discover it.
 
 ### 21.2 Track allocation
 
-| Track | Phases | Why it can run independently |
-|---|---|---|
-| **A — Domain trunk** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress | The critical path. Owns the access gate. Assign to whoever has the deepest Eloquent and policy experience. |
-| **B — Surfaces** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor | Needs only Phase 3 plus the admin shell it builds itself. Heaviest Livewire/Blade load. |
-| **C — Infrastructure & commerce** | 11 Queues & Mail → **12 Payments** → 16 Deployment prep | Mail and queues need only `email_logs`. The `PaymentGateway` interface and `FakeGateway` need **no LMS tables at all** and can be built and unit-tested before the domain exists. |
+| Track | Owner | Phases | Why it can run independently |
+|---|---|---|---|
+| **A — Domain core & money** | **Govind** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress → **12 Payments** | The critical path, and it is genuinely serial: the player needs the access gate, which needs content to protect. Owns both single-owner components (§21.3). |
+| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Everything a user looks at. Owns `app/Livewire/**` and `resources/views/**`, so it barely touches Track A's files at all. |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever and can start at any time. |
 
-Phases 13–15 and 17 converge back to a single track: reporting, security hardening, UI polish and
-production hardening are all cross-cutting audits of the *whole* system, and splitting an audit
-across three people is how gaps appear between the seams.
+**Phase 14 (Security Hardening) is done by all three together.** It is an adversarial review of the
+finished system, and three independent perspectives genuinely catch more than one — it is the one
+phase where splitting the work *helps* rather than creating seams.
+
+### 21.2.1 Correction — Phase 12 belongs to Track A
+
+An earlier revision of this table listed **Phase 12 (Payments) under Track C**, which contradicted
+§21.3 and both track briefs. §21.3 is correct and this table has been fixed: Phase 12 is **Track A
+(Govind)**, because its entire design is *"call the already-tested `GrantEnrollment`, unchanged"* —
+far harder to hold to for someone meeting that action for the first time.
+
+Shashank still builds the `orders`, `payments` and `webhook_events` **tables**; Govind wires the
+money to the access. That split is deliberate.
+
+### 21.2.2 Why this allocation and not the previous one
+
+The first version was organised around phase *numbers*. Phase numbers follow dependency order, so
+allocating by number meant people were constantly waiting for the phase below them. This version
+allocates by **area of the codebase**, which is what actually determines whether two people
+collide:
+
+| Owner | Owns these directories outright |
+|---|---|
+| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing}`, `app/Services/{Content,Media,Enrollment,Billing,Progress}`, `routes/media.php`, `routes/webhooks.php` |
+| **Srivathsa** | `app/Livewire/**`, `resources/views/**`, `app/Actions/Assessment`, `app/Services/Assessment` |
+| **Shashank** | `app/Jobs/**`, `app/Mail/**`, `app/Notifications/**`, `app/Services/Reporting`, `.github/**`, `database/seeders` |
+
+Three people, three near-disjoint sets of files. Route files are append-only within their groups,
+so simultaneous additions merge cleanly.
+
+### 21.2.3 Work rounds — who does what, when
+
+A round is a set of phases with **no dependency on each other**. Everyone works freely inside a
+round; the round boundary is where merges settle.
+
+| Round | Govind | Srivathsa | Shashank | Blocking? |
+|---|---|---|---|---|
+| **0** *(now)* | ✅ done — starts Round 1 early | Phase 3 assessment tables | Phase 3 commerce tables | None. Both are unblocked today |
+| **1** | **5** Course Builder *(backend first)* | **4** Admin Shell | **11** Queues & Mail | None — three disjoint file sets |
+| **2** | **6** Enrollment & Access | **8** Assessment authoring | **16** Deployment prep | None |
+| **3** | **7** Student Experience | **8** Attempt runner *(needs the player)* | **13** Reporting | Srivathsa's half needs Govind's Phase 7 |
+| **4** | **9** Progress → **12** Payments | **10** Instructor Module | **17** Production Hardening | Phase 10 needs 8 + 9 |
+| **5** | Phase **14** Security — **all three together** | | | Everything merged first |
+| **6** | | **15** UI/UX Polish | | Final pass |
+
+**The one soft dependency worth planning around:** Phase 5's *Course Builder UI* lives inside
+Srivathsa's Phase 4 admin shell. So in Round 1, Govind builds Phase 5's **backend first** — the
+content type registry, media pipeline, `MediaPathResolver`, course actions, publish validator and
+the public catalogue — none of which need the shell. The Builder screens go in once Srivathsa
+merges it. That turns a hard block into a sequencing preference.
+
+### 21.2.4 Workload balance
+
+Effort ratings from `phases.md`:
+
+| Owner | Phases | Load |
+|---|---|---|
+| Govind | 5, 6, 7, 9, 12 | 3 Large + 2 Medium |
+| Srivathsa | 4, 8, 10, 15 | 1 Large + 3 Medium |
+| Shashank | 11, 13, 16, 17 | 3 Medium + 1 Small |
+
+Govind still carries the most, which is unavoidable: the critical path and both single-owner
+components sit on one track by necessity. Track C is deliberately lightest **at the start** and
+picks up reporting and production work later, when Track A is at its busiest.
 
 ### 21.3 Single-owner components — never parallelised
 
@@ -871,11 +933,36 @@ Amends §10 for parallel work:
 Maintained alongside the phase ledger in §2.1. The ledger records what is *done*; this records who
 is doing *what now*.
 
-| Track | Owner | Current phase | Blocked by |
+**Last updated: 2026-08-12.** Update this table whenever a track changes state — it is the one
+place that answers "what is everyone doing right now, and what is stopping them".
+
+**Current round: 0** — finishing Phase 3. Gate **G1** clears when all 17 tables are on `main`.
+
+| Track | Owner | Doing now | Status | Blocked by | Next |
+|---|---|---|---|---|---|
+| **A — Domain core & money** | **Govind** | Phase 3 catalogue slice → then **Phase 5 backend** | 🟢 **Complete & pushed** (`c036e44`, `43e0134`) | **Nothing.** May start Phase 5's backend immediately — it needs no admin shell | 5 → 6 → 7 → 9 → 12 |
+| **B — Surfaces & assessment** | **Srivathsa** | Phase 3 assessment slice (`100300`–`100340`) | ⚪ **Not started** | **Nothing for 3 of 5 tables.** `assessments`, `questions`, `question_options` have no cross-track FK — start today. Only `assessment_attempts` waits, on Shashank's `enrollments` | 4 → 8 → 10 → 15 |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | Phase 3 commerce slice (`100200`–`100230`, `100400`–`100410`) | ⚪ **Not started** | **Nothing — fully unblocked.** Govind's `courses` and `lessons` are on `main` as of `c036e44`. All six tables available | 11 → 13 → 16 → 17 |
+
+#### What each person's next action is, concretely
+
+| Owner | Next action |
+|---|---|
+| **Govind** | Start Phase 5 **backend only** — `ContentTypeRegistry` + 5 handlers, `MediaStorageService`, `MediaPathResolver`, `FileValidationService`, catalogue Actions, `CoursePublishValidator`, public catalogue pages. The Builder UI waits on Srivathsa's shell |
+| **Srivathsa** | Clone, set up, then write `assessments` → `questions` → `question_options` (migrations, models, enums, factories, policies). **Then Phase 4's admin shell — Govind's Phase 5 UI is blocked on it, so merge it early** |
+| **Shashank** | Clone, set up, then all six commerce/progress tables. **Push `enrollments` (`100230`) promptly — Srivathsa's `assessment_attempts` waits on it** |
+
+#### Round board
+
+| Round | Govind | Srivathsa | Shashank |
 |---|---|---|---|
-| **A — Domain trunk** | **Govind** | Phase 3 — catalogue + media (`100100`–`100150`) | Nothing. **Head of the chain — two people wait on this** |
-| **B — Surfaces** | **Srivathsa** | Phase 3 — assessment (`100300`–`100340`) | `assessment_attempts` waits on Shashank's `enrollments`. The other four are unblocked |
-| **C — Infrastructure** | **Shashank** | Phase 3 — commerce + progress (`100200`–`100230`, `100400`–`100410`) | `orders`/`enrollments`/`lesson_progress` wait on Govind's `courses` + `lessons`. `webhook_events` and `email_logs` are unblocked |
+| **0 ← now** | ✅ done | Phase 3 assessment | Phase 3 commerce |
+| 1 | 5 Course Builder | 4 Admin Shell | 11 Queues & Mail |
+| 2 | 6 Enrollment & Access | 8 Assessment authoring | 16 Deployment |
+| 3 | 7 Student | 8 Attempt runner | 13 Reporting |
+| 4 | 9 Progress → 12 Payments | 10 Instructor | 17 Hardening |
+| 5 | 14 Security — all three together | | |
+| 6 | | 15 UI/UX Polish | |
 
 **Per-developer Claude Code briefs** live in `docs/tracks/` and are loaded through a git-ignored
 `CLAUDE.local.md` containing one import line. Root `CLAUDE.md` holds the shared rules and the
