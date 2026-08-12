@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../../app/Livewire/**/*.php';
+
+/*
+| Design tokens
+|--------------------------------------------------------------------------
+| Tailwind 4 is configured CSS-first. These tokens are the single source of
+| truth for colour, radius and typography across all four audiences (public,
+| student, instructor, admin).
+|
+| planning.md §6.3: views reuse the shared component library and avoid
+| arbitrary values. If a value is needed twice, it belongs here as a token —
+| not inline in a view.
+*/
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand — used for primary actions and active navigation. */
+    --color-brand-50: oklch(0.97 0.014 254);
+    --color-brand-100: oklch(0.94 0.03 254);
+    --color-brand-200: oklch(0.88 0.06 254);
+    --color-brand-300: oklch(0.81 0.1 254);
+    --color-brand-400: oklch(0.71 0.15 254);
+    --color-brand-500: oklch(0.62 0.19 254);
+    --color-brand-600: oklch(0.54 0.2 254);
+    --color-brand-700: oklch(0.46 0.17 254);
+    --color-brand-800: oklch(0.39 0.14 254);
+    --color-brand-900: oklch(0.33 0.11 254);
+
+    /* Semantic status colours. Meaning is fixed; usage must stay consistent. */
+    --color-success-50: oklch(0.96 0.03 155);
+    --color-success-600: oklch(0.55 0.15 155);
+    --color-success-700: oklch(0.47 0.13 155);
+
+    --color-warning-50: oklch(0.97 0.04 85);
+    --color-warning-600: oklch(0.65 0.15 85);
+    --color-warning-700: oklch(0.55 0.13 85);
+
+    --color-danger-50: oklch(0.96 0.03 25);
+    --color-danger-600: oklch(0.55 0.2 25);
+    --color-danger-700: oklch(0.47 0.18 25);
+
+    --radius-card: 0.75rem;
+    --radius-control: 0.5rem;
+}
+
+/*
+| Base layer
+|--------------------------------------------------------------------------
+| NFR-UX-03 / WCAG 2.1 AA: focus must always be visible. Tailwind's reset
+| removes the default outline, so a visible focus ring is restored here for
+| every interactive element rather than relying on each component to
+| remember it.
+*/
+@layer base {
+    :focus-visible {
+        outline: 2px solid var(--color-brand-600);
+        outline-offset: 2px;
+    }
+
+    /* Respect users who have asked for reduced motion. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}

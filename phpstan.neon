@@ -1,0 +1,54 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    # Teaches PHPStan that Pest binds it()/test() closures to the TestCase, so
+    # $this->get(), $this->assertX() etc. resolve correctly inside them.
+    # Without this, every Pest test reports false "undefined method" errors and
+    # the only alternatives would be excluding tests from analysis or
+    # suppressing errors — both worse than adding the first-party plugin.
+    - vendor/pestphp/pest-plugin-phpstan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+        - tests
+
+    # AGREED LEVEL: 8 (NFR-MAINT-02).
+    #
+    # Set high deliberately, and at the outset. Raising the level later means
+    # retrofitting types across a grown codebase; starting at 8 means every
+    # phase is written to that bar from its first line. Level 8 adds nullability
+    # checking on top of level 7's union handling — precisely the class of bug
+    # (a null enrollment, a null attempt, a null media file) that would
+    # otherwise surface as a 500 in front of a paying student.
+    #
+    # This is a floor, not a ceiling. It is reviewed at the end of each phase
+    # and raised when the codebase supports it. It is NEVER lowered to make a
+    # failing build pass — that is a Rule 9 violation.
+    level: 8
+
+    # No baseline file exists, and none should be created. A baseline hides
+    # existing violations; on a project starting from zero there is nothing
+    # legitimate to hide (Universal DoD U-4: "no new baseline entries").
+
+    checkOctaneCompatibility: false
+
+    # checkModelProperties is DISABLED, deliberately and with regret.
+    #
+    # When enabled, Larastan types Factory::definition() as
+    #   array<model property of TModel, mixed>
+    # but `model property of` is an INTERNAL Larastan type that cannot be
+    # written in userland PHPDoc — attempting it is a phpDoc.parseError. So
+    # every Eloquent factory reports a childReturnType violation that is
+    # impossible to satisfy without an @phpstan-ignore or a baseline entry,
+    # both of which are prohibited (U-4, Development Rule 9).
+    #
+    # This is a tooling incompatibility with Laravel's own factory signature,
+    # not a defect being hidden: no application code is exempted from analysis.
+    #
+    # REVISIT IN PHASE 3, when the real domain models and tables exist and the
+    # cost/benefit can be judged against actual schema-backed models rather
+    # than a stock User model for a table Phase 1 does not create.
+    checkModelProperties: false

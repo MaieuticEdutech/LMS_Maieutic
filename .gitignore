@@ -1,0 +1,48 @@
+# ── Secrets — NEVER commit (planning.md rules G-1, G-2, E-2) ──────────────────
+# .env.example is the ONLY env file that belongs in version control, and it
+# must contain no real values. A secret that reaches git history is considered
+# leaked and must be ROTATED — deleting the commit is not sufficient (G-2).
+.env
+.env.*
+!.env.example
+/auth.json
+/storage/*.key
+
+# ── Uploaded learning content — NEVER commit ──────────────────────────────────
+# Protected course media (video, PDF, PPTX, resources) lives here. It is
+# private customer content, frequently large, and has no business in a
+# repository (FR-FILE-03).
+/storage/app/content
+/storage/app/private
+/storage/app/public
+/storage/app/temp
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+/vendor
+/node_modules
+
+# ── Build output ──────────────────────────────────────────────────────────────
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# ── Caches, logs, scratch ─────────────────────────────────────────────────────
+*.log
+.phpunit.result.cache
+/.phpunit.cache
+/storage/pail
+_ide_helper.php
+.phpactor.json
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+/.idea
+/.vscode
+/.zed
+/.nova
+/.cursor/
+/.codex
+Homestead.json
+Homestead.yaml
