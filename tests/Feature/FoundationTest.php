@@ -48,33 +48,29 @@ it('has not built ahead of the current phase', function (): void {
     //
     //   Phase 1 → asserted `users` absent      (a Phase 2 table)
     //   Phase 2 → created it; guard moved to the Phase 3 boundary
-    //   Phase 3 → Track A's catalogue tables now exist, and so do three of
-    //             Track B's five (`assessments`, `questions`,
-    //             `question_options` — see AssessmentSchemaTest,
-    //             QuestionSchemaTest and QuestionOptionSchemaTest, the same
-    //             kind of inversion recorded for `users` above). The guard
-    //             now protects the TRACK boundary: nobody builds a table
-    //             that isn't theirs (planning.md §21.5).
+    //   Phase 3 → COMPLETE, all three tracks. Track B and Track C are both
+    //             now owned by Srivathsa (confirmed 2026-08-12, not yet
+    //             reflected in planning.md/TRACK-C-SHASHANK.md — see
+    //             PROGRESS.md), which is why one person's branch legitimately
+    //             built every table below. Nothing is left in the "not yet
+    //             built" half of this guard because Phase 4 (Admin Shell)
+    //             introduces no new tables — the next entry here belongs to
+    //             whichever future phase first adds one.
     expect(Schema::hasTable('users'))->toBeTrue();
 
-    // Track A (Govind) — delivered.
+    // Track A (Govind).
     foreach (['categories', 'courses', 'course_instructor', 'modules', 'lessons', 'media_files'] as $table) {
         expect(Schema::hasTable($table))->toBeTrue();
     }
 
-    // Track B (Srivathsa) — assessments, questions, question_options
-    // delivered; the attempt tables still wait on Track C's enrollments.
-    foreach (['assessments', 'questions', 'question_options'] as $table) {
+    // Track B (Srivathsa) — all five.
+    foreach (['assessments', 'questions', 'question_options', 'assessment_attempts', 'attempt_answers'] as $table) {
         expect(Schema::hasTable($table))->toBeTrue();
     }
 
-    foreach (['assessment_attempts', 'attempt_answers'] as $table) {
-        expect(Schema::hasTable($table))->toBeFalse();
-    }
-
-    // Track C (Shashank) — not started.
-    foreach (['orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs'] as $table) {
-        expect(Schema::hasTable($table))->toBeFalse();
+    // Track C (Srivathsa, formerly Shashank's — see PROGRESS.md) — all six.
+    foreach (['webhook_events', 'email_logs', 'orders', 'payments', 'enrollments', 'lesson_progress'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue();
     }
 });
 

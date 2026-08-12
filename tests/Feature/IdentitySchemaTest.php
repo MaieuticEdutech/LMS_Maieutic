@@ -27,23 +27,21 @@ it('creates the phase 2 tables', function (string $table): void {
     expect(Schema::hasTable($table))->toBeTrue();
 })->with(['users', 'instructor_profiles', 'settings', 'audit_logs']);
 
-it('has not created another track\'s tables', function (string $table): void {
-    // Track A must not build Track B's or Track C's slice (planning.md §21.5).
-    // Two developers creating the same migration is the most expensive
-    // mistake available on this project, so it is asserted rather than
-    // trusted to discipline.
-    //
-    // `assessments`, `questions` and `question_options` are deliberately
-    // absent from this list: Track B created them in Phase 3 (see
-    // AssessmentSchemaTest, QuestionSchemaTest, QuestionOptionSchemaTest) —
-    // the same inversion recorded for `users` between Phase 1 and Phase 2
-    // (phases.md deviations).
-    expect(Schema::hasTable($table))->toBeFalse();
+it('creates every Track B and Track C table (Phase 3, complete)', function (string $table): void {
+    // Formerly a negative guard ("Track A must not build Track B's or
+    // Track C's slice", planning.md §21.5) — that mattered while these
+    // tables didn't exist yet. Now that both tracks are complete (Srivathsa
+    // owns both — see PROGRESS.md), there is nothing left to assert absent,
+    // so this asserts the positive instead: every table both tracks were
+    // responsible for actually exists. See the individual *SchemaTest files
+    // for the per-table invariants (CHECK constraints, unique constraints,
+    // cascade behaviour) this test does not duplicate.
+    expect(Schema::hasTable($table))->toBeTrue();
 })->with([
-    // Track B — Srivathsa (remaining)
-    'assessment_attempts', 'attempt_answers',
-    // Track C — Shashank
-    'orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs',
+    // Track B — Srivathsa
+    'assessments', 'questions', 'question_options', 'assessment_attempts', 'attempt_answers',
+    // Track C — Srivathsa (formerly Shashank's, see PROGRESS.md)
+    'webhook_events', 'email_logs', 'orders', 'payments', 'enrollments', 'lesson_progress',
 ]);
 
 /*

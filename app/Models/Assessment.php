@@ -117,6 +117,14 @@ class Assessment extends Model
     }
 
     /**
+     * @return HasMany<AssessmentAttempt, $this>
+     */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(AssessmentAttempt::class);
+    }
+
+    /**
      * @param  Builder<self>  $query
      */
     public function scopePublished(Builder $query): void
