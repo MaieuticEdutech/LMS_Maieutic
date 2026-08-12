@@ -35,6 +35,14 @@
 _ide_helper.php
 .phpactor.json
 
+# ── Per-developer Claude Code memory ──────────────────────────────────────────
+# Each developer creates CLAUDE.local.md containing a single import line for
+# their own track brief, e.g.  @docs/tracks/TRACK-A-GOVIND.md
+# It is personal and machine-specific, so it is never committed. The track
+# briefs themselves ARE committed (docs/tracks/) so the whole team can see what
+# every track is doing.
+CLAUDE.local.md
+
 # ── Editor / OS ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

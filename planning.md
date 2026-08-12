@@ -871,11 +871,34 @@ Amends §10 for parallel work:
 Maintained alongside the phase ledger in §2.1. The ledger records what is *done*; this records who
 is doing *what now*.
 
-| Track | Owner | Current phase | Branch | Blocked by |
-|---|---|---|---|---|
-| A — Domain trunk | *(unassigned)* | — | — | Gate G1 |
-| B — Surfaces | *(unassigned)* | — | — | Gate G1 |
-| C — Infrastructure | *(unassigned)* | — | — | Gate G1 |
+| Track | Owner | Current phase | Blocked by |
+|---|---|---|---|
+| **A — Domain trunk** | **Govind** | Phase 3 — catalogue + media (`100100`–`100150`) | Nothing. **Head of the chain — two people wait on this** |
+| **B — Surfaces** | **Srivathsa** | Phase 3 — assessment (`100300`–`100340`) | `assessment_attempts` waits on Shashank's `enrollments`. The other four are unblocked |
+| **C — Infrastructure** | **Shashank** | Phase 3 — commerce + progress (`100200`–`100230`, `100400`–`100410`) | `orders`/`enrollments`/`lesson_progress` wait on Govind's `courses` + `lessons`. `webhook_events` and `email_logs` are unblocked |
+
+**Per-developer Claude Code briefs** live in `docs/tracks/` and are loaded through a git-ignored
+`CLAUDE.local.md` containing one import line. Root `CLAUDE.md` holds the shared rules and the
+setup instruction. See `CLAUDE.md` → "Set up your track".
+
+### 21.7.1 Phase 3 dependency chain
+
+Migration numbering is by dependency, so ownership interleaves. The practical consequence is a
+**three-stage stagger on day one**:
+
+```
+Govind    100100–100150  catalogue + media      ── no wait ──▶ push FIRST, migrations only
+                │
+                ├──▶ Shashank  100200–100230, 100400–100410   commerce + progress
+                │                    │
+                │                    └──▶ Srivathsa  100330–100340   attempts + answers
+                │
+                └──▶ Srivathsa  100300–100320   assessments (no FK — starts immediately)
+```
+
+Govind's obligation: **push the catalogue block as the first PR, before writing any model,
+policy or factory.** Six migration files unblock two developers for two days of work; the tidy
+migration-plus-model pairing comes second.
 
 ### 21.8 Prerequisites before parallel work can start
 
