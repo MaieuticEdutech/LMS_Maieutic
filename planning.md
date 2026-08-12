@@ -40,6 +40,8 @@ Build a professional, secure, maintainable Learning Management System that lets 
 | Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
 | Outstanding verification items | (1) **CI never executed** — pipeline authored in Phase 1, awaiting a push to the remote. (2) **Vite HMR not interactively verified.** Neither blocks Phase 3; carried forward per customer instruction. |
+| Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
+| **Blocking parallel work** | The repository has **never been pushed**. Three people cannot work without a shared remote, and the push is also what starts CI running on pull requests. See §21.8. |
 
 ### 2.1 Phase status ledger
 
@@ -153,7 +155,7 @@ These are binding. A change that violates one is rejected in review regardless o
 
 ### 5.1 Process rules
 
-1. **One phase at a time.** Never implement multiple major phases at once.
+1. **One phase at a time — *per track*.** Amended 2026-08-12 for a three-person team (§21). A single developer still works one phase at a time; the team may run **at most one phase per track**, and only where §21.2 shows the tracks are genuinely independent. Tracks must be green on `main` together at every convergence gate (§21.4). The two single-owner components in §21.3 are never parallelised. Before the amendment this rule read simply "never implement multiple major phases at once" — the tightening it provided is now supplied by the gates.
 2. **Read before writing.** Before coding a phase, read `requirements.md`, `architecture.md`, `phases.md` and `planning.md`.
 3. **Plan before implementing.** Before implementing a feature, state the implementation plan and get agreement.
 4. **Small, testable changes.** Prefer a sequence of small verifiable steps to one large change.
@@ -333,7 +335,7 @@ Beyond the NFR-SEC requirements, these are the rules for daily work:
 |---|---|
 | G-1 | `.env`, `.env.*` (except `.env.example`), `/vendor`, `/node_modules`, `/storage/app/content`, `/storage/app/public`, `/public/build`, `/public/storage`, `.phpunit.result.cache` are git-ignored. |
 | G-2 | **No secret is ever committed.** If one is, rotate it immediately — removing the commit is not sufficient. |
-| G-3 | Branch per phase: `phase/NN-short-name`. Branch per fix: `fix/short-name`. |
+| G-3 | Branch per phase: `phase/NN-short-name`. Branch per fix: `fix/short-name`. **With a parallel team, branch per _task_ and merge daily — see §21.6. Long-lived per-track branches are merge debt disguised as organisation.** |
 | G-4 | Conventional commit subjects: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `perf:`, `security:`. Subject ≤ 72 characters, imperative mood. |
 | G-5 | Commits are atomic and self-consistent — the suite passes at every commit on the main branch. |
 | G-6 | Never force-push a shared branch. |
@@ -435,7 +437,7 @@ Every acceptance criterion in `requirements.md` §23 passes on production (Phase
 
 These are the rules the customer set for this project. They are restated here verbatim as the operative list; §5 organises the same rules by theme.
 
-1. Never implement multiple major phases at once.
+1. Never implement multiple major phases at once. *(Amended 2026-08-12 — now scoped per track: see §5.1 rule 1 and §21. One phase per track, never two phases by one person, never a parallel owner on the components in §21.3.)*
 2. Before coding a phase, read `requirements.md`, `architecture.md`, `phases.md` and `planning.md`.
 3. Before implementing a feature, explain the implementation plan.
 4. Prefer small, testable changes.
@@ -640,6 +642,8 @@ Decisions made during the project are appended here with date, decision, rationa
 | 2026-08-12 | **Phase 2:** two password brokers (`users` 60m, `activations` 72h) over one token table | Reset and activation need very different lifetimes. A short activation window would strand a buyer who did not open their email immediately — the worst failure on the paid onboarding path | Sharing the email-keyed table means one live token per user: requesting a reset invalidates a pending activation link, which is a desirable property |
 | 2026-08-12 | **Phase 2:** password reset also activates a `pending_activation` account | Otherwise a buyer who clicked "forgot password" instead of the activation link would set a password successfully and still be unable to log in — a dead end with no visible cause | `ChangeUserPassword::$activateIfPending` |
 | 2026-08-12 | **Phase 2:** Super Admin seeder sets NO usable password outside local/testing | A seeded default credential in production is an open door. The operator takes control via "Forgot password" | Also fixed a real bug Larastan surfaced: `env()` in a seeder returns null once `config:cache` has run, which would have seeded an admin with an empty email |
+| 2026-08-12 | **Team grew to three full-stack developers. Development Rule 1 amended from "one phase at a time" to "one phase at a time PER TRACK"** | The roadmap is a dependency order, not a schedule. Running independent phases in series would idle two developers for no engineering reason | New §21 defines three tracks, five convergence gates, single-owner components, shared-file ownership and branch/PR rules. Phase 3 split three ways by domain with pre-agreed migration numbering. **Phases 13–17 stay single-track** — they are cross-cutting audits, and splitting an audit is how gaps appear between the seams |
+| 2026-08-12 | **`GrantEnrollment` and `EnrollmentAccessService` designated single-owner, non-parallelisable** | ADR-006 guarantees exactly one enrollment writer and one definition of access. That is an ownership decision, not a code-review outcome — it is the one place where adding people makes the result worse | Phase 6 and Phase 12 are one person, one branch. Other tracks consume them as read-only interfaces |
 | 2026-08-12 | **Phase 2:** `guest` middleware alias overridden rather than `$middleware->replace()` | `replace()` operates on middleware groups and does not rebind an alias — the stock class stayed active and every role was redirected to `/`. Caught by test, not by inspection | Role-based post-login and guest-screen redirects now both resolve from `UserRole::homePath()` |
 | 2026-08-12 | Local runtime installed **portably**, no admin rights | Herd and the PostgreSQL service installer both need UAC elevation, which is unavailable from the automation shell (winget failed `0x800704c7`). PHP and PostgreSQL run from `C:\Users\<user>\devtools` as user processes | **Developer-machine setup only — not a project decision.** Production provisioning is Phase 16 and unaffected. See §20.1 |
 | 2026-08-12 | Quizzes and tests unified as one `assessments` entity | Structurally identical (ADR-002) | One engine, one policy set; `type` discriminates |
@@ -725,6 +729,9 @@ Adaptive-bitrate video and DRM · live classes · discussion forums and Q&A · m
 | What phase are we in? | **Phase 2 complete.** Phase 3 is next and not started (§2) |
 | What is next? | **Phase 3 — Core Domain Schema & Models**, on explicit go-ahead |
 | May I start Phase 3 now? | Only on explicit instruction. Rule 1: one phase at a time |
+| Which track am I on, and what am I blocked by? | §21.2 for allocation, §21.7 for current state, §21.4 for gates |
+| May two of us work on the enrollment code? | **No.** `GrantEnrollment` and `EnrollmentAccessService` are single-owner (§21.3) |
+| Who owns the file I need to change? | §21.5. If it is not yours, raise it with the owner |
 | How do I check a user's role? | `$user->hasRole(UserRole::X)` — the ONLY permitted pattern (rule S-7) |
 | Where is the account status enforced? | Inside `Fortify::authenticateUsing()`, with `EnsureUserIsActive` as defence in depth |
 | How do I run the quality gates? | `composer check` — Pint, then Larastan level 8, then Pest. All three must pass |
@@ -769,3 +776,113 @@ C:\Users\<user>\devtools\pgsql\bin\pg_ctl.exe -D C:\Users\<user>\devtools\pgdata
 
 Any developer may instead use Herd, Sail or a native PostgreSQL service — the project depends
 on PHP 8.5 and PostgreSQL 16+, not on how they are installed (architecture.md §21).
+
+---
+
+## 21. Parallel development — the track model
+
+Adopted 2026-08-12 for a three-person, full-stack team. This section governs how the phase
+roadmap — which is a **dependency order, not a schedule** — is executed by more than one person.
+
+### 21.1 The principle
+
+`phases.md` numbers phases in the order their dependencies resolve. That numbering was written
+for a single worker, where dependency order and calendar order are the same thing. With three
+developers they are not: several phases have no dependency on each other at all, and running
+them in series would leave two people idle for no engineering reason.
+
+**What does not change:** every phase still has to satisfy its own Definition of Done and the
+universal DoD. Parallelism changes *when* work happens, never *whether it is finished*.
+
+**What it costs:** integration debt, merge conflicts on shared files, and a harder time asserting
+"the whole suite is green" when three branches are in flight. §21.5–21.7 exist to pay that cost
+deliberately rather than discover it.
+
+### 21.2 Track allocation
+
+| Track | Phases | Why it can run independently |
+|---|---|---|
+| **A — Domain trunk** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress | The critical path. Owns the access gate. Assign to whoever has the deepest Eloquent and policy experience. |
+| **B — Surfaces** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor | Needs only Phase 3 plus the admin shell it builds itself. Heaviest Livewire/Blade load. |
+| **C — Infrastructure & commerce** | 11 Queues & Mail → **12 Payments** → 16 Deployment prep | Mail and queues need only `email_logs`. The `PaymentGateway` interface and `FakeGateway` need **no LMS tables at all** and can be built and unit-tested before the domain exists. |
+
+Phases 13–15 and 17 converge back to a single track: reporting, security hardening, UI polish and
+production hardening are all cross-cutting audits of the *whole* system, and splitting an audit
+across three people is how gaps appear between the seams.
+
+### 21.3 Single-owner components — never parallelised
+
+Two components carry the guarantees the entire system rests on. They have **one owner, one branch,
+one reviewer**, and no concurrent work anywhere near them:
+
+| Component | Phase | Why |
+|---|---|---|
+| `GrantEnrollment` + `EnrollmentAccessService` | 6 | ADR-006 says there is exactly **one** code path that creates an enrollment, and exactly **one** definition of "has access". Two people working near this is precisely how a second path appears. Everything downstream trusts it. |
+| Webhook → enrollment path | 12 | Should be the **same person** who wrote Phase 6. Phase 12's whole design is "call the already-tested action, unchanged" — that is far harder to hold to for someone meeting the action for the first time. |
+
+Tracks B and C consume both as **read-only interfaces**. If either needs a change, it is a request
+to the owner, not an edit.
+
+### 21.4 Convergence gates
+
+A gate is a point where **all tracks must be merged to `main` and green together** before anyone
+proceeds. No track starts its next phase until the gate clears.
+
+| Gate | When | What must be true |
+|---|---|---|
+| **G1 — Schema** | End of Phase 3 | All 17 migrations merged; `migrate:fresh --seed` green; every model, factory and policy registered; all three tracks building on the same schema |
+| **G2 — Access gate** | End of Phase 6 | `GrantEnrollment` and `EnrollmentAccessService` merged and tested. **Track B and C both rebase onto this before continuing** — it changes what every policy means |
+| **G3 — Engines** | End of Phases 8 + 9 | Assessment and progress engines merged; Track B may start Phase 10 |
+| **G4 — Pre-payment** | Before Phase 12 | Phase 11 mail/queues merged and Phase 6 proven; only then does the payment path get wired |
+| **G5 — Feature freeze** | Before Phase 14 | All feature tracks merged. Security hardening audits a complete system, not a moving one |
+
+### 21.5 Shared-file ownership
+
+These files sit on every track's path and will conflict. Each has a named owner; changes by anyone
+else are raised with the owner rather than merged directly.
+
+| File / directory | Owner | Rule |
+|---|---|---|
+| `database/migrations/` | Track A | Filenames and ordering are **agreed in advance** (see `phases.md` Phase 3). Never renumber a merged migration |
+| `bootstrap/app.php` | Track A | Middleware aliases and route registration. Announce before editing |
+| `composer.json` / `package.json` | Track C | A new dependency needs a recorded Rule 6 justification regardless of who wants it |
+| `config/lms.php` | Track C | Add keys, never repurpose existing ones |
+| `resources/views/components/` | Track B | The shared component library. Extend, don't fork — a second button component is a defect |
+| `planning.md`, `phases.md` | Whoever closes the phase | Update in the same PR as the code, per Rule 10 |
+| `requirements.md`, `architecture.md` | Team decision | Changes here affect all tracks; agree before editing |
+
+### 21.6 Branch and pull-request rules
+
+Amends §10 for parallel work:
+
+| # | Rule |
+|---|---|
+| P-1 | Branch per **task**, not per track: `phase/NN-short-name`. Long-lived track branches are merge debt disguised as organisation |
+| P-2 | Merge to `main` **daily**, even mid-phase, behind an incomplete-but-inert surface. A branch older than ~2 days is a warning sign |
+| P-3 | Every merge to `main` goes through a pull request. No direct pushes |
+| P-4 | CI must be green before merge — lint, Larastan level 8, the full Pest suite |
+| P-5 | **The phase's Definition of Done is the PR review checklist.** This is a better use of it than a solo checkbox, and it is how one person's phase gets a second pair of eyes |
+| P-6 | A PR touching another track's single-owner component (§21.3) requires that owner's review |
+| P-7 | Rebase on `main` before opening a PR; resolve your own conflicts |
+| P-8 | `main` stays deployable at all times (G-9 unchanged) |
+
+### 21.7 Per-track status
+
+Maintained alongside the phase ledger in §2.1. The ledger records what is *done*; this records who
+is doing *what now*.
+
+| Track | Owner | Current phase | Branch | Blocked by |
+|---|---|---|---|---|
+| A — Domain trunk | *(unassigned)* | — | — | Gate G1 |
+| B — Surfaces | *(unassigned)* | — | — | Gate G1 |
+| C — Infrastructure | *(unassigned)* | — | — | Gate G1 |
+
+### 21.8 Prerequisites before parallel work can start
+
+1. **Push the repository.** It has never left one machine. Three people cannot work without a
+   shared remote, and pushing is also what makes the Phase 1 CI pipeline start running on pull
+   requests — which is what will actually catch cross-track breakage.
+2. **Each developer sets up their own environment** — PHP 8.5, PostgreSQL 16+, their own `lms_dev`
+   and `lms_test`. `README.md` covers it; §20.1 records the portable route if they want it.
+3. **Enable branch protection on `main`**: require a passing CI run and one review.
+4. **Assign the tracks and fill in §21.7.**

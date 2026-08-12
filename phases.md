@@ -358,12 +358,60 @@ Create the complete relational foundation for courses, content, commerce and pro
 - Console commands for cache rebuild operations
 
 ### Database work
-Migrations, in dependency order, per §6.4:
-`categories` → `courses` → `course_instructor` → `modules` → `lessons` → `media_files` → `assessments` → `questions` → `question_options` → `assessment_attempts` → `attempt_answers` → `orders` → `payments` → `webhook_events` → `enrollments` → `lesson_progress` → `email_logs`
 
 Each migration must include: FKs with explicit `ON DELETE` behaviour, CHECK constraints mirroring PHP enums, all indexes from §6.4, the invariant constraints from §6.5 (including the **partial unique index** for one in-progress attempt), and a comment classifying the table as **tenant-owned** or **platform-global** (§24.4 rule 6).
 
 Factories for every model; `DevelopmentSeeder` producing 2 instructors, 20 students, 3 courses with modules, lessons of every type, quizzes, a final test, enrollments and progress.
+
+#### Agreed migration order and ownership (three-person team — planning.md §21)
+
+**These filenames are fixed and agreed BEFORE anyone writes a line.** Deterministic numbering is
+the single thing that keeps a three-way split from becoming a merge conflict: each developer
+creates only their assigned files, and foreign keys resolve by name because the order is already
+correct.
+
+Numbering is **by dependency, not by owner** — ownership is orthogonal to ordering. Gaps of 10
+leave room to insert a table without renumbering anything already merged.
+
+| # | Migration | Owner | Key dependencies |
+|---|---|:--:|---|
+| `2026_08_13_100100` | `create_categories_table` | **A** | — |
+| `2026_08_13_100110` | `create_courses_table` | **A** | categories, users |
+| `2026_08_13_100120` | `create_course_instructor_table` | **A** | courses, users |
+| `2026_08_13_100130` | `create_modules_table` | **A** | courses |
+| `2026_08_13_100140` | `create_lessons_table` | **A** | modules |
+| `2026_08_13_100150` | `create_media_files_table` | **A** | users *(polymorphic attachable — no FK)* |
+| `2026_08_13_100200` | `create_orders_table` | **C** | users, courses |
+| `2026_08_13_100210` | `create_payments_table` | **C** | orders |
+| `2026_08_13_100220` | `create_webhook_events_table` | **C** | — |
+| `2026_08_13_100230` | `create_enrollments_table` | **C** | users, courses, orders, **lessons** |
+| `2026_08_13_100300` | `create_assessments_table` | **B** | users *(polymorphic assessable — no FK)* |
+| `2026_08_13_100310` | `create_questions_table` | **B** | assessments |
+| `2026_08_13_100320` | `create_question_options_table` | **B** | questions |
+| `2026_08_13_100330` | `create_assessment_attempts_table` | **B** | assessments, users, **enrollments** |
+| `2026_08_13_100340` | `create_attempt_answers_table` | **B** | assessment_attempts, questions |
+| `2026_08_13_100400` | `create_lesson_progress_table` | **C** | enrollments, lessons, users |
+| `2026_08_13_100410` | `create_email_logs_table` | **C** | — |
+
+**Two ordering constraints that are easy to get wrong and expensive to discover late:**
+
+1. `enrollments` (100230, C) references `lessons` (100140, A) for `last_lesson_id`.
+2. `assessment_attempts` (100330, B) references `enrollments` (100230, C).
+
+So the numbering deliberately interleaves owners. It also means Phase 3 has **one internal
+stagger**: Track A merges the catalogue block (100100–100150) to `main` first, on day one. B and C
+can *write* their migrations immediately, but cannot run `migrate:fresh` locally until A's block
+is on `main`. Plan the first day around that.
+
+#### Work split beyond migrations
+
+| Owner | Also delivers |
+|---|---|
+| **A** | Enums `CourseStatus`, `CourseLevel`, `LessonType`, `MediaPurpose`; models Category, Course, Module, Lesson, MediaFile; `Course::published()`, `Course::assignedTo()`, `Lesson::published()`; Course/Module/Lesson/MediaFile policies; factories |
+| **B** | Enums `AssessmentType`, `QuestionType`, `AnswerRevealPolicy`, `AttemptStatus`; models Assessment, Question, QuestionOption, AssessmentAttempt, AttemptAnswer; `Assessment::published()`; Assessment/Attempt policies; factories |
+| **C** | Enums `OrderStatus`, `PaymentStatus`, `EnrollmentStatus`, `EnrollmentSource`, `ProgressStatus`, `CompletionSource`; models Order, Payment, WebhookEvent, Enrollment, LessonProgress, EmailLog; `Enrollment::active()`; Order/Payment/Enrollment policies; factories |
+| **A** *(sole owner)* | `EnrollmentAccessService::grantsAccess()` and the `GrantEnrollment` skeleton — **single-owner components** (planning.md §21.3), even though the tables belong to C |
+| **Whoever finishes first** | `DevelopmentSeeder`, `lms:progress:rebuild`, `lms:counters:rebuild` — these need every model to exist, so they are the natural convergence task |
 
 ### Backend work
 - Enums: `UserRole`, `UserStatus`, `CourseStatus`, `CourseLevel`, `LessonType`, `MediaPurpose`, `AssessmentType`, `QuestionType`, `AnswerRevealPolicy`, `AttemptStatus`, `OrderStatus`, `PaymentStatus`, `EnrollmentStatus`, `EnrollmentSource`, `ProgressStatus`, `CompletionSource`
@@ -1420,3 +1468,79 @@ graph LR
 ```
 
 The two highest-risk phases are **6** (the access gate — everything downstream trusts it) and **12** (payment-driven enrollment — the customer's central requirement). Both are scheduled so that their dependencies are complete and tested before they begin, and Phase 12 reuses the enrollment engine proven in Phase 6 rather than introducing a second path to access.
+
+---
+
+## 5. Parallel execution — tracks and convergence gates
+
+> Adopted 2026-08-12 for a three-person team. Governed by `planning.md` §21, which holds the
+> ownership rules, branch/PR rules and prerequisites. This section shows the **shape** of the
+> parallelism against the roadmap.
+
+**The numbering above is a dependency order, not a schedule.** Several phases have no dependency
+on one another and may run concurrently on separate tracks. A phase's Definition of Done is
+unchanged — parallelism alters when work happens, never whether it is finished.
+
+```mermaid
+graph TD
+    P3["Phase 3 · Schema<br/><i>all three, split by domain</i>"] --> G1{{"GATE G1<br/>Schema green"}}
+
+    G1 --> A5["A · Ph 5 Course Builder"]
+    G1 --> B4["B · Ph 4 Admin Shell"]
+    G1 --> C11["C · Ph 11 Queues & Mail"]
+
+    B4 --> A5
+    A5 --> A6["A · Ph 6 Enrollment & Access<br/><b>SINGLE OWNER</b>"]
+    A6 --> G2{{"GATE G2<br/>Access gate<br/>all tracks rebase"}}
+
+    G2 --> A7["A · Ph 7 Student"]
+    G2 --> B8["B · Ph 8 Assessments"]
+    C11 --> G4
+
+    A7 --> A9["A · Ph 9 Progress"]
+    B8 --> G3{{"GATE G3<br/>Engines"}}
+    A9 --> G3
+    G3 --> B10["B · Ph 10 Instructor"]
+
+    G3 --> G4{{"GATE G4<br/>Pre-payment"}}
+    G4 --> C12["C · Ph 12 Payments<br/><b>SAME OWNER AS Ph 6</b>"]
+
+    B10 --> G5{{"GATE G5<br/>Feature freeze"}}
+    C12 --> G5
+    G5 --> S["Single track from here:<br/>13 Reporting · 14 Security ·<br/>15 UI/UX · 16 Deploy · 17 Hardening"]
+    S --> REL(("V1.0"))
+
+    style A6 fill:#ffd9d9,stroke:#b00020
+    style C12 fill:#ffd9d9,stroke:#b00020
+    style G1 fill:#fff3c4,stroke:#c79100
+    style G2 fill:#fff3c4,stroke:#c79100
+    style G3 fill:#fff3c4,stroke:#c79100
+    style G4 fill:#fff3c4,stroke:#c79100
+    style G5 fill:#fff3c4,stroke:#c79100
+    style REL fill:#d4f5dd,stroke:#1a7f4b
+```
+
+### 5.1 Why phases 13–17 collapse back to one track
+
+Reporting, security hardening, UI polish and production hardening are **cross-cutting audits of
+the whole system**. Splitting an audit three ways is how gaps appear between the seams: three
+people each checking "their" area is exactly the condition under which nobody checks the boundary
+between two areas. Phase 14 in particular exists to look at the finished system adversarially,
+which is impossible while it is still moving.
+
+### 5.2 What each gate actually blocks
+
+| Gate | Blocks | Because |
+|---|---|---|
+| **G1** Schema | Everything | Three tracks cannot build on three different versions of the schema |
+| **G2** Access gate | Phases 7, 8 | `EnrollmentAccessService` changes what every downstream policy *means*. B and C must rebase, not merge later |
+| **G3** Engines | Phase 10, Phase 12 | The instructor module reads assessment and progress data; building it against stubs means building it twice |
+| **G4** Pre-payment | Phase 12 | Payments need queued mail (Phase 11) and the proven enrollment engine (Phase 6). Both, not either |
+| **G5** Feature freeze | Phases 13–17 | An audit of a moving target is not an audit |
+
+### 5.3 The rule that survives parallelism unchanged
+
+Phase 6 and Phase 12 remain **single-owner, single-branch** work (`planning.md` §21.3). ADR-006
+says there is exactly one code path that creates an enrollment and exactly one definition of
+"has access". That guarantee is not a code-review outcome — it is an ownership decision, and it is
+the one place where adding people to the project makes the result worse rather than better.
