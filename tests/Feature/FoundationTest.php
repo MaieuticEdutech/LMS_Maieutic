@@ -42,15 +42,31 @@ it('connects to a real postgresql database and has migrated', function (): void 
 });
 
 it('has not built ahead of the current phase', function (): void {
-    // Phase 1 asserted `users` did NOT exist, because it is a Phase 2 domain
-    // table. Phase 2 has since created it with the LMS schema (role, status,
-    // nullable password), so that assertion is now inverted — deliberately,
-    // and recorded in the Phase 2 report rather than quietly deleted.
+    // This guard moves forward with each phase rather than being deleted, so
+    // "we did not build ahead" stays continuously asserted rather than being
+    // checked once and forgotten.
     //
-    // The guard itself still matters: it now protects the Phase 3 boundary.
+    //   Phase 1 → asserted `users` absent      (a Phase 2 table)
+    //   Phase 2 → created it; guard moved to the Phase 3 boundary
+    //   Phase 3 → Track A's catalogue tables now exist. The guard now
+    //             protects the TRACK boundary: Track A must not build
+    //             Track B's or Track C's tables (planning.md §21.5).
     expect(Schema::hasTable('users'))->toBeTrue();
 
-    foreach (['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments', 'assessments'] as $table) {
+    // Track A (Govind) — delivered.
+    foreach (['categories', 'courses', 'course_instructor', 'modules', 'lessons', 'media_files'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue();
+    }
+
+    // Track B (Srivathsa) and Track C (Shashank) — NOT ours to create.
+    // If one of these turns true in a Track A branch, someone has built
+    // another developer's slice and two migrations for the same table are
+    // about to collide on main.
+    foreach (['assessments', 'questions', 'question_options', 'assessment_attempts', 'attempt_answers'] as $table) {
+        expect(Schema::hasTable($table))->toBeFalse();
+    }
+
+    foreach (['orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs'] as $table) {
         expect(Schema::hasTable($table))->toBeFalse();
     }
 });

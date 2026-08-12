@@ -27,11 +27,18 @@ it('creates the phase 2 tables', function (string $table): void {
     expect(Schema::hasTable($table))->toBeTrue();
 })->with(['users', 'instructor_profiles', 'settings', 'audit_logs']);
 
-it('has not created any phase 3 domain table', function (string $table): void {
-    // Phase 2 must not build ahead (Rule 5). Courses, enrollments, payments
-    // and assessments all belong to Phase 3 and later.
+it('has not created another track\'s tables', function (string $table): void {
+    // Track A must not build Track B's or Track C's slice (planning.md §21.5).
+    // Two developers creating the same migration is the most expensive
+    // mistake available on this project, so it is asserted rather than
+    // trusted to discipline.
     expect(Schema::hasTable($table))->toBeFalse();
-})->with(['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments', 'assessments']);
+})->with([
+    // Track B — Srivathsa
+    'assessments', 'questions', 'question_options', 'assessment_attempts', 'attempt_answers',
+    // Track C — Shashank
+    'orders', 'payments', 'webhook_events', 'enrollments', 'lesson_progress', 'email_logs',
+]);
 
 /*
 | CHECK CONSTRAINTS (ADR-012). The database refuses an illegal role or status
