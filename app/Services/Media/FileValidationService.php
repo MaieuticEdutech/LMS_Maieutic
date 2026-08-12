@@ -243,8 +243,11 @@ final class FileValidationService
         }
 
         $detected = finfo_file($finfo, $path);
-        finfo_close($finfo);
 
+        // No finfo_close() call, deliberately. As of PHP 8.5 the resource is an
+        // object freed on garbage collection, and closing it explicitly is
+        // deprecated — it becomes a hard error in PHP 9. Do not "fix" this by
+        // adding the close back.
         return $detected === false ? null : $detected;
     }
 
