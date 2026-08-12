@@ -41,14 +41,18 @@ it('connects to a real postgresql database and has migrated', function (): void 
     expect(Schema::hasTable('password_reset_tokens'))->toBeTrue();
 });
 
-it('has no domain tables yet', function (): void {
-    // Phase 1 Definition of Done: "No domain tables yet". The stock Laravel
-    // users table was deliberately removed from the framework migration —
-    // `users` is a Phase 2 domain table with role, status and a nullable
-    // password, and must not be created early with the wrong shape.
-    expect(Schema::hasTable('users'))->toBeFalse();
-    expect(Schema::hasTable('courses'))->toBeFalse();
-    expect(Schema::hasTable('enrollments'))->toBeFalse();
+it('has not built ahead of the current phase', function (): void {
+    // Phase 1 asserted `users` did NOT exist, because it is a Phase 2 domain
+    // table. Phase 2 has since created it with the LMS schema (role, status,
+    // nullable password), so that assertion is now inverted — deliberately,
+    // and recorded in the Phase 2 report rather than quietly deleted.
+    //
+    // The guard itself still matters: it now protects the Phase 3 boundary.
+    expect(Schema::hasTable('users'))->toBeTrue();
+
+    foreach (['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments', 'assessments'] as $table) {
+        expect(Schema::hasTable($table))->toBeFalse();
+    }
 });
 
 it('reports healthy when every dependency is reachable', function (): void {

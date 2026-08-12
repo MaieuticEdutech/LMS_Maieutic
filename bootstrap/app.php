@@ -56,8 +56,40 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         /*
-         * Phase 2 registers EnsureUserIsActive and EnsureUserHasRole here.
-         * Phase 14 registers the security-headers middleware (CSP, nosniff,
+         * Route middleware aliases (architecture.md §8.2).
+         *
+         *   active — terminates a session whose user has since been suspended
+         *            or deactivated. Defence in depth: the primary status check
+         *            is inside Fortify::authenticateUsing(), which stops such a
+         *            session being created in the first place.
+         *
+         *   role   — coarse gate for a route group. NOT the authority: every
+         *            controller and Livewire action must still authorise the
+         *            specific record through its Policy (FR-RBAC-03).
+         */
+        $middleware->alias([
+            'active' => App\Http\Middleware\EnsureUserIsActive::class,
+            'role' => App\Http\Middleware\EnsureUserHasRole::class,
+
+            /*
+             * Override the framework's `guest` alias so an already-signed-in
+             * user opening /login lands on THEIR role home rather than the
+             * stock single hardcoded path.
+             *
+             * The alias is overridden directly rather than via
+             * $middleware->replace(): replace() operates on middleware groups
+             * and does not rebind an alias, so the stock class stayed active
+             * and every role was redirected to "/".
+             */
+            'guest' => App\Http\Middleware\RedirectIfAuthenticatedToRoleHome::class,
+        ]);
+
+        /*
+         * Session cookie hardening (NFR-SEC-09, architecture.md §7.4).
+         * Encrypted cookies are on by default in Laravel; HttpOnly, SameSite
+         * and Secure are set in config/session.php.
+         *
+         * Phase 14 adds the security-headers middleware (CSP, nosniff,
          * Referrer-Policy, frame-ancestors, Permissions-Policy).
          */
     })

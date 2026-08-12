@@ -35,6 +35,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')
     ->name('admin.')
+    ->middleware(['auth', 'active', 'role:super_admin'])
     ->group(static function (): void {
-        // Phase 4 onwards.
+        // Phase 2: role home placeholder only. Phase 4 replaces this with the
+        // real dashboard and adds user management, settings and the audit log.
+        Route::view('/', 'admin.home')->name('home');
     });

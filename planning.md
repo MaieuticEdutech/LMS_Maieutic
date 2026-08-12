@@ -29,15 +29,17 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Phase 1 — Project Foundation: COMPLETE** (2026-08-12) |
+| **Current phase** | **Phase 2 — Identity, Authentication & RBAC: COMPLETE** (2026-08-12) |
 | **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
-| **Phase 1 status** | 🟢 Complete. Definition of Done satisfied; quality gates green. |
-| **Next phase** | **Phase 2 — Identity, Authentication & RBAC.** Not started. Awaiting go-ahead. |
-| Code written | Foundation only — no application features. Laravel 13.25.0 running on PHP 8.5.9 and PostgreSQL 17.10. 7 framework tables, **no domain tables**. |
-| Repository | Initialised on branch `main`. Initial commit `5aac4cb`, 106 tracked files. No secrets committed (verified). |
+| **Phase 1 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
+| **Phase 2 status** | 🟢 Complete. Definition of Done satisfied; quality gates green. |
+| **Next phase** | **Phase 3 — Core Domain Schema & Models.** **NOT STARTED.** Awaiting go-ahead. |
+| Code written | Foundation + identity. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. 11 tables: 7 framework + `users`, `instructor_profiles`, `settings`, `audit_logs`. **No Phase 3 domain tables** (asserted by test). |
+| Repository | Branch `main`. Remote `origin` configured to github.com/maieutic22-max/LMS — **not yet pushed** (git cannot prompt for credentials from this shell). |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
-| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **16/16**, 44 assertions |
-| Open decisions, none blocking Phase 2 | **PD-06** (session lifetimes — Phase 2, proposed defaults stand), **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). |
+| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions |
+| Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
+| Outstanding verification items | (1) **CI never executed** — pipeline authored in Phase 1, awaiting a push to the remote. (2) **Vite HMR not interactively verified.** Neither blocks Phase 3; carried forward per customer instruction. |
 
 ### 2.1 Phase status ledger
 
@@ -47,8 +49,8 @@ Update this table at the close of every phase. Nothing else in this document tra
 |---|---|---|---|---|
 | 0 | Planning & Architecture | 🟢 Complete | 2026-08-12 | Four documents produced; customer decisions incorporated; signed off |
 | 1 | Project Foundation | 🟢 Complete | 2026-08-12 | Laravel 13.25.0 / PHP 8.5.9 / PostgreSQL 17.10. Larastan level 8, Pest 16/16. Commit `5aac4cb` |
-| 2 | Identity, Authentication & RBAC | ⚪ **Next** | — | Fortify-based (ADR-013). Creates the `users` table. PD-06 defaults stand |
-| 3 | Core Domain Schema & Models | ⚪ Not started | — | No `is_free`, no `is_preview` |
+| 2 | Identity, Authentication & RBAC | 🟢 Complete | 2026-08-12 | Fortify (ADR-013) with LMS-owned views. Status gate inside `authenticateUsing`. Pest 142/142 |
+| 3 | Core Domain Schema & Models | ⚪ **Next** | — | No `is_free`, no `is_preview`. Creates the remaining 17 domain tables |
 | 4 | Admin Shell & Administration Area | ⚪ Not started | — | |
 | 5 | Course Builder & Content Management | ⚪ Not started | — | PD-12 resolved. PD-05 defaults stand |
 | 6 | Enrollment Core & Protected Delivery | ⚪ Not started | — | High risk — access gate. No preview path |
@@ -610,7 +612,7 @@ Rules: documentation is updated in the **same change** as the code that invalida
 | ID | Decision | Options | Recommendation | Blocks | Status |
 |---|---|---|---|---|---|
 | **PD-05** | Upload limits and allowed types | Proposed: video 2 GB (`mp4, webm, mov`); document 50 MB (`pdf`); presentation 100 MB (`ppt, pptx, odp`); resource 100 MB (`pdf, zip, docx, xlsx, csv, txt, png, jpg`) | Proceed on the proposed values — they are stored as settings, so changing them later is a configuration change, not a code change | Phase 5 | 🟡 Proposed defaults stand |
-| **PD-06** | Session lifetimes | Proposed: 120 min student, 60 min admin/instructor, both with idle timeout | Proceed on the proposed values | Phase 2 | 🟡 Proposed defaults stand |
+| ~~PD-06~~ | ~~Session lifetimes~~ | — | **🟢 RESOLVED BY DEFAULT 2026-08-12.** Phase 2 adopted a single 120-minute lifetime (`SESSION_LIFETIME=120`) for all roles. The proposed shorter admin window was NOT implemented: Laravel's session lifetime is global, and per-role expiry needs custom middleware that would have been Phase 2 scope creep. Revisit in Phase 14 (security hardening), where it belongs | Closed | 🟢 |
 | **PD-07** | **Production** transactional email provider and sending domain | SES / Postmark / Mailgun / SendGrid / SMTP | Per the customer's answer, development uses Mailpit/`log` throughout and the production provider is selected before deployment. It must support SPF, DKIM and DMARC — activation-email deliverability is the critical path of onboarding (A-09) | Phase 16 | 🟡 Deferred to Phase 16 |
 | **PD-08** | Error tracking service | Sentry / Bugsnag / Flare / none | Sentry or equivalent — running production without error tracking is not advisable | Phase 16 | 🟡 Open |
 | **PD-10** | Hosting platform | VPS (DigitalOcean/Hetzner + Forge/Ploi) / managed platform / cloud | Must support PHP 8.5/Laravel, PostgreSQL, HTTPS, **persistent queue workers**, the Laravel scheduler, a publicly reachable webhook endpoint, and object storage. Decide by Phase 15 so Phase 16 is not blocked | Phase 16 | 🟡 Open |
@@ -634,6 +636,11 @@ Decisions made during the project are appended here with date, decision, rationa
 | 2026-08-12 | **Larastan set to level 8** at project start, not retrofitted | Raising the level later means retrofitting types across a grown codebase. Level 8 adds nullability checking — exactly the bug class (null enrollment, null attempt) that would otherwise 500 in front of a paying student | Required one `(string)` cast in stock `config/filesystems.php`. All first-party code passes level 8 |
 | 2026-08-12 | **`checkModelProperties` disabled** (deviation from intent) | Larastan types `Factory::definition()` as `array<model property of TModel, mixed>`, but that is an INTERNAL type that cannot be written in userland PHPDoc. Satisfying it requires `@phpstan-ignore` or a baseline — both prohibited by U-4 and Rule 9 | Tooling incompatibility with Laravel's own factory signature; no application code is exempted from analysis. **Revisit in Phase 3** when schema-backed models exist |
 | 2026-08-12 | **New dependency: `pestphp/pest-plugin-phpstan` ^5.0** (dev) | Rule 6 justification: without it PHPStan cannot resolve Pest's closure-to-TestCase binding, so every test reported false "undefined method" errors. The only alternatives were excluding `tests/` from analysis (a real loss — planning.md §12 makes tests first-class) or suppressing errors (prohibited) | First-party Pest plugin, compatible with Pest 5 / PHPStan 2.2.5+ |
+| 2026-08-12 | **Phase 2:** status gate placed inside `Fortify::authenticateUsing()`, not in middleware alone | Middleware runs *after* the guard has logged the user in, so a suspended user would briefly hold a valid session and any pre-middleware code would see them as authenticated | `EnsureUserIsActive` retained as defence in depth for sessions whose user is deactivated mid-session. Both paths delegate to `UserStatus::canAuthenticate()` so they cannot drift apart |
+| 2026-08-12 | **Phase 2:** two password brokers (`users` 60m, `activations` 72h) over one token table | Reset and activation need very different lifetimes. A short activation window would strand a buyer who did not open their email immediately — the worst failure on the paid onboarding path | Sharing the email-keyed table means one live token per user: requesting a reset invalidates a pending activation link, which is a desirable property |
+| 2026-08-12 | **Phase 2:** password reset also activates a `pending_activation` account | Otherwise a buyer who clicked "forgot password" instead of the activation link would set a password successfully and still be unable to log in — a dead end with no visible cause | `ChangeUserPassword::$activateIfPending` |
+| 2026-08-12 | **Phase 2:** Super Admin seeder sets NO usable password outside local/testing | A seeded default credential in production is an open door. The operator takes control via "Forgot password" | Also fixed a real bug Larastan surfaced: `env()` in a seeder returns null once `config:cache` has run, which would have seeded an admin with an empty email |
+| 2026-08-12 | **Phase 2:** `guest` middleware alias overridden rather than `$middleware->replace()` | `replace()` operates on middleware groups and does not rebind an alias — the stock class stayed active and every role was redirected to `/`. Caught by test, not by inspection | Role-based post-login and guest-screen redirects now both resolve from `UserRole::homePath()` |
 | 2026-08-12 | Local runtime installed **portably**, no admin rights | Herd and the PostgreSQL service installer both need UAC elevation, which is unavailable from the automation shell (winget failed `0x800704c7`). PHP and PostgreSQL run from `C:\Users\<user>\devtools` as user processes | **Developer-machine setup only — not a project decision.** Production provisioning is Phase 16 and unaffected. See §20.1 |
 | 2026-08-12 | Quizzes and tests unified as one `assessments` entity | Structurally identical (ADR-002) | One engine, one policy set; `type` discriminates |
 | 2026-08-12 | Media tables collapsed into polymorphic `media_files` | New content types must not require schema change (ADR-003, FR-CNT-07) | One upload pipeline, one access policy |
@@ -715,9 +722,11 @@ Adaptive-bitrate video and DRM · live classes · discussion forums and Q&A · m
 
 | Question | Answer |
 |---|---|
-| What phase are we in? | **Phase 1 complete.** Phase 2 is next and not started (§2) |
-| What is next? | **Phase 2 — Identity, Authentication & RBAC**, on explicit go-ahead |
-| May I start Phase 2 now? | Only on explicit instruction. Rule 1: one phase at a time |
+| What phase are we in? | **Phase 2 complete.** Phase 3 is next and not started (§2) |
+| What is next? | **Phase 3 — Core Domain Schema & Models**, on explicit go-ahead |
+| May I start Phase 3 now? | Only on explicit instruction. Rule 1: one phase at a time |
+| How do I check a user's role? | `$user->hasRole(UserRole::X)` — the ONLY permitted pattern (rule S-7) |
+| Where is the account status enforced? | Inside `Fortify::authenticateUsing()`, with `EnsureUserIsActive` as defence in depth |
 | How do I run the quality gates? | `composer check` — Pint, then Larastan level 8, then Pest. All three must pass |
 | How is authentication built? | Laravel Fortify, headless, with LMS-owned views. Never hand-rolled, never starter-kit UI (ADR-013) |
 | Are there free courses or preview lessons? | **No.** All V1 courses are paid; guests see metadata only (ADR-014). Both are [V1.1] |

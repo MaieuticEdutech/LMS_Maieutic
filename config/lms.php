@@ -96,6 +96,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bootstrap Super Admin
+    |--------------------------------------------------------------------------
+    |
+    | Identity of the first administrator, created by SuperAdminSeeder.
+    |
+    | Read through config() rather than env() at the call site (rule E-3): a
+    | seeder runs through artisan, and once `config:cache` has been run in a
+    | deployed environment env() returns NULL — which would silently seed an
+    | administrator with an empty email. This is not a style preference; it is
+    | the difference between a working bootstrap and a broken one in
+    | production.
+    |
+    */
+
+    'super_admin' => [
+        'email' => env('LMS_SUPER_ADMIN_EMAIL', 'admin@lms.test'),
+        'name' => env('LMS_SUPER_ADMIN_NAME', 'Super Admin'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Progress tracking
     |--------------------------------------------------------------------------
     |

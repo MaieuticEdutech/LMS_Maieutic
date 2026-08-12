@@ -29,6 +29,22 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::name('student.')
+    ->middleware(['auth', 'active', 'role:student'])
     ->group(static function (): void {
-        // Phase 7 onwards.
+        // Phase 2: role home placeholder only. Phase 7 replaces this with the
+        // real dashboard, My Courses and the course player.
+        Route::view('/dashboard', 'student.home')->name('home');
     });
+
+/*
+| Profile — available to EVERY authenticated role, so it sits outside the
+| student-only group above. Users manage their own name, phone and password
+| here (FR-STU-14).
+|
+| No `role` middleware: a super admin and an instructor need a profile too.
+| Authorisation is per-record via UserPolicy::update, which allows a user to
+| update themselves and a super admin to update anyone.
+*/
+Route::middleware(['auth', 'active'])->group(static function (): void {
+    Route::view('/profile', 'profile.show')->name('profile.show');
+});

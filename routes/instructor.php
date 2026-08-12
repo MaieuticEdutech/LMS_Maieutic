@@ -33,6 +33,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('instructor')
     ->name('instructor.')
+    ->middleware(['auth', 'active', 'role:instructor'])
     ->group(static function (): void {
-        // Phase 10.
+        // Phase 2: role home placeholder only. Phase 10 replaces this with the
+        // real dashboard, scoped to assigned courses.
+        Route::view('/', 'instructor.home')->name('home');
     });

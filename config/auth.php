@@ -94,11 +94,40 @@ return [
     |
     */
 
+    /*
+    | TWO BROKERS, ONE TABLE (ADR-004, architecture.md §7.1).
+    |
+    | Password reset and first-time account activation are the same mechanism
+    | — a hashed, expiring, single-use token — but they need very different
+    | lifetimes, so they are configured as separate brokers over the same
+    | `password_reset_tokens` table.
+    |
+    |   users        60 minutes. A reset is requested by someone sitting at
+    |                their keyboard; a short window limits exposure if the
+    |                email account is later compromised.
+    |
+    |   activations  72 hours. A buyer may not open their email straight after
+    |                paying. An expired link here means a paying customer who
+    |                cannot reach what they bought — the single worst failure
+    |                on the onboarding path (FR-MAIL-01, A-09).
+    |
+    | Sharing the table means a user holds at most ONE live token, because the
+    | table is keyed by email. That is a deliberate security property, not an
+    | accident: requesting a password reset invalidates a pending activation
+    | link, so an attacker cannot keep a stale link alive alongside it.
+    */
     'passwords' => [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
+            'expire' => (int) config('lms.auth.password_reset_ttl', 60),
+            'throttle' => 60,
+        ],
+
+        'activations' => [
+            'provider' => 'users',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => (int) config('lms.auth.activation_link_ttl', 4320),
             'throttle' => 60,
         ],
     ],

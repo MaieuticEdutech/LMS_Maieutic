@@ -325,16 +325,20 @@ Phase 1. **PD-02** (one role per user) and **PD-03** (Fortify) resolved. **PD-06
 - Audit entries written for login success, login failure, password change, activation
 - Session ID regenerates on login; other sessions invalidated on password change
 
-### Definition of Done
-- [ ] Fortify is the auth backend; no Fortify or starter-kit view is used anywhere
-- [ ] Unused Fortify features are explicitly disabled, not left enabled and unused
-- [ ] All auth flows work end to end with emails visible in Mailpit/log
-- [ ] AC-05, AC-06, AC-14 pass
-- [ ] Deny-by-default confirmed: an unprotected route is unreachable without auth
-- [ ] Audit log populated for all identity events
-- [ ] No raw password is ever emailed, logged or stored (verified by inspection and test)
-- [ ] `settings` and `BrandingService` in use — no hardcoded organisation name anywhere
-- [ ] Universal DoD satisfied
+### Definition of Done — ✅ SATISFIED 2026-08-12
+- [x] Fortify is the auth backend; no Fortify or starter-kit view is used anywhere — all six view callbacks bound to LMS Blade views, asserted by test
+- [x] Unused Fortify features are explicitly disabled, not left enabled and unused — `updateProfileInformation`, `twoFactorAuthentication` and `passkeys` removed; their routes return 404, asserted by test. 2FA/passkeys migrations and the profile-information action deleted rather than left as dead schema
+- [x] All auth flows work end to end with emails visible in the log — registration, verification, login, logout, reset, activation, resend, password change; verified live (login → 302 `/admin` → 200, cross-role → 403)
+- [x] **AC-05** (no non-admin request can change role or status) — proven by policy tests plus a mass-assignment test that asserts `fill()` *throws*
+- [x] **AC-06** (last active Super Admin cannot be deleted, deactivated or demoted) — proven across all three verbs, including that an *inactive* super admin does not count as a safety net
+- [x] **AC-14** (activation link single-use and rejected after expiry) — plus forged-token and wrong-email cases
+- [x] Deny-by-default confirmed — every protected area tested against every role and against guests; a super admin is *not* exempt from role middleware
+- [x] Audit log populated for all identity events — login succeeded/failed/blocked, registration, activation link sent, activation, email verified, password changed
+- [x] No raw password is ever emailed, logged or stored — asserted three ways: the stored value is a bcrypt hash, the activation email carries only a link, and a distinctive password string is asserted absent from the entire audit log
+- [x] `settings` and `BrandingService` in use — proven by changing a database setting and asserting the login page renders the new organisation name
+- [x] Universal DoD satisfied — Pint clean · Larastan **level 8**, 0 errors · Pest **142/142**, 326 assertions
+
+**Deviations, recorded in planning.md §16.4:** the Phase 1 test asserting `users` does not exist was inverted (Phase 2 creates it, by design); `env()` replaced with `config()` in the Super Admin seeder after Larastan surfaced a real cached-config bug.
 
 ### Deliverables
 Working authentication, the role system, the activation mechanism, the audit logger, the settings/branding services, and the auth test suite.

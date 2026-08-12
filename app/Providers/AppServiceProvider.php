@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Listeners\ActivateUserAfterEmailVerification;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +28,20 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureModels();
         $this->configureDates();
+        $this->configureEvents();
+    }
+
+    /**
+     * Register domain event listeners explicitly.
+     *
+     * Preferred over relying on auto-discovery: an explicit list makes the
+     * wiring greppable, and a listener that silently stops being discovered
+     * would be a security-relevant failure here — the Verified listener is
+     * what promotes a verified account to `active` (FR-AUTH-11).
+     */
+    private function configureEvents(): void
+    {
+        Event::listen(Verified::class, ActivateUserAfterEmailVerification::class);
     }
 
     /**
