@@ -16,12 +16,30 @@ you can start immediately and only the last one waits.
 
 ### Your phases, in order
 
-| Phase | Name |
-|---|---|
-| **3** | Core Domain Schema — assessment slice *(current)* |
-| 4 | Admin Shell & Administration Area |
-| 8 | Assessment Engine |
-| 10 | Instructor Module |
+| Phase | Name | Round |
+|---|---|---|
+| **3** | Core Domain Schema — assessment slice *(current)* | 0 |
+| **4** | Admin Shell & Administration Area | 1 |
+| **8** | Assessment Engine — authoring, then the attempt runner | 2–3 |
+| **10** | Instructor Module | 4 |
+| **14** | Security Hardening — *with Govind and Shashank* | 5 |
+| **15** | UI/UX Polish & Accessibility | 6 |
+
+### Directories you own outright
+
+`app/Livewire/**` · `resources/views/**` · `app/Actions/Assessment` · `app/Services/Assessment`
+
+Nobody else edits these. That is what lets you push freely without collision — your files and
+Govind's barely overlap (planning.md §21.2.2).
+
+### 🔴 The one thing the whole team waits on you for
+
+**Phase 4's admin shell blocks Govind's Course Builder.** The Course Builder is a screen *inside*
+your admin area, so until the shell — layout, navigation, breadcrumbs, the reusable admin table
+component — is merged, he cannot build the Phase 5 UI.
+
+**Build the shell first and merge it fast, then continue with student and instructor management.**
+He is working around it by building Phase 5's backend first, but that only buys a few days.
 
 ---
 

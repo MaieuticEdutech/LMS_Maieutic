@@ -800,15 +800,76 @@ deliberately rather than discover it.
 
 ### 21.2 Track allocation
 
-| Track | Phases | Why it can run independently |
-|---|---|---|
-| **A — Domain trunk** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress | The critical path. Owns the access gate. Assign to whoever has the deepest Eloquent and policy experience. |
-| **B — Surfaces** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor | Needs only Phase 3 plus the admin shell it builds itself. Heaviest Livewire/Blade load. |
-| **C — Infrastructure & commerce** | 11 Queues & Mail → **12 Payments** → 16 Deployment prep | Mail and queues need only `email_logs`. The `PaymentGateway` interface and `FakeGateway` need **no LMS tables at all** and can be built and unit-tested before the domain exists. |
+| Track | Owner | Phases | Why it can run independently |
+|---|---|---|---|
+| **A — Domain core & money** | **Govind** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress → **12 Payments** | The critical path, and it is genuinely serial: the player needs the access gate, which needs content to protect. Owns both single-owner components (§21.3). |
+| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Everything a user looks at. Owns `app/Livewire/**` and `resources/views/**`, so it barely touches Track A's files at all. |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever and can start at any time. |
 
-Phases 13–15 and 17 converge back to a single track: reporting, security hardening, UI polish and
-production hardening are all cross-cutting audits of the *whole* system, and splitting an audit
-across three people is how gaps appear between the seams.
+**Phase 14 (Security Hardening) is done by all three together.** It is an adversarial review of the
+finished system, and three independent perspectives genuinely catch more than one — it is the one
+phase where splitting the work *helps* rather than creating seams.
+
+### 21.2.1 Correction — Phase 12 belongs to Track A
+
+An earlier revision of this table listed **Phase 12 (Payments) under Track C**, which contradicted
+§21.3 and both track briefs. §21.3 is correct and this table has been fixed: Phase 12 is **Track A
+(Govind)**, because its entire design is *"call the already-tested `GrantEnrollment`, unchanged"* —
+far harder to hold to for someone meeting that action for the first time.
+
+Shashank still builds the `orders`, `payments` and `webhook_events` **tables**; Govind wires the
+money to the access. That split is deliberate.
+
+### 21.2.2 Why this allocation and not the previous one
+
+The first version was organised around phase *numbers*. Phase numbers follow dependency order, so
+allocating by number meant people were constantly waiting for the phase below them. This version
+allocates by **area of the codebase**, which is what actually determines whether two people
+collide:
+
+| Owner | Owns these directories outright |
+|---|---|
+| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing}`, `app/Services/{Content,Media,Enrollment,Billing,Progress}`, `routes/media.php`, `routes/webhooks.php` |
+| **Srivathsa** | `app/Livewire/**`, `resources/views/**`, `app/Actions/Assessment`, `app/Services/Assessment` |
+| **Shashank** | `app/Jobs/**`, `app/Mail/**`, `app/Notifications/**`, `app/Services/Reporting`, `.github/**`, `database/seeders` |
+
+Three people, three near-disjoint sets of files. Route files are append-only within their groups,
+so simultaneous additions merge cleanly.
+
+### 21.2.3 Work rounds — who does what, when
+
+A round is a set of phases with **no dependency on each other**. Everyone works freely inside a
+round; the round boundary is where merges settle.
+
+| Round | Govind | Srivathsa | Shashank | Blocking? |
+|---|---|---|---|---|
+| **0** *(now)* | ✅ done — starts Round 1 early | Phase 3 assessment tables | Phase 3 commerce tables | None. Both are unblocked today |
+| **1** | **5** Course Builder *(backend first)* | **4** Admin Shell | **11** Queues & Mail | None — three disjoint file sets |
+| **2** | **6** Enrollment & Access | **8** Assessment authoring | **16** Deployment prep | None |
+| **3** | **7** Student Experience | **8** Attempt runner *(needs the player)* | **13** Reporting | Srivathsa's half needs Govind's Phase 7 |
+| **4** | **9** Progress → **12** Payments | **10** Instructor Module | **17** Production Hardening | Phase 10 needs 8 + 9 |
+| **5** | Phase **14** Security — **all three together** | | | Everything merged first |
+| **6** | | **15** UI/UX Polish | | Final pass |
+
+**The one soft dependency worth planning around:** Phase 5's *Course Builder UI* lives inside
+Srivathsa's Phase 4 admin shell. So in Round 1, Govind builds Phase 5's **backend first** — the
+content type registry, media pipeline, `MediaPathResolver`, course actions, publish validator and
+the public catalogue — none of which need the shell. The Builder screens go in once Srivathsa
+merges it. That turns a hard block into a sequencing preference.
+
+### 21.2.4 Workload balance
+
+Effort ratings from `phases.md`:
+
+| Owner | Phases | Load |
+|---|---|---|
+| Govind | 5, 6, 7, 9, 12 | 3 Large + 2 Medium |
+| Srivathsa | 4, 8, 10, 15 | 1 Large + 3 Medium |
+| Shashank | 11, 13, 16, 17 | 3 Medium + 1 Small |
+
+Govind still carries the most, which is unavoidable: the critical path and both single-owner
+components sit on one track by necessity. Track C is deliberately lightest **at the start** and
+picks up reporting and production work later, when Track A is at its busiest.
 
 ### 21.3 Single-owner components — never parallelised
 

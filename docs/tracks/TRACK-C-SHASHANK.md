@@ -15,11 +15,25 @@ on you. Push your commerce block promptly — someone is blocked behind it.
 
 ### Your phases, in order
 
-| Phase | Name |
-|---|---|
-| **3** | Core Domain Schema — commerce + progress slice *(current)* |
-| 11 | Queues, Mail & Transactional Notifications |
-| 16 | Deployment preparation *(can start early — see below)* |
+| Phase | Name | Round |
+|---|---|---|
+| **3** | Core Domain Schema — commerce + progress slice *(current)* | 0 |
+| **11** | Queues, Mail & Transactional Notifications | 1 |
+| **16** | Deployment & Environments | 2 |
+| **13** | Reporting & Analytics | 3 |
+| **17** | Production Hardening & Observability | 4 |
+| **14** | Security Hardening — *with Govind and Srivathsa* | 5 |
+
+**Yours is the least blocked track by design.** Mail and queues need only `email_logs` — your own
+table. Deployment preparation needs no domain code at all and can start whenever you like.
+Reporting comes later precisely because it reads `orders` and `payments`, which you build yourself.
+
+### Directories you own outright
+
+`app/Jobs/**` · `app/Mail/**` · `app/Notifications/**` · `app/Services/Reporting` · `.github/**`
+· `config/**` · `database/seeders`
+
+Nobody else edits these (planning.md §21.2.2).
 
 Phase 12 (Payments) is **Govind's**, not yours, even though you build the tables it uses. See
 "What you must NOT touch".
