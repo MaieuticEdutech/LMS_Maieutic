@@ -48,9 +48,16 @@ it('has not built ahead of the current phase', function (): void {
     // and recorded in the Phase 2 report rather than quietly deleted.
     //
     // The guard itself still matters: it now protects the Phase 3 boundary.
+    //
+    // `assessments` is deliberately absent from the "not yet built" list
+    // below: Track B created it in Phase 3 (see AssessmentSchemaTest), the
+    // same kind of inversion recorded for `users` above. The other Phase 3
+    // domain tables (Tracks A and C) are not this track's to create and stay
+    // guarded here until their own tracks land them.
     expect(Schema::hasTable('users'))->toBeTrue();
+    expect(Schema::hasTable('assessments'))->toBeTrue();
 
-    foreach (['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments', 'assessments'] as $table) {
+    foreach (['courses', 'modules', 'lessons', 'enrollments', 'orders', 'payments'] as $table) {
         expect(Schema::hasTable($table))->toBeFalse();
     }
 });
