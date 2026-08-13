@@ -201,6 +201,31 @@ return [
     | It lives in `settings` behind BrandingService — see the header of this
     | file and rule S-1.
     |
+    | ─────────────────────────────────────────────────────────────────────
+    | THE TRANSACTIONAL EMAIL SET (architecture.md §14) — 6 of 10 built.
+    |
+    | Built and wired to a real trigger:
+    |   VerifyEmail            self-registration          (Phase 2)
+    |   ResetPassword          forgot password            (Phase 2)
+    |   WelcomeAndActivate     account activation link    (Phase 2)
+    |   PasswordChanged        both password paths        (Phase 11)
+    |   EnrollmentGranted      GrantEnrollment            (Phase 6 event)
+    |   EnrollmentRevoked      revoke / refund / expiry   (Phase 6 event)
+    |
+    | Not built — the TRIGGER does not exist yet, not the mail layer:
+    |   PurchaseConfirmation   Phase 12 (payments)
+    |   PaymentFailed          Phase 12 (payments)
+    |   AssessmentResult       Phase 8  (attempt graded)
+    |   CourseCompleted        Phase 9  (progress complete)
+    |
+    | Each remaining one is a notification class plus a listener on its phase's
+    | event. Queueing, branding, logging, retry and alerting are done and
+    | tested — a new email inherits all of it by extending Notification and
+    | putting itself on the mail queue. Add it to MailPreviewController and to
+    | transactionalEmails() in MailBrandingTest, and the branding guarantees
+    | cover it automatically.
+    | ─────────────────────────────────────────────────────────────────────
+    |
     */
 
     'mail' => [

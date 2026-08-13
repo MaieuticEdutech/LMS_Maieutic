@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Events\EnrollmentGranted;
+use App\Events\EnrollmentRevoked;
 use App\Listeners\ActivateUserAfterEmailVerification;
 use App\Listeners\AlertOnFailedJob;
 use App\Listeners\LogOutboundEmail;
+use App\Listeners\SendEnrollmentGrantedNotification;
+use App\Listeners\SendEnrollmentRevokedNotification;
 use App\Listeners\SendPasswordChangedNotification;
 use App\Models\AssessmentAttempt;
 use App\Policies\AttemptPolicy;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Queue\Events\JobFailed;
@@ -29,7 +34,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        /*
+         * Turn off convention-based listener discovery. See configureEvents()
+         * for the full reasoning: with it on, every listener registered
+         * explicitly there is ALSO found by convention and runs twice.
+         *
+         * Done here rather than via withEvents(false) in bootstrap/app.php
+         * because that file belongs to Track A (CLAUDE.md, shared-files
+         * table). This static call has the identical effect and stays inside a
+         * file this track already maintains.
+         *
+         * It must happen in register(), before the framework's event provider
+         * boots and performs discovery.
+         */
+        EventServiceProvider::disableEventDiscovery();
     }
 
     /**
@@ -53,6 +71,35 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureEvents(): void
     {
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * AUTO-DISCOVERY IS OFF, AND THE EXPLICIT LIST BELOW IS THE ONLY
+         * REGISTRATION. Turning it back on double-fires every listener here.
+         *
+         * Laravel 13 discovers listeners in app/Listeners by convention, and
+         * discovery is enabled by default. Every class below therefore ALSO
+         * matched by convention, so each was registered twice and its handle()
+         * ran twice per event. Verified by counting registrations:
+         * EnrollmentGranted, EnrollmentRevoked and Verified each reported two
+         * listeners.
+         *
+         * The symptoms are not cosmetic:
+         *   - two "you now have access" emails per enrollment (Phase 11)
+         *   - ActivateUserAfterEmailVerification running twice per
+         *     verification, which has been true since Phase 2 and was
+         *     invisible only because that listener happens to be idempotent
+         *
+         * Discovery is disabled rather than deleting these calls, because the
+         * docblock above is right: an explicit list is greppable, and a
+         * listener that silently STOPS being discovered would be a
+         * security-relevant failure — this is where a verified account is
+         * promoted to `active` (FR-AUTH-11). Explicit registration cannot fail
+         * that way. It just may not be doubled.
+         *
+         * tests/Feature/EventRegistrationTest.php asserts exactly one listener
+         * per event, so this cannot silently regress.
+         * ═════════════════════════════════════════════════════════════════
+         */
         Event::listen(Verified::class, ActivateUserAfterEmailVerification::class);
 
         /*
@@ -87,6 +134,16 @@ class AppServiceProvider extends ServiceProvider
          */
         Event::listen(PasswordReset::class, SendPasswordChangedNotification::class);
         Event::listen(PasswordUpdatedViaController::class, SendPasswordChangedNotification::class);
+
+        /*
+         * Enrollment mail (FR-MAIL-07). Attached to Track A's events rather
+         * than living inside GrantEnrollment / RevokeEnrollment, which are
+         * single-owner (Rule 3): the access path and the notification path
+         * must fail independently, so a broken template can never stop a paid
+         * student being enrolled.
+         */
+        Event::listen(EnrollmentGranted::class, SendEnrollmentGrantedNotification::class);
+        Event::listen(EnrollmentRevoked::class, SendEnrollmentRevokedNotification::class);
     }
 
     /**
