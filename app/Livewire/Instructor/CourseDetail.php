@@ -22,8 +22,10 @@ use Livewire\Component;
  * another instructor's course slug" into a 404 instead of a data leak —
  * the same reasoning `Course::assignedTo()` exists for at all (AC-03).
  *
- * NO PROGRESS COLUMN. "Average progress" is Phase 9 territory — this shows
- * enrollment and assessment facts only, not learning progress.
+ * Per-student and course-level progress (FR-INS-02, FR-INS-03) read the
+ * cached `enrollments.progress_percentage` column — the same figure the
+ * student's own dashboard shows them, never recounted from `lesson_progress`
+ * here.
  */
 #[Layout('layouts.instructor', [
     'breadcrumbs' => [
@@ -53,6 +55,7 @@ final class CourseDetail extends Component
         return view('livewire.instructor.course-detail', [
             'students' => $courses->enrolledStudents($this->course),
             'assessments' => $courses->assessmentsForCourse($this->course),
+            'averageProgress' => $courses->averageProgressForCourse($this->course),
         ]);
     }
 }

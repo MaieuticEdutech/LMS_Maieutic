@@ -1,8 +1,9 @@
 <div>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-stat-tile label="Assigned courses" :value="$assignedCourseCount" />
         <x-stat-tile label="Students" :value="$studentCount" />
         <x-stat-tile label="Assessments" :value="$assessmentCount" />
+        <x-stat-tile label="Average progress" :value="$averageProgress.'%'" />
     </div>
 
     <div class="mt-6">

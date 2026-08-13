@@ -36,6 +36,11 @@ final class InstructorCourseService
         return Course::query()
             ->assignedTo($instructor)
             ->withCount(['modules', 'lessons'])
+            // Average of enrollments.progress_percentage — the cached figure,
+            // not a recount from lesson_progress. One aggregate query for the
+            // whole list rather than one ProgressCalculator call per course
+            // (the same N+1 CoursePlayerService exists to avoid).
+            ->withAvg('enrollments', 'progress_percentage')
             ->orderBy('title')
             ->get();
     }
@@ -72,6 +77,22 @@ final class InstructorCourseService
     public function studentCount(Course $course): int
     {
         return Enrollment::query()->where('course_id', $course->getKey())->count();
+    }
+
+    /**
+     * The course-level progress overview (FR-INS-02, FR-INS-07 supporting
+     * figure) — a mean of the cached `enrollments.progress_percentage`
+     * column, the same figure `ProgressCalculator::studentOverall()` averages
+     * for a student's own dashboard. Never recounted from `lesson_progress`
+     * here: that is what the cache is for.
+     */
+    public function averageProgressForCourse(Course $course): int
+    {
+        $average = Enrollment::query()
+            ->where('course_id', $course->getKey())
+            ->avg('progress_percentage');
+
+        return (int) round((float) ($average ?? 0));
     }
 
     /**

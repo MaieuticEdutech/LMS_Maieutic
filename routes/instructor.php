@@ -8,6 +8,7 @@ use App\Livewire\Instructor\Assessments\Results;
 use App\Livewire\Instructor\CourseDetail;
 use App\Livewire\Instructor\CoursesList;
 use App\Livewire\Instructor\Dashboard;
+use App\Livewire\Instructor\StudentProgressDetail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,11 +40,9 @@ use Illuminate\Support\Facades\Route;
 | those components. See Admin\Assessments\AssessmentBuilder's docblock.
 |
 | Delivered by Phase 10 — dashboard, assigned courses, enrolled students,
-| assessment authoring, results and statistics. Per-student PROGRESS is
-| deliberately NOT here: it depends on Phase 9's ProgressCalculator, which
-| does not exist yet. Building it now would mean inventing a fake read path
-| against an engine that isn't shaped — exactly the "build ahead" mistake
-| planning.md Rule 5 exists to prevent. Added the moment Phase 9 lands.
+| assessment authoring, results, statistics, and per-student/per-course
+| progress (FR-INS-02, FR-INS-03, FR-INS-07) now that Phase 9's
+| ProgressCalculator is on main.
 |
 */
 
@@ -55,6 +54,7 @@ Route::prefix('instructor')
 
         Route::get('/courses', CoursesList::class)->name('courses.index');
         Route::get('/courses/{course}', CourseDetail::class)->name('courses.show');
+        Route::get('/courses/{course}/students/{enrollment}', StudentProgressDetail::class)->name('courses.students.progress');
 
         Route::get('/assessments', AssessmentsTable::class)->name('assessments.index');
         Route::get('/assessments/{assessment}', AssessmentBuilder::class)->name('assessments.builder');

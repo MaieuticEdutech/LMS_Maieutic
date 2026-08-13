@@ -22,6 +22,12 @@
                             <x-badge :variant="$course->status->badgeVariant()">{{ $course->status->label() }}</x-badge>
                         </div>
                         <div class="text-xs text-neutral-500">{{ $course->modules_count }} {{ Str::plural('module', $course->modules_count) }} &middot; {{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }}</div>
+
+                        @php($averageProgress = (int) round($course->enrollments_avg_progress_percentage ?? 0))
+                        <div class="mt-2 flex items-center gap-2">
+                            <x-progress-bar :value="$averageProgress" size="sm" class="max-w-[8rem]" />
+                            <span class="font-mono text-xs text-neutral-500">{{ $averageProgress }}% avg progress</span>
+                        </div>
                     </div>
 
                     <x-button :href="route('instructor.courses.show', $course)" variant="secondary" size="sm" wire:navigate>
