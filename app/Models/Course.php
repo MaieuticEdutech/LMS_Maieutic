@@ -170,6 +170,24 @@ class Course extends Model
     }
 
     /**
+     * Students who hold, or have ever held, access to this course.
+     *
+     * NOT scoped by status, deliberately. This answers "has anyone ever been
+     * enrolled here", which is the question FR-CRS-06 asks before allowing a
+     * delete — a refunded or expired enrollment is still a commercial record
+     * that must survive.
+     *
+     * Never use this to decide access. That is
+     * `EnrollmentAccessService::grantsAccess()` and only that (rule S-8).
+     *
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
      * @return MorphMany<MediaFile, $this>
      */
     public function media(): MorphMany

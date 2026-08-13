@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Catalog;
 
+use App\Exceptions\CourseDeletionException;
 use App\Jobs\Media\DeleteOrphanedMedia;
 use App\Models\Course;
 use App\Models\User;
@@ -22,17 +23,37 @@ use Illuminate\Support\Facades\DB;
  * fail against remote storage, and must not make the admin's request hang or
  * roll back a database transaction that already succeeded.
  *
- * PHASE 6 NOTE: a course with enrollments must not be deletable through the
- * UI (FR-CRS-06). That check cannot be written yet — `enrollments` belongs to
- * Track C and does not exist. It is deliberately NOT stubbed here; it lands
- * with the enrollment engine.
+ * ═════════════════════════════════════════════════════════════════════════
+ * A COURSE WITH ENROLLMENTS CANNOT BE DELETED (FR-CRS-06).
+ *
+ * Even a soft delete. The row would survive, but the course would vanish from
+ * every list a student, an instructor and an administrator can see — and a
+ * student who paid for it would find their purchase gone with no explanation
+ * and no way to raise it.
+ *
+ * The check counts enrollments of EVERY status, not just active ones. A
+ * refunded or expired enrollment is still a commercial record: it is evidence
+ * that money moved, and it has to remain reachable for support and for
+ * whoever handles a dispute months later.
+ *
+ * ARCHIVE IS THE ANSWER for a course that should no longer be sold. It hides
+ * the course from the catalogue while leaving existing students exactly where
+ * they were, which is what an administrator reaching for "delete" almost
+ * always actually wants. The error below says so, because an error that
+ * refuses without offering the alternative just gets worked around.
+ * ═════════════════════════════════════════════════════════════════════════
  */
 final class DeleteCourse
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
+    /**
+     * @throws CourseDeletionException when students are enrolled.
+     */
     public function handle(Course $course, User $actor): void
     {
+        $this->assertNoEnrollments($course);
+
         $title = $course->title;
         $id = $course->getKey();
 
@@ -50,5 +71,28 @@ final class DeleteCourse
         // After commit: a queued cleanup for a rolled-back delete would
         // destroy files belonging to a course that still exists.
         DeleteOrphanedMedia::dispatch(Course::class, $id)->afterCommit();
+    }
+
+    /**
+     * @throws CourseDeletionException
+     */
+    private function assertNoEnrollments(Course $course): void
+    {
+        // exists() rather than count() when only deciding, then count() only
+        // for the message — the common case is zero and does not need a total.
+        if (! $course->enrollments()->exists()) {
+            return;
+        }
+
+        $count = $course->enrollments()->count();
+
+        throw new CourseDeletionException(sprintf(
+            '"%s" cannot be deleted: %d student%s %s enrolled. Archive it instead — '
+            .'that removes it from the catalogue while leaving existing students their access.',
+            $course->title,
+            $count,
+            $count === 1 ? '' : 's',
+            $count === 1 ? 'is' : 'are',
+        ));
     }
 }
