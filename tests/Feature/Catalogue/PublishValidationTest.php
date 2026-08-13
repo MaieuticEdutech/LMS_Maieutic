@@ -129,11 +129,11 @@ it('blocks a text lesson with an empty body', function (): void {
 });
 
 /*
-| A quiz lesson can never be published in V1 — the assessment engine is
-| Phase 8. Fail-safe: blocking is visible; allowing would put a dead lesson in
-| front of a paying student.
+| A quiz lesson with no assessment attached (or an unpublished one) can
+| never publish — Phase 8's QuizContentHandler. Fail-safe: blocking is
+| visible; allowing would put a dead lesson in front of a paying student.
 */
-it('blocks a quiz lesson until phase 8', function (): void {
+it('blocks a quiz lesson with no assessment attached', function (): void {
     $course = Course::factory()->create(['description' => 'x', 'thumbnail_path' => 'y.jpg']);
     $module = Module::factory()->forCourse($course)->published()->create();
     Lesson::factory()->forModule($module)->published()->create([
@@ -143,7 +143,26 @@ it('blocks a quiz lesson until phase 8', function (): void {
 
     expect(implode(' ', $this->validator->blockers($course->refresh())))
         ->toContain('Chapter Quiz')
-        ->toContain('Phase 8');
+        ->toContain('no assessment attached');
+});
+
+it('allows a quiz lesson once its assessment is published', function (): void {
+    $course = Course::factory()->create(['description' => 'x', 'thumbnail_path' => 'y.jpg']);
+    $module = Module::factory()->forCourse($course)->published()->create();
+    $lesson = Lesson::factory()->forModule($module)->published()->create([
+        'title' => 'Chapter Quiz',
+        'type' => LessonType::Quiz,
+    ]);
+
+    App\Models\Assessment::factory()->create([
+        'assessable_type' => Lesson::class,
+        'assessable_id' => $lesson->id,
+        'is_published' => true,
+    ]);
+
+    expect($this->validator->blockers($course->refresh()))->not->toContain(
+        'Lesson "Chapter Quiz" is a quiz with no assessment attached yet.',
+    );
 });
 
 it('reports every blocker at once, not just the first', function (): void {

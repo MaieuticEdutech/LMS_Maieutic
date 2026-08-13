@@ -106,6 +106,18 @@ Schedule::command('lms:enrollments:expire')
     ->withoutOverlapping();
 
 /*
+ * ExpireStaleAttempts — Phase 8. Same "does not enforce, cleans up" shape as
+ * lms:enrollments:expire above (see that command's docblock), but every 15
+ * minutes rather than daily: assessments are timed in minutes, not months,
+ * so a student who closed the tab mid-quiz should see a graded result soon
+ * after, not up to a day later.
+ */
+Schedule::command('lms:attempts:expire')
+    ->everyFifteenMinutes()
+    ->onOneServer()
+    ->withoutOverlapping();
+
+/*
  * `onOneServer` on every entry above is not incidental. Production runs more
  * than one application server (architecture.md §22); without it each server
  * would run each task, and "prune" running concurrently on two machines is a

@@ -1,28 +1,46 @@
 {{--
-    QUIZ LESSON PLAYER — placeholder until Phase 8.
+    QUIZ LESSON PLAYER (Phase 8). Available: $lesson, $media (null), $progress.
 
-    ═════════════════════════════════════════════════════════════════════════
-    THIS VIEW EXISTS SO THE PLAYER CANNOT CRASH, NOT SO QUIZZES WORK.
-
-    ContentTypeRegistry declares a view for every registered type, and Quiz is
-    registered — it appears in `LessonType`, and a lesson row can already carry
-    it. Without this file the player would throw "View not found" the moment
-    anyone reached such a lesson.
-
-    It is NOT building ahead (Rule 5). No attempt runner, no question
-    rendering, no scoring — that is Phase 8's Assessment Engine, and
-    QuizContentHandler still returns a publish blocker so a course containing
-    one cannot go live. This is the honest state made visible instead of a
-    stack trace.
-    ═════════════════════════════════════════════════════════════════════════
-
-    Available: $lesson, $media (null), $progress.
+    The lesson's "content" is the Assessment attached to it — resolved the
+    same way QuizContentHandler does, so this partial never touches the
+    assessments/questions schema directly. requires_final_test-driven course
+    completion (FR-ASMT-19) is Phase 9's concern, not this view's.
 --}}
-<x-empty-state
-    title="Assessments are not available yet"
-    description="This lesson is a quiz. The assessment runner arrives in a later release — your progress in the rest of the course is unaffected."
-/>
+@php
+    $quizAssessment = \App\Models\Assessment::query()
+        ->where('assessable_type', \App\Models\Lesson::class)
+        ->where('assessable_id', $lesson->id)
+        ->first();
+@endphp
 
-@if ($lesson->summary)
-    <p class="mt-5 max-w-[68ch] leading-relaxed text-neutral-700">{{ $lesson->summary }}</p>
+@if ($quizAssessment === null || ! $quizAssessment->is_published)
+    <x-empty-state
+        title="This quiz isn't ready yet"
+        description="Check back soon — your progress in the rest of the course is unaffected."
+    />
+@else
+    <div class="rounded-card border border-neutral-200 bg-white p-6">
+        <p class="eyebrow text-teal-600">{{ ucfirst($quizAssessment->type->value) }}</p>
+        <h2 class="mt-1.5 text-xl">{{ $quizAssessment->title }}</h2>
+
+        @if ($quizAssessment->instructions)
+            <p class="mt-2 text-sm text-neutral-600">{{ $quizAssessment->instructions }}</p>
+        @endif
+
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
+            <span>{{ $quizAssessment->questions_count }} {{ Str::plural('question', $quizAssessment->questions_count) }}</span>
+            <span>Pass mark {{ $quizAssessment->passing_percentage }}%</span>
+            @if ($quizAssessment->time_limit_minutes)
+                <span>{{ $quizAssessment->time_limit_minutes }} minute limit</span>
+            @endif
+            @if ($quizAssessment->max_attempts)
+                <span>{{ $quizAssessment->max_attempts }} {{ Str::plural('attempt', $quizAssessment->max_attempts) }} allowed</span>
+            @endif
+        </div>
+
+        <div class="mt-5 flex gap-3">
+            <x-button :href="route('student.assessments.attempt', $quizAssessment)" wire:navigate>Start / continue</x-button>
+            <x-button :href="route('student.assessments.history', $quizAssessment)" variant="secondary" wire:navigate>Attempt history</x-button>
+        </div>
+    </div>
 @endif

@@ -23,7 +23,7 @@ it('creates a text lesson', function (): void {
     expect($module->lessons()->where('title', 'Introduction')->exists())->toBeTrue();
 });
 
-it('only offers selectable content types — never quiz', function (): void {
+it('offers every selectable content type, including quiz since Phase 8', function (): void {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
@@ -31,22 +31,21 @@ it('only offers selectable content types — never quiz', function (): void {
 
     Livewire::test(LessonList::class, ['module' => $module])
         ->call('openCreate')
-        ->assertDontSee('Quiz');
+        ->assertSee('Quiz');
 });
 
-it('rejects an attempt to create a quiz lesson through the form', function (): void {
+it('creates a quiz lesson through the form', function (): void {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
     $module = Module::factory()->create();
 
     Livewire::test(LessonList::class, ['module' => $module])
-        ->set('title', 'Sneaky quiz')
+        ->set('title', 'Chapter quiz')
         ->set('type', LessonType::Quiz->value)
-        ->call('save')
-        ->assertHasErrors(['type']);
+        ->call('save');
 
-    expect($module->lessons()->where('title', 'Sneaky quiz')->exists())->toBeFalse();
+    expect($module->lessons()->where('title', 'Chapter quiz')->where('type', LessonType::Quiz)->exists())->toBeTrue();
 });
 
 it('deletes a lesson', function (): void {

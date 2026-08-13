@@ -38,15 +38,16 @@ it('throws for an unregistered type rather than returning null', function (): vo
         ->toThrow(InvalidArgumentException::class, 'No content handler registered');
 });
 
-it('excludes quiz from the types an admin can choose', function (): void {
-    // Offering a type that cannot be authored until Phase 8 would let an
-    // admin build a lesson no student could ever complete.
+it('includes every registered type, including quiz since Phase 8', function (): void {
+    // Quiz was excluded through Phase 5–7 (no assessment engine existed to
+    // author against); Phase 8 completes QuizContentHandler and lifts the
+    // exclusion — see that class and ContentTypeRegistry::selectableTypes().
     $selectable = array_map(
         static fn (LessonType $t): string => $t->value,
         $this->registry->selectableTypes(),
     );
 
-    expect($selectable)->not->toContain('quiz')
+    expect($selectable)->toContain('quiz')
         ->and($selectable)->toContain('video')
         ->and($selectable)->toContain('text');
 });

@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Student\AttemptHistory;
+use App\Livewire\Student\AttemptResult;
+use App\Livewire\Student\AttemptRunner;
 use App\Livewire\Student\CoursePlayer;
 use App\Livewire\Student\Dashboard;
 use App\Livewire\Student\MyCourses;
@@ -55,6 +58,20 @@ Route::name('student.')
         | getRouteKeyName.
         */
         Route::get('/learn/{course}/{lesson?}', CoursePlayer::class)->name('courses.play');
+
+        /*
+        | Phase 8 — assessment attempt runner and results.
+        |
+        | ONE CANONICAL URL PER ASSESSMENT for the runner itself: mount()
+        | resumes an in-progress attempt or starts one via StartAttempt,
+        | same "resolve or start" shape as the player above. Result and
+        | history are bound by the ATTEMPT (ulid) and the ASSESSMENT
+        | respectively — AttemptPolicy/EnrollmentAccessService do the actual
+        | gating, this grouping is not the control (Rule 20).
+        */
+        Route::get('/assessments/{assessment}/attempt', AttemptRunner::class)->name('assessments.attempt');
+        Route::get('/assessments/{assessment}/history', AttemptHistory::class)->name('assessments.history');
+        Route::get('/attempts/{attempt}/result', AttemptResult::class)->name('assessments.result');
     });
 
 /*

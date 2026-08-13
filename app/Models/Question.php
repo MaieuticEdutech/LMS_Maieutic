@@ -77,4 +77,12 @@ class Question extends Model
     {
         return $this->hasMany(QuestionOption::class)->orderBy('position');
     }
+
+    /**
+     * @return HasMany<AttemptAnswer, $this>
+     */
+    public function answers(): HasMany
+    {
+        return $this->hasMany(AttemptAnswer::class);
+    }
 }
