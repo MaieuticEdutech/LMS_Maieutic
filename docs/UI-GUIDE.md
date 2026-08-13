@@ -1,125 +1,140 @@
 # UI Guide — Maieutic LMS
 
-**Every screen in this product is built against this document.** If a view contradicts it, the view
-is wrong. If this document contradicts the brand system in `sample ui/_ds/`, that design system
-wins and this file gets fixed.
+**Every screen in this product is built against this document.**
 
-Read this before writing a single line of Blade. It is written to be followed by Claude Code as
-much as by a person — when you ask Claude for a screen, tell it to read this file first.
+It is derived from the reference prototypes in `sample ui/ui/` and the brand design system in
+`sample ui/ui/_ds/`. Where this file and that design system disagree, **the design system wins** and
+this file gets corrected.
+
+Written to be followed by Claude Code as much as by a person — that is how the screens will
+actually get built.
 
 ---
 
 ## 0. How to use this with Claude
 
-Start any UI task with:
+Open any UI task with:
 
-> Read `docs/UI-GUIDE.md` in full before writing anything. Build [screen] following it exactly.
-> Reuse the existing components in `resources/views/components/`. Do not invent new tokens,
-> new colours, or a second version of an existing component.
+> Read `docs/UI-GUIDE.md` in full before writing anything.
+> Then open the matching screen in `sample ui/ui/<Audience>.dc.html` and study the section for
+> [screen name].
+> Build [screen] in Blade + Livewire following the guide exactly. Reuse the components in
+> `resources/views/components/`. Do not invent tokens, colours, or a second version of an existing
+> component. Do not copy the reference's inline styles — use Tailwind utilities bound to our
+> tokens.
 
-Then check the output against §12 before you open a PR.
+Then check the result against §14 before opening a PR.
 
 ---
 
-## 1. What we are building, and what we are not
+## 1. The brand
 
-Maieutic is a **premium learning-experience company**, not a coaching institute and not a generic
-EdTech product. The reference points are Apple, Linear, Notion, Stripe. The anti-references are
-Canva templates, gradient-heavy SaaS dashboards, and anything that looks like a course marketplace.
+Maieutic is a **premium learning-experience company** — not a coaching institute, not a generic
+EdTech product. Reference points: Apple, Linear, Notion, Stripe, Pentagram. Anti-references: Canva
+templates, gradient SaaS dashboards, course marketplaces.
+
+> *maieutic* (adj.) — of the Socratic method: drawing out ideas already latent in the mind.
 
 The house style is **editorial**: big type, big air, tight alignment, one or two colours per screen.
 A page should read like a well-set magazine spread, not a control panel.
 
 **Restraint is the signal of quality.** When in doubt, remove something.
 
-### The sample is the floor, not the ceiling
-
-`sample ui/Student.dc.html` shows the intended standard. Match its discipline — the type contrast,
-the whitespace, the hairline borders — and then do better. What it does *not* show, and what we are
-expected to add: real loading states, real empty states, real error states, and keyboard operability.
-
 ---
 
-## 2. Ownership and sequencing
+## 2. The reference files
 
-UI is no longer owned by one person. It is split into a **shared layer** and **feature screens**.
-
-| Layer | Who owns it | Files |
-|---|---|---|
-| **Design foundation** — tokens, fonts, base layer | **Govind** (one-time), then frozen | `resources/css/app.css` |
-| **Shared component library** | **Srivathsa** after the foundation lands | `resources/views/components/**` |
-| **Layouts / shells** | **Srivathsa** | `resources/views/layouts/**` |
-| **Feature screens** | **The person who owns that phase** | own subdirectory only |
-
-### Feature screen subdirectories
-
-Ownership is by **subdirectory**, which is what keeps merges conflict-free — the same trick that
-let two 46-file and 73-file branches merge with zero overlap.
-
-| Area | Owner |
+| File | Contains |
 |---|---|
-| `Admin/Courses/**` — course builder | Govind |
-| `Student/**` — dashboard, my courses, player | Govind |
-| public catalogue + course detail | Govind |
-| `Admin/Users/**`, `Admin/Settings/**` — admin shell | Srivathsa |
-| `Assessment/**`, `Instructor/**` | Srivathsa |
-| `Reporting/**`, mail templates | Shashank |
+| `sample ui/ui/Auth & States.dc.html` | Login, forgot, reset, activate, verify, change password, suspended, 404, 403, 500 |
+| `sample ui/ui/Student.dc.html` | Dashboard, my courses, browse, detail, checkout, success, player, quizzes, quiz, result, progress, profile |
+| `sample ui/ui/Instructor.dc.html` | Dashboard, courses, assessments, new assessment, results, progress, student detail, profile |
+| `sample ui/ui/Super Admin.dc.html` | Dashboard, students, student detail, new student, instructors, courses, builder, quiz builder, enrolments, orders, settings |
+| `sample ui/ui/_ds/` | The design system — tokens, brand rules, component inventory |
 
-### The order this has to happen in
+**41 screens across four audiences.** Between them they answer nearly every layout question you
+will have. Read the relevant one before designing anything from scratch.
 
-This sequencing is not a preference. Getting it wrong means rework.
+### How to read them
 
-1. **Govind lands the design foundation first** — §4's tokens replacing the current placeholder
-   blue, plus the fonts. Small, fast, one PR.
-2. **Everyone rebases immediately.** Srivathsa is mid-Phase-4; he rebases before going further,
-   because every component he builds inherits these tokens.
-3. **Srivathsa restyles the 12 shared components** against the new tokens, and finishes Phase 4's
-   admin shell.
-4. **Then** feature screens, in parallel, by owner.
+They are **Claude Design prototypes**, not production code:
 
-> **Why this order.** Building an admin shell against placeholder-blue components and restyling
-> afterwards means touching every file twice, and the second pass lands in someone else's
-> directory. Foundation first is the only order that doesn't create rework.
+- `<sc-if value="{{ isLogin }}">` and `<sc-for list="{{ items }}">` are prototype directives. In our
+  stack these become `@if` / `@foreach` in Blade.
+- **Everything is inline-styled.** Correct for a mockup, wrong for us. Translate to Tailwind
+  utilities bound to the tokens in §5.
+- `_ds_bundle.js` exposes React components at `window.Maieutic.*`. **We do not consume it.** We take
+  the tokens and the rules, not the code.
+- The dark strip of buttons at the top of each file is a **prototype screen switcher**, not product
+  UI. Never build it.
 
-### What has no UI
+### The reference is the floor, not the ceiling
 
-**Phase 3 has no UI at all.** It is schema, models and policies. There is nothing to style.
+You were asked for something **better** than the reference: more polished, more interactive, more
+responsive, production-quality. Match its discipline — type contrast, whitespace, hairline borders —
+then exceed it where it is thin:
 
-**Phase 5's course builder lives inside Phase 4's admin shell**, so it cannot be finished until
-Srivathsa merges. The **public catalogue and course detail pages have no shell dependency** and can
-be built at any time.
+| The reference shows | We must also deliver |
+|---|---|
+| Finished screens only | Real loading skeletons, empty and error states (§11) |
+| Desktop widths | Full responsive behaviour, 360 px → 1920 px |
+| Static markup | Real keyboard operability, focus management, ARIA |
+| Happy-path data | Pagination, long-text truncation, zero/one/many cases |
+| — | Reduced-motion support, WCAG 2.1 AA contrast |
+
+Exceeding the reference means **more rigour, not more decoration.** Do not add gradients, glows,
+illustrations or animation flourishes it does not have.
 
 ---
 
-## 3. The rules nobody may break
+## 3. Screens mapped to phases
 
-1. **Never invent a colour.** Every colour comes from §4. No hex in a Blade file, ever.
+Ownership currently follows the existing plan — **Track B (Srivathsa) owns `app/Livewire/**` and
+`resources/views/**`.** A split is under discussion but **is not in effect**; it will be settled
+after Phase 4 merges. Until then, do not build UI outside your existing assignment.
+
+| Reference screens | Phase | Backend owner |
+|---|---|---|
+| Auth & States — all 10 | 2 (built, unstyled) | Govind |
+| Super Admin — dashboard, students, instructors, settings | 4 | Srivathsa |
+| Super Admin — courses, builder · public browse + detail | 5 | Govind |
+| Student — dashboard, my courses, player | 6–7 | Govind |
+| Student/Instructor — quizzes, quiz, result, assessments | 8 | Srivathsa |
+| Student/Instructor — progress | 9 | Govind |
+| Instructor — all | 10 | Srivathsa |
+| Student — checkout, success · Super Admin — orders | 12 | Govind |
+| Super Admin — enrolments | 6 | Govind |
+
+---
+
+## 4. The rules nobody may break
+
+1. **Never invent a colour.** Every colour comes from §5. No hex in a Blade file, ever.
 2. **Never fork a component.** A second button component is a defect. Extend the existing one.
-3. **No arbitrary Tailwind values** — `p-[13px]`, `text-[#00615c]`, `w-[347px]` are all rejected.
-   If a value is needed twice, it is a token.
-4. **No emoji. Anywhere.** Not in UI, not in copy, not in commit messages.
-5. **Focus is always visible.** Never remove the focus ring. It is set globally in the base layer.
-6. **Light mode only in V1.** Do not build a dark theme. Dark *sections* (deep teal panels) are a
-   design device, not a theme.
-7. **Backend policy is the only authority.** Hiding a button is never security — the policy check
-   behind it is what matters. See the root `CLAUDE.md`.
+3. **No arbitrary Tailwind values** — `p-[13px]`, `text-[#00615c]`, `w-[347px]` are rejected. A
+   value needed twice is a token.
+4. **No emoji. Anywhere.** Not in UI, not in copy, not in commits.
+5. **Focus is always visible.** Never remove the ring.
+6. **Light mode only in V1.** Do not build a dark theme. Dark teal *panels* are a design device, not
+   a theme.
+7. **Hiding a control is never security.** Every screen sits behind a real policy check.
+8. **Sentence case everywhere.** UPPERCASE is only for mono eyebrows.
 
 ---
 
-## 4. Design tokens
+## 5. Design tokens
 
-These replace the placeholder palette currently in `resources/css/app.css`. Tailwind 4 is
-configured CSS-first — there is no `tailwind.config.js`, everything lives in `@theme`.
+Tailwind 4 is configured CSS-first — no `tailwind.config.js`. These replace the placeholder blue
+palette currently in `resources/css/app.css`.
 
 ```css
 @theme {
     /* ---- Typography ------------------------------------------------ */
-    /* Serif display is the hero. Sans for UI/body. Mono for eyebrows.  */
     --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
     --font-sans:  'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    /* ---- Teal — the primary brand and the ONLY CTA colour ---------- */
+    /* ---- Teal — primary brand, and the ONLY CTA colour ------------- */
     --color-teal-50:  #eaf2f1;
     --color-teal-100: #cde3e1;
     --color-teal-200: #a5ccc9;
@@ -129,9 +144,9 @@ configured CSS-first — there is no `tailwind.config.js`, everything lives in `
     --color-teal-600: #00615c;  /* Training Day Teal — base */
     --color-teal-700: #024e4a;
     --color-teal-800: #043b38;
-    --color-teal-900: #052826;
+    --color-teal-900: #052826;  /* sidebars, brand panels */
 
-    /* ---- Red Sea — a RARE accent. Not a second brand colour -------- */
+    /* ---- Red Sea — a RARE accent, not a second brand colour -------- */
     --color-red-50:  #fbeae9;
     --color-red-100: #f5cbc9;
     --color-red-200: #e79a96;
@@ -144,7 +159,7 @@ configured CSS-first — there is no `tailwind.config.js`, everything lives in `
 
     /* ---- Warm neutrals: paper → ink. NOT grey. --------------------- */
     --color-neutral-0:   #ffffff;
-    --color-neutral-50:  #faf9f6;  /* paper — the page background */
+    --color-neutral-50:  #faf9f6;  /* paper — page background */
     --color-neutral-100: #f2f1ec;
     --color-neutral-200: #e5e3dc;  /* the hairline border workhorse */
     --color-neutral-300: #d2cfc6;
@@ -152,8 +167,8 @@ configured CSS-first — there is no `tailwind.config.js`, everything lives in `
     --color-neutral-500: #8a867b;
     --color-neutral-600: #66625a;
     --color-neutral-700: #4a473f;
-    --color-neutral-800: #2e2c27;
-    --color-neutral-900: #1a1815;  /* ink — body text */
+    --color-neutral-800: #2e2c27;  /* body text */
+    --color-neutral-900: #1a1815;  /* ink — headings */
 
     /* ---- Accents. Two or three per screen, maximum. ---------------- */
     --color-melon:     #f2aa84;
@@ -166,7 +181,7 @@ configured CSS-first — there is no `tailwind.config.js`, everything lives in `
     --radius-xs:   4px;
     --radius-sm:   8px;
     --radius-md:   12px;
-    --radius-card: 16px;   /* the default card */
+    --radius-card: 16px;
     --radius-xl:   24px;
 
     /* ---- Shadows: soft, warm-tinted, minimal ---------------------- */
@@ -181,228 +196,282 @@ configured CSS-first — there is no `tailwind.config.js`, everything lives in `
 }
 ```
 
-### Semantic meaning — use the role, not the raw scale
+### Use the role, not the raw scale
 
-| Role | Token | Notes |
-|---|---|---|
-| Page background | `neutral-50` | Warm paper. Never pure white. |
-| Card surface | `neutral-0` | White on paper. |
-| Heading text | `neutral-900` | Ink. |
-| Body text | `neutral-800` | |
-| Muted text | `neutral-500` | Metadata, captions. |
-| Border | `neutral-200` | The hairline workhorse. |
-| Brand / primary CTA | `teal-600` | The **only** CTA colour. |
-| Brand hover | `teal-700` | |
-| Brand pressed | `teal-800` | |
-| Dark panels | `teal-900` | With white text. |
-| Success | `honeydew` | |
-| Warning | `melon` | |
-| Danger / destructive | `red-600` | Also used for the rare accent. |
+| Role | Token |
+|---|---|
+| Page background | `neutral-50` — warm paper, never pure white |
+| Card surface | `neutral-0` |
+| Sunken / muted panel | `neutral-100` |
+| Heading text | `neutral-900` |
+| Body text | `neutral-800` |
+| Muted text, metadata | `neutral-500` |
+| Border | `neutral-200` |
+| Stronger divider | `neutral-300` |
+| Primary CTA | `teal-600` — the **only** CTA colour |
+| CTA hover / pressed | `teal-700` / `teal-800` |
+| Dark shells and panels | `teal-900` with white text |
+| Brand-forward headings, eyebrows | `teal-600` |
+| Success | `honeydew` |
+| Warning | `melon` |
+| Danger, destructive | `red-600` |
 
-### Status colours are fixed
-
-Green means success. Amber means warning. Red means danger or destructive. Never repurpose them
-decoratively — a red badge must mean something is wrong.
+**Status colours are fixed.** Green means success, amber means warning, red means danger. Never
+decorative — a red badge must mean something is wrong.
 
 ### Fonts
 
-Self-host via `@fontsource` packages, exactly as Instrument Sans is today. **No CDN links** — they
-break the CSP and leak user IPs to a third party.
+Self-host via `@fontsource`, exactly as Instrument Sans is today. **No CDN links** — they break the
+CSP and leak user IPs.
 
-> **`package.json` is Track C's file (Shashank).** Adding the three font packages needs his sign-off
-> and a recorded Rule 6 justification. Ask before adding. Do not edit `package.json` unilaterally.
+> `package.json` is Track C's file (Shashank). Adding the three font packages needs his sign-off and
+> a recorded Rule 6 justification. Ask first.
 
 ---
 
-## 5. Typography — the hero of the system
+## 6. Typography
 
-The signature of this brand is **the contrast between huge serif headlines and small tracked mono
-labels**. If a screen has no type contrast, it is off-brand no matter how correct the colours are.
+The signature of this brand is **the contrast between large serif headlines and small tracked mono
+eyebrows.** A screen without that contrast is off-brand no matter how correct the colours are.
 
 | Use | Family | Size | Weight | Tracking |
 |---|---|---|---|---|
-| Page title | serif | 30–38px | 600 | `-0.015em` |
+| Hero / brand panel | serif | 38–48px | 600 | `-0.015em` |
+| Page title | serif | 28–38px | 600 | `-0.015em` |
 | Section heading | serif | 20–24px | 600 | `-0.015em` |
 | Card heading | serif | 18–19px | 600 | normal |
-| Body | sans | 16px | 400 | normal |
-| Small / secondary | sans | 14px | 400 | normal |
-| Eyebrow / kicker | **mono, UPPERCASE** | 12px | 500 | `0.16em` |
-| Metadata, counts | mono | 12–13px | 400 | `0.04em` |
+| Body | sans | 15–16px | 400 | normal |
+| Small / secondary | sans | 13–14px | 400 | normal |
+| **Eyebrow / kicker** | **mono, UPPERCASE** | 11–12px | 500 | `0.16em` |
+| Metadata, counts, IDs | mono | 11–13px | 400 | `0.04em` |
 
-**Line height:** 1.5–1.65 for body, 1.2 for headings, 1.05–1.15 for display.
+Element defaults are already set by the design system: `h1`–`h3` are serif, semibold, `-0.015em`,
+`text-wrap: balance`. `h4`–`h6` are sans. Do not re-declare them per screen.
 
-**Measure:** cap body text at `68ch`. Long unbroken lines are the most common failure in a
-first draft.
-
-**Casing:** sentence case everywhere — "Course catalogue", never "Course Catalogue". UPPERCASE is
-reserved exclusively for mono eyebrows, which are 1–4 words.
-
----
-
-## 6. Layout and space
-
-- Content max width **1240px**, gutters **24px**, page inset **32px** minimum.
-- Vertical section rhythm on a **96px** cadence. Marketing/public pages should breathe more than
-  admin tables.
-- 4px base spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128.
-- **Left-align text by default.** Centred body copy is a brand violation. Centring is for short
-  hero statements only.
-- Generous, intentional negative space. If a screen feels crowded, remove an element rather than
-  shrinking the gaps.
+- **Line height** 1.5–1.65 body, 1.2 headings, 1.05–1.18 display.
+- **Measure** cap body at `68ch`. Unbroken long lines are the most common first-draft failure.
+- **Body size** 16px on reading surfaces (public pages, player, course detail); 15px is acceptable
+  in dense admin tables. Never below 13px for anything a user must read.
+- **Casing** "Course catalogue", never "Course Catalogue". UPPERCASE only for 1–4 word eyebrows.
 
 ---
 
-## 7. Components — extend, never fork
+## 7. Layout and shells
 
-Twelve components already exist in `resources/views/components/`:
+Four shells cover every screen. Each is in the reference — read it before building.
+
+### Auth — split screen
+
+Left: `teal-900` brand panel with the M motif bottom-right, serif wordmark top, editorial headline
+and mono eyebrow centre, mono footer. Right: white form panel, form column **400px**, vertically
+centred, `fade-in 300ms var(--ease-out)` on mount.
+
+Grid `1fr 1.15fr` — the form side is slightly wider. **Collapses to form-only below 1024px**; the
+brand panel is decorative and must not push the form off-screen on mobile.
+
+### Admin / instructor — dark sidebar
+
+Sticky `aside`, **248px**, `teal-900`, full viewport height, white text. Serif wordmark at top with a
+`rgba(255,255,255,0.12)` hairline beneath. Nav items are sans; the active item gets a lighter
+surface, not a colour flip.
+
+Below 1024px the sidebar becomes a drawer with a hamburger trigger. It must trap focus when open and
+close on `Escape`.
+
+### Student — content-first
+
+Lighter chrome than admin. Top bar with avatar and notifications, paper background, cards on white.
+The **player** is the exception: it needs a focused, low-chrome layout that keeps the video and the
+lesson list visible together, collapsing to stacked below 1024px.
+
+### Public — editorial
+
+Marketing rhythm: `--content-max: 1240px`, 24px gutters, ~96px vertical section cadence, generous
+air. This is where the brand is most visible — the catalogue and course detail pages are the first
+thing a prospective buyer sees.
+
+### Spacing
+
+4px base: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128. Page inset ≥ 32px. **Left-align text by
+default** — centred body copy is a brand violation; centring is for short hero statements only.
+
+### Responsive breakpoints
+
+Every screen is verified at **360 / 768 / 1024 / 1440 / 1920**. The reference only shows desktop —
+mobile behaviour is ours to design, and it is not optional.
+
+---
+
+## 8. Components
+
+Twelve components exist in `resources/views/components/`:
 
 ```
 alert  badge  button  card  checkbox  empty-state
 input  modal  pagination  select  table  textarea
 ```
 
-**If you need a variant, add a prop to the existing component.** Do not create `button-2`,
-`primary-button`, or a local `<div class="...">` that reimplements one. Rule 3 of the root
-`CLAUDE.md` calls a second button component a defect, and it means it.
+**Need a variant? Add a prop.** Do not create `button-2`, `primary-button`, or a local `<div>` that
+reimplements one. A genuinely new primitive is a conversation with the component-library owner, not
+a commit.
 
-If a genuinely new primitive is needed, that is a conversation with Srivathsa (component library
-owner), not a commit.
+**Buttons** — Primary: solid `teal-600`, white text, **one per screen**. Secondary: white surface,
+`neutral-200` border, ink text. Ghost: text only. Destructive: `red-600`, and always confirms first.
+Radius 8–12px. Height 36–40px. **Never pill-shaped** — pills are for badges only.
 
-### Cards
+**Cards** — white on paper, 1px `neutral-200` hairline, 16px radius. **Hierarchy comes from borders
+and spacing, not shadow.** Resting cards have no shadow or `shadow-xs`; soft shadow on hover only.
+No coloured left-border accent cards.
 
-White on paper, `1px` `neutral-200` hairline border, `16px` radius. **Hierarchy comes from borders
-and spacing, not shadow.** A resting card has no shadow or `shadow-xs`; a soft shadow appears only
-on hover or for overlays. No coloured left-border accent cards.
+**Inputs / selects** — 36–40px height, 8px radius, 1px `neutral-200` border, white surface, 13–14px
+sans. Focus shows the teal ring. Every input has a real `<label>` — placeholders are not labels.
 
-### Buttons
+**Status pills** — `radius-full`, 11–12px, soft tint background with a darker text of the same
+family (`teal-50`/`teal-700`, `red-50`/`red-600`). Never a saturated fill.
 
-- **Primary** — solid `teal-600`, white text. **One per screen.** If you have two primary buttons,
-  one of them is secondary.
-- **Secondary** — `neutral-0` surface, `neutral-200` border, ink text.
-- **Ghost** — text only, for tertiary actions.
-- **Destructive** — `red-600`, and destructive actions always confirm first.
+**Avatars** — circle, 34px in bars, initials in 13px semibold, `teal-600` on white or white on
+`teal-600`. Notification dot: 7px `red-600` circle with a 1.5px white ring.
 
-Radius 8–12px. Never pill-shaped buttons; pills are for badges and tags only.
+**Tables** — hairline row separators, no zebra striping, no vertical rules. Column headers are small
+mono uppercase, tracked. Numeric columns right-aligned. Long lists paginate — never render 500 rows.
 
-### The "M" angle motif
-
-The triangular geometry of the Maieutic "M" — a **single diagonal angle** at the edge or corner of
-a card or callout, in two palette colours. Use it **sparingly**, only to add life to an otherwise
-plain block. Never as a repeating pattern, never as a background texture.
+**Tabs / filters** — quiet by default; the active tab gets weight and a teal underline or a subtle
+surface, never a heavy filled block.
 
 ---
 
-## 8. States — all five, every time
+## 9. The "M" angle motif
 
-A screen is not done when the happy path renders. Every data surface needs:
+The defining decorative element: the triangular geometry of the Maieutic "M", rendered as a **single
+diagonal angle** in two palette colours at the edge or corner of a panel. As implemented in the
+reference:
+
+```css
+background:
+  linear-gradient(315deg, var(--color-teal-600) 0 26%, transparent 26.5%),
+  linear-gradient(315deg, var(--color-red-600)  0 34%, transparent 34.5%);
+```
+
+**Use sparingly** — a brand panel corner, an occasional callout. Never a repeating pattern, never a
+background texture, never more than one per screen.
+
+---
+
+## 10. Backgrounds and imagery
+
+Flat warm paper or white. **No aggressive gradients** — the M motif is the only gradient in the
+system. Occasional soft tint blocks (`marigold`, `teal-50`) separate sections. Dark sections use
+`teal-900` with white text. No noise, no textures, no photographic hero wallpaper.
+
+Imagery, where used: authentic and natural — real people learning and collaborating, hands, devices,
+lines of connection. Faces often not required. **Avoid** fake corporate smiles, graduation caps,
+staged classrooms, stock clichés. Until real assets exist, use labelled placeholders — never
+lorem-ipsum imagery or an unlicensed stock photo.
+
+---
+
+## 11. States — all five, every time
+
+A screen is not done when the happy path renders.
 
 | State | Requirement |
 |---|---|
-| **Loading** | Skeletons matching final layout. No spinners as the primary device, no layout shift. |
-| **Empty** | Use `<x-empty-state>`. Explain what would be here and give the action that creates it. Never a bare "No results". |
-| **Error** | Say what failed and what to do next. Never expose a stack trace or a raw exception. |
-| **Partial** | Long lists paginate. Never render 500 rows. |
-| **Success** | Confirm destructive and creative actions with a consistent flash/toast. |
+| **Loading** | Skeletons matching the final layout. No layout shift. Spinners are not the primary device. |
+| **Empty** | `<x-empty-state>`: say what would be here and give the action that creates it. Never a bare "No results". |
+| **Error** | Say what failed and what to do next. Never a stack trace or raw exception. |
+| **Partial** | Paginate. Truncate long text with a title attribute. Handle zero / one / many. |
+| **Success** | Consistent flash or toast after create, update and destructive actions. |
 
-Empty states are the most commonly skipped and the most visible to a first-time user — the whole
-product is empty on day one.
+**Empty states matter most here** — the entire product is empty on day one, so they are the first
+thing a real user sees.
+
+The reference has dedicated screens for suspended accounts, 404, 403 and 500. Build all four; do not
+let framework defaults ship.
 
 ---
 
-## 9. Interaction, motion, accessibility
+## 12. Interaction, motion, accessibility
 
 **Hover** — buttons darken one step (`teal-600` → `teal-700`). Cards raise slightly: border darkens,
-subtle shadow, ~1px lift. Links go to `teal-700` with a `0.18em` underline offset. **No colour-flip
+subtle shadow, ~1px lift. Links go to `teal-700` with `0.18em` underline offset. **No colour-flip
 surprises.**
 
-**Press** — one step darker again (`teal-800`), optionally `scale(0.98)`. Subtle and tactile.
+**Press** — one step darker (`teal-800`), optionally `scale(0.98)`. Subtle, tactile, never a squish.
 
-**Focus** — a visible `3px` teal ring on `:focus-visible`. Already set globally in the base layer.
-**Never remove it.**
+**Focus** — visible 3px teal ring on `:focus-visible`, set globally. **Never remove it.**
 
-**Motion** — 120–320ms. `--ease-standard` for most, `--ease-out` for entrances. Fades and small
-2–8px translations only. No bounces, no springs, no parallax. `prefers-reduced-motion` is already
-respected in the base layer; do not bypass it with inline animation.
+**Motion** — 120–320ms. `--ease-standard` for most, `--ease-out` for entrances. Fades and 2–8px
+translations only. **No bounces, no springs, no parallax.** `prefers-reduced-motion` is respected in
+the base layer — do not bypass it with inline animation.
 
-**Accessibility is WCAG 2.1 AA and it is not negotiable** (NFR-UX-03). Build it in — retrofitting it
-in Phase 15 is far more expensive than getting it right now:
+**Accessibility is WCAG 2.1 AA and is not negotiable** (NFR-UX-03). Build it in — retrofitting in
+Phase 15 costs far more:
 
-- Semantic HTML. A clickable `div` is a bug. Buttons are `<button>`, links are `<a>`.
-- Every input has a real `<label>`. Placeholders are not labels.
-- Body text contrast ≥ 4.5:1, large text ≥ 3:1. Check `neutral-500` on `neutral-50` before using it
-  for anything that must be read.
-- Full keyboard operability. Logical tab order. Modals trap focus and close on `Escape`.
-- Icons are decorative — `aria-hidden` — unless they are the only content, in which case they need
-  an accessible name.
-- Never convey meaning by colour alone. A red border needs text next to it.
+- Semantic HTML. A clickable `div` is a bug. `<button>` for actions, `<a>` for navigation.
+- Every input has a real label. Placeholders are not labels.
+- Contrast ≥ 4.5:1 body, ≥ 3:1 large text. Check `neutral-500` on `neutral-50` before using it for
+  anything that must be read.
+- Full keyboard operability, logical tab order. Modals and drawers trap focus and close on `Escape`.
+- Icons `aria-hidden` unless they are the only content, in which case they need an accessible name.
+- **Never convey meaning by colour alone** — a red border needs text beside it.
+- The video player and quiz runner must be fully keyboard-operable. They are the two hardest
+  surfaces; design for it from the start.
+
+**Icons** — Lucide, stroke only, 1.5–2px, sized to text (18–20px inline, 16px dense). `currentColor`,
+never multicolour. Icons support text, they do not replace it. **No emoji, no unicode glyph icons.**
 
 ---
 
-## 10. Voice and copy
+## 13. Voice and copy
 
-Copy is part of the design, and bad copy makes good layout look cheap.
+Copy is part of the design. Bad copy makes good layout look cheap.
 
-**Intelligent, calm, precise — a thoughtful mentor, never a hype marketer.** Speak to the learner as
-"you"; "we" is used sparingly. Active voice, concrete verbs — *understand, question, build, master* —
-never *empower, unlock, revolutionise*.
+**Intelligent, calm, precise — a thoughtful mentor, never a hype marketer.** Address the learner as
+"you"; "we" sparingly. Active voice, concrete verbs — *understand, question, build, master* — never
+*empower, unlock, revolutionise*.
 
-One clear message per screen. One primary action. If a word can be cut and the point survives, cut
+One clear message per screen, one primary action. If a word can be cut and the point survives, cut
 it.
 
 | Good | Bad |
 |---|---|
-| "Begin a session" | "Start Your Journey Today! 🚀" |
+| "Sign in" · "Welcome back — pick up where you left off." | "Login to Your Account!" |
 | "Answers fade. The questions stay." | "World's #1 Learning Platform!!!" |
 | "3 questions · 92% complete" | "You're doing amazing!!" |
 | "This course has no lessons yet." | "Oops! Nothing here 😢" |
+| "Begin a session" · "Explore programs" | "Unlock Your Potential Today! 🚀" |
 
 Numerals for data. Em dashes for asides. Minimal exclamation marks. **No emoji, ever.**
 
 ---
 
-## 11. Laravel specifics
-
-- **Blade + Livewire 4 + Tailwind 4.** The `sample ui/` folder ships React components and a JS
-  bundle — we take the **tokens and the rules** from it, not the code. Do not try to import
-  `_ds_bundle.js`.
-- The sample HTML uses **inline styles**. That is fine for a mockup and wrong for us. Use Tailwind
-  utility classes bound to the tokens above.
-- **No business logic in Blade or Livewire components** (Rule 16). Views orchestrate; Actions and
-  Services decide.
-- Livewire components live in `app/Livewire/{Area}/`, their views in
-  `resources/views/livewire/{area}/`. Stay in your own subdirectory.
-- Prefer server-rendered Blade. Reach for Livewire when a screen genuinely needs interactivity —
-  the course builder does; a course detail page does not.
-- Every screen renders behind a policy check. Never rely on a hidden button.
-
----
-
-## 12. Before you open a UI PR
+## 14. Before you open a UI PR
 
 - [ ] No hex codes, no arbitrary Tailwind values, no invented tokens
-- [ ] No new component that duplicates an existing one
-- [ ] Loading, empty and error states all exist
-- [ ] Keyboard: full tab order, visible focus, `Escape` closes modals
-- [ ] Contrast checked on real token pairs
-- [ ] Responsive at 360 / 768 / 1024 / 1440 / 1920
-- [ ] Sentence case; no emoji; copy passes §10
+- [ ] No component duplicating an existing one
+- [ ] Loading, empty and error states all present
+- [ ] Keyboard: full tab order, visible focus, `Escape` closes overlays
+- [ ] Contrast checked on the real token pairs used
+- [ ] Verified at 360 / 768 / 1024 / 1440 / 1920
 - [ ] Type contrast present — serif headings against mono eyebrows
+- [ ] Sentence case, no emoji, copy passes §13
+- [ ] No inline styles copied from the reference prototypes
 - [ ] `composer check` green — Pint, Larastan level 8, Pest
-- [ ] Screenshot in the PR description
+- [ ] Screenshots in the PR description, desktop **and** mobile
 
 ---
 
-## 13. Open questions
+## 15. Open questions — ask, do not guess
 
-These are not yet decided. Do not guess — ask.
-
-1. **Font licensing.** Newsreader / Hanken Grotesk / JetBrains Mono are Google Fonts substitutes for
-   the brand guideline's Lucida Sans and Posterama, which are not web-licensed. If Maieutic owns web
-   licences for the originals, they replace these.
+1. **Font licensing.** Newsreader / Hanken Grotesk / JetBrains Mono are substitutes chosen by the
+   design system. The brand guideline names Lucida Sans and Posterama, neither web-licensed. If
+   Maieutic owns web licences for the originals, they replace these.
 2. **Logo.** Only a white-background PNG exists. A transparent SVG and a reversed light-on-dark
-   lockup are needed before any dark teal panel can carry the logo.
-3. **Icon set.** Lucide is the assumed default. It needs self-hosting rather than a CDN, and
-   `package.json` is Track C's file.
-4. **Whether `sample ui/` belongs in the repository.** It is ~100KB of reference HTML plus a React
-   bundle we do not consume. It probably belongs in `docs/design/` or in shared storage, not in the
-   application root.
+   lockup are needed before any `teal-900` panel can carry it. The reference currently sets the
+   wordmark as live serif text.
+3. **Icons.** Lucide assumed. Needs self-hosting, and `package.json` is Track C's file.
+4. **Where `sample ui/` lives.** ~300KB of reference HTML plus a React bundle we do not consume. It
+   probably belongs in `docs/design/` rather than the application root, and may not belong in git at
+   all.
+5. **UI ownership.** Currently Track B owns all views. A per-subdirectory split is under discussion
+   and will be settled **after Phase 4 merges**. Until then, follow the existing plan.
