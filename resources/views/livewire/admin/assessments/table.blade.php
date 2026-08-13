@@ -31,6 +31,7 @@
                 <th class="px-3 py-2">Attached to</th>
                 <th class="px-3 py-2">Questions</th>
                 <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2"></th>
             </x-slot:head>
 
             @foreach ($assessments as $assessment)
@@ -43,6 +44,9 @@
                         <x-badge :variant="$assessment->is_published ? 'success' : 'neutral'">
                             {{ $assessment->is_published ? 'Published' : 'Draft' }}
                         </x-badge>
+                    </td>
+                    <td class="px-3 py-2 text-right" onclick="event.stopPropagation()">
+                        <x-button :href="route('admin.assessments.results', $assessment)" variant="secondary" size="sm" wire:navigate>Results</x-button>
                     </td>
                 </tr>
             @endforeach

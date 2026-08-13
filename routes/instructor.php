@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Admin\Assessments\AssessmentBuilder;
+use App\Livewire\Instructor\Assessments\AssessmentsTable;
+use App\Livewire\Instructor\Assessments\Results;
+use App\Livewire\Instructor\CourseDetail;
+use App\Livewire\Instructor\CoursesList;
+use App\Livewire\Instructor\Dashboard;
+use App\Livewire\Instructor\StudentProgressDetail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,8 +33,16 @@ use Illuminate\Support\Facades\Route;
 |      may ever appear in this file (FR-INS-10). OrderPolicy and PaymentPolicy
 |      deny them explicitly.
 |
+| AssessmentBuilder and Results are SHARED with routes/admin.php — one
+| implementation, not a near-duplicate, since AssessmentPolicy already
+| authorises both an assigned instructor and a super admin the same way.
+| Only the chrome (layout, breadcrumbs) differs, chosen dynamically inside
+| those components. See Admin\Assessments\AssessmentBuilder's docblock.
+|
 | Delivered by Phase 10 — dashboard, assigned courses, enrolled students,
-| assessment authoring, results and statistics, per-student progress.
+| assessment authoring, results, statistics, and per-student/per-course
+| progress (FR-INS-02, FR-INS-03, FR-INS-07) now that Phase 9's
+| ProgressCalculator is on main.
 |
 */
 
@@ -35,7 +50,13 @@ Route::prefix('instructor')
     ->name('instructor.')
     ->middleware(['auth', 'active', 'role:instructor'])
     ->group(static function (): void {
-        // Phase 2: role home placeholder only. Phase 10 replaces this with the
-        // real dashboard, scoped to assigned courses.
-        Route::view('/', 'instructor.home')->name('home');
+        Route::get('/', Dashboard::class)->name('home');
+
+        Route::get('/courses', CoursesList::class)->name('courses.index');
+        Route::get('/courses/{course}', CourseDetail::class)->name('courses.show');
+        Route::get('/courses/{course}/students/{enrollment}', StudentProgressDetail::class)->name('courses.students.progress');
+
+        Route::get('/assessments', AssessmentsTable::class)->name('assessments.index');
+        Route::get('/assessments/{assessment}', AssessmentBuilder::class)->name('assessments.builder');
+        Route::get('/assessments/{assessment}/results', Results::class)->name('assessments.results');
     });

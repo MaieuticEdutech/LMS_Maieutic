@@ -17,6 +17,7 @@ use App\Livewire\Admin\SettingsForm;
 use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
 use App\Livewire\Admin\StudentsTable;
+use App\Livewire\Instructor\Assessments\Results;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -108,4 +109,10 @@ Route::prefix('admin')
          */
         Route::get('/assessments', AssessmentsTable::class)->name('assessments.index');
         Route::get('/assessments/{assessment}', AssessmentBuilder::class)->name('assessments.builder');
+
+        /*
+         * Phase 10 — Results is shared with routes/instructor.php (one
+         * implementation, chrome chosen dynamically). See its docblock.
+         */
+        Route::get('/assessments/{assessment}/results', Results::class)->name('assessments.results');
     });

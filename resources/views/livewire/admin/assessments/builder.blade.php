@@ -1,6 +1,6 @@
 <div>
     <div class="mb-6 flex flex-wrap items-center gap-3">
-        <a href="{{ route('admin.assessments.index') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-700 hover:text-teal-700">
+        <a href="{{ route($indexRoute) }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-700 hover:text-teal-700">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
             Assessments
         </a>

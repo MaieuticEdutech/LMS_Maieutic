@@ -17,7 +17,6 @@ use App\Models\User;
 use App\Services\Assessment\AssessmentPublishValidator;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
@@ -28,8 +27,17 @@ use Livewire\Component;
  * (LessonEditor's "Create assessment" button, CourseBuilder's final-test
  * section) that redirects straight here, mirroring how CourseBuilder's own
  * "create" is really "save a minimal draft, then continue building".
+ *
+ * SHARED BETWEEN ADMIN AND INSTRUCTOR (Phase 10) — one implementation
+ * rather than a near-duplicate Instructor\Assessments\AssessmentBuilder,
+ * since the two would drift the moment one changed and not the other. Every
+ * mutating method already authorises through AssessmentPolicy, which now
+ * allows an assigned instructor exactly the same as it allows a super
+ * admin — this class does not need to know which one is looking at it,
+ * except to pick the right chrome (layout, breadcrumbs, "back" link),
+ * decided once in render() via Livewire's imperative `->layout()` rather
+ * than the static `#[Layout]` attribute, which cannot vary per request.
  */
-#[Layout('layouts.admin')]
 final class AssessmentBuilder extends Component
 {
     public Assessment $assessment;
@@ -140,7 +148,7 @@ final class AssessmentBuilder extends Component
         try {
             $delete->handle($this->assessment, $actor);
 
-            return redirect()->route('admin.assessments.index');
+            return redirect()->route($this->indexRouteName());
         } catch (AssessmentDeletionException $e) {
             session()->flash('error', $e->getMessage());
 
@@ -159,6 +167,34 @@ final class AssessmentBuilder extends Component
 
     public function render(): View
     {
-        return view('livewire.admin.assessments.builder');
+        $actor = auth()->user();
+        $isInstructor = $actor instanceof User && $actor->isInstructor() && ! $actor->isSuperAdmin();
+
+        $layout = $isInstructor ? 'layouts.instructor' : 'layouts.admin';
+        $breadcrumbRoot = $isInstructor ? 'Instructor' : 'Administration';
+        $breadcrumbRootUrl = $isInstructor ? '/instructor' : '/admin';
+
+        return view('livewire.admin.assessments.builder', [
+            'indexRoute' => $this->indexRouteName(),
+        ])->layout($layout, [
+            'breadcrumbs' => [
+                ['label' => $breadcrumbRoot, 'url' => $breadcrumbRootUrl],
+                ['label' => 'Assessments', 'url' => route($this->indexRouteName())],
+                ['label' => 'Builder', 'url' => null],
+            ],
+        ]);
+    }
+
+    /**
+     * Which index page "back" points to and delete() redirects to — the
+     * only place this class distinguishes its two audiences beyond chrome.
+     */
+    private function indexRouteName(): string
+    {
+        $actor = auth()->user();
+
+        return ($actor instanceof User && $actor->isInstructor() && ! $actor->isSuperAdmin())
+            ? 'instructor.assessments.index'
+            : 'admin.assessments.index';
     }
 }
