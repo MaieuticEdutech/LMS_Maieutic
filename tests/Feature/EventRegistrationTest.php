@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Events\AttemptGraded;
+use App\Events\CourseCompleted;
 use App\Events\EnrollmentGranted;
 use App\Events\EnrollmentRevoked;
 use Illuminate\Auth\Events\PasswordReset;
@@ -52,7 +54,27 @@ it('registers exactly one listener per domain event', function (string $event): 
     PasswordUpdatedViaController::class,
     EnrollmentGranted::class,
     EnrollmentRevoked::class,
+    CourseCompleted::class,
 ]);
+
+it('registers both AttemptGraded listeners, and only those two', function (): void {
+    /*
+     * The one event here that legitimately has more than one listener, so its
+     * count is asserted separately rather than being left out of the guard
+     * above — an uncovered event is exactly where a silent doubling would hide.
+     *
+     * Two, and they are deliberately separate:
+     *   CompleteLessonOnPassedAttempt   — records progress (Phase 9)
+     *   SendAssessmentResultNotification — emails the result (Phase 11)
+     *
+     * Merging them would mean a failing mail template could stop a lesson
+     * being marked complete. Three would mean discovery is back on.
+     */
+    expect(Event::getListeners(AttemptGraded::class))->toHaveCount(2,
+        '[AttemptGraded] must have exactly two listeners: progress and mail. '
+        .'More usually means listener auto-discovery has been re-enabled.',
+    );
+});
 
 it('registers exactly one listener for each mail transport event', function (string $event): void {
     /*

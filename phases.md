@@ -964,12 +964,35 @@ Phase 10. **No blocking decision.** Per PD-07, this phase is built and tested en
 - No live mail transport is reachable from the development environment (FR-MAIL-09)
 
 ### Definition of Done
-- [ ] All ten transactional emails render, queue and deliver correctly
-- [ ] AC-33 passes
-- [ ] Queue workers process all named queues; failures alert
-- [ ] Scheduler runs every recurring task
-- [ ] No email hardcodes organisation identity
-- [ ] Universal DoD satisfied
+- [ ] All ten transactional emails render, queue and deliver correctly — **8 of 10; see below**
+- [x] AC-33 passes
+- [x] Queue workers process all named queues; failures alert
+- [x] Scheduler runs every recurring task
+- [x] No email hardcodes organisation identity
+- [x] Universal DoD satisfied
+
+> **Status 2026-08-13: everything buildable is built. The phase stays OPEN, and deliberately so.**
+>
+> Infrastructure landed in PR #6. The remaining work was completed once Phases 8 and 9 shipped the
+> triggers it had been waiting for:
+>
+> - `AssessmentResult` — on `AttemptGraded`. Sent for a fail as well as a pass; a student who did
+>   not pass is the one who most needs to know where they stand.
+> - `CourseCompleted` — on Phase 9's `CourseCompleted`. Fires once, on the transition only.
+> - **Admin email log viewer** — `email_logs` had been written since PR #6 and read by nothing. A
+>   delivery record nobody can look at answers no question, and the question is "the student says
+>   they never got it".
+> - **Admin queue-health panel** — depth per named queue, the age of the oldest waiting job, and
+>   failed jobs with retry and discard. `AlertOnFailedJob` shouts; this is where somebody can then
+>   act. Depth reports **null rather than zero** on a non-database driver: a panel confidently
+>   showing "0 pending" against a backed-up Redis queue is worse than one admitting it cannot see.
+>
+> **Two emails remain, and neither can be honestly built yet:** `PurchaseConfirmation` and
+> `PaymentFailed`. Their trigger is a signature-verified payment, which does not exist until
+> Phase 12. Writing them now would mean shipping two mailables no code path can reach and no test
+> can exercise — building ahead (Rule 5) dressed up as completeness. Phase 12 adds both to
+> `MailPreviewController` and to `transactionalEmails()` in `MailBrandingTest`, at which point every
+> branding, queueing and logging guarantee already covers them and this box can be ticked.
 
 ### Deliverables
 Queue infrastructure, worker and scheduler configuration, the complete branded email set, email logging, queue-health tooling, and the mail/queue test suite.

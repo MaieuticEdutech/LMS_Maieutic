@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Events\AttemptGraded;
+use App\Events\CourseCompleted;
 use App\Events\CourseStructureChanged;
 use App\Events\EnrollmentGranted;
 use App\Events\EnrollmentRevoked;
@@ -13,6 +14,8 @@ use App\Listeners\ActivateUserAfterEmailVerification;
 use App\Listeners\AlertOnFailedJob;
 use App\Listeners\CompleteLessonOnPassedAttempt;
 use App\Listeners\LogOutboundEmail;
+use App\Listeners\SendAssessmentResultNotification;
+use App\Listeners\SendCourseCompletedNotification;
 use App\Listeners\SendEnrollmentGrantedNotification;
 use App\Listeners\SendEnrollmentRevokedNotification;
 use App\Listeners\SendPasswordChangedNotification;
@@ -164,6 +167,18 @@ class AppServiceProvider extends ServiceProvider
          * that is Track B's, and grading must not fail because progress did.
          */
         Event::listen(AttemptGraded::class, CompleteLessonOnPassedAttempt::class);
+
+        /*
+         * Phase 11's last two transactional emails, unblocked by Phases 8 and 9
+         * shipping their triggers (FR-MAIL-07).
+         *
+         * Two listeners now hang off AttemptGraded — one records progress, one
+         * sends mail. They are separate on purpose: a failing template must not
+         * be able to stop a lesson being marked complete, which it could if the
+         * two shared a listener.
+         */
+        Event::listen(AttemptGraded::class, SendAssessmentResultNotification::class);
+        Event::listen(CourseCompleted::class, SendCourseCompletedNotification::class);
 
         Event::listen(
             CourseStructureChanged::class,

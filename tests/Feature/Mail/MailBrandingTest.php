@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Models\User;
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\AssessmentResultNotification;
+use App\Notifications\CourseCompletedNotification;
 use App\Notifications\EnrollmentGrantedNotification;
 use App\Notifications\EnrollmentRevokedNotification;
 use App\Notifications\PasswordChangedNotification;
@@ -64,6 +66,10 @@ function renderMail(string $email, User $user): string
         'enrollment-reactivated' => (new EnrollmentGrantedNotification('Example Course', wasReactivated: true))->toMail($user),
         'enrollment-revoked' => (new EnrollmentRevokedNotification('Example Course', 'Refund processed.'))->toMail($user),
         'enrollment-expired' => (new EnrollmentRevokedNotification('Example Course', 'Access period ended.', wasAutomatic: true))->toMail($user),
+        'assessment-passed' => (new AssessmentResultNotification('Example Quiz', 82, true, 'attempt-key'))->toMail($user),
+        'assessment-failed' => (new AssessmentResultNotification('Example Quiz', 41, false, 'attempt-key'))->toMail($user),
+        'assessment-timed-out' => (new AssessmentResultNotification('Example Quiz', 36, false, 'attempt-key', ranOutOfTime: true))->toMail($user),
+        'course-completed' => (new CourseCompletedNotification('Example Course', 12))->toMail($user),
         default => throw new InvalidArgumentException("Unknown email [{$email}]."),
     };
 
@@ -73,8 +79,9 @@ function renderMail(string $email, User $user): string
 /**
  * Every transactional email that exists today.
  *
- * Phases 12, 8 and 9 add their mailables to this list when they build them —
- * at which point these branding guarantees cover them automatically.
+ * Phase 12 adds its two — PurchaseConfirmation and PaymentFailed — to this
+ * list when it builds them, at which point these branding guarantees cover
+ * them automatically. Phases 8 and 9 have since done exactly that.
  *
  * @return list<string>
  */
@@ -89,6 +96,14 @@ function transactionalEmails(): array
         'enrollment-reactivated',
         'enrollment-revoked',
         'enrollment-expired',
+        // Phase 11's last two, unblocked once Phases 8 and 9 shipped their
+        // triggers. Added to THIS list rather than tested separately, so they
+        // inherit every branding guarantee the other eight already carry
+        // instead of a new email quietly having none.
+        'assessment-passed',
+        'assessment-failed',
+        'assessment-timed-out',
+        'course-completed',
     ];
 }
 

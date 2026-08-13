@@ -21,6 +21,11 @@
         ['route' => 'admin.assessments.index', 'label' => 'Assessments', 'icon' => 'assessments'],
         ['route' => 'admin.settings.index', 'label' => 'Settings', 'icon' => 'settings'],
         ['route' => 'admin.audit-log.index', 'label' => 'Audit log', 'icon' => 'audit'],
+        // Phase 11 — operations. Grouped after the domain screens because
+        // they answer questions about the system rather than about a course
+        // or a student.
+        ['route' => 'admin.email-log.index', 'label' => 'Email log', 'icon' => 'mail'],
+        ['route' => 'admin.queue-health.index', 'label' => 'Queue health', 'icon' => 'queue'],
     ];
 
     // Inline SVGs (Lucide-shaped path data, hand-copied — no icon package;
@@ -35,6 +40,8 @@
         'assessments' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path>',
         'settings' => '<line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line>',
         'audit' => '<path d="M9 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M9 3v0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v0"></path><path d="M9 12h6"></path><path d="M9 16h6"></path>',
+        'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>',
+        'queue' => '<path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>',
     ];
 @endphp
 
