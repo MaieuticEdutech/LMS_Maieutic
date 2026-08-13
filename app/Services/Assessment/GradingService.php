@@ -33,6 +33,20 @@ final class GradingService
         // assessment_id is a NOT NULL, RESTRICT-on-delete FK — null here
         // would mean the attempt outlived the row it references, which the
         // database itself refuses to allow.
+        /*
+         * Loaded explicitly, and it matters twice over.
+         *
+         * The loop below reads `$question->options` for every question, which
+         * lazily would be one query per question — an N+1 inside the one
+         * operation a student is actively waiting on — and a
+         * LazyLoadingViolation outside production, where the guard is on.
+         *
+         * SubmitAttempt re-reads the attempt under `lockForUpdate()`, so
+         * whatever the caller had loaded is gone by the time grading runs.
+         * This is where the relations have to be asked for.
+         */
+        $attempt->loadMissing(['assessment.questions.options', 'answers']);
+
         $assessment = $attempt->assessment ?? throw new RuntimeException(
             "Attempt #{$attempt->id} has no assessment — the FK constraint should make this impossible.",
         );

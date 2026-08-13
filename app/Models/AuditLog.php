@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -37,6 +38,9 @@ use LogicException;
  */
 class AuditLog extends Model
 {
+    /** @use HasFactory<\Database\Factories\AuditLogFactory> */
+    use HasFactory;
+
     /**
      * There is no `updated_at` column — the table is append-only.
      */

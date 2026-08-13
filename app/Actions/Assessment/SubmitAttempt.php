@@ -75,7 +75,18 @@ final class SubmitAttempt
                 'max_marks' => $result['maxMarks'],
                 'score_percentage' => $result['percentage'],
                 'is_passed' => $result['passed'],
-                'time_spent_seconds' => max(0, $submittedAt->diffInSeconds($locked->started_at)),
+                /*
+                 * START to SUBMIT, in that order. It was written the other way
+                 * round — `$submittedAt->diffInSeconds($started_at)` — which
+                 * Carbon returns SIGNED, so it was always negative and the
+                 * max(0, …) floored every attempt to zero seconds.
+                 *
+                 * Silent, and wrong in the direction nobody checks: the column
+                 * existed, was populated, and read 0 for every attempt ever
+                 * submitted. Phase 13's reporting would have inherited it as
+                 * "students spend no time on assessments".
+                 */
+                'time_spent_seconds' => max(0, (int) $locked->started_at->diffInSeconds($submittedAt)),
             ])->save();
 
             $performedGrading = true;
