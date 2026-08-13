@@ -34,14 +34,11 @@ use App\Models\User;
  * the right kind of actor"; the Action answers "is this specific attempt
  * allowed right now."
  *
- * THE INSTRUCTOR/ADMIN "READ WITHIN SCOPE" BRANCH IS DEFERRED, same
- * reasoning as `AssessmentPolicy`'s deferred instructor branch (see
- * PROGRESS.md): resolving "the course this attempt's assessment belongs to"
- * requires walking the polymorphic `assessable` relation
- * (Lesson → Module → Course) with type-specific logic that doesn't exist
- * yet. Unlike `EnrollmentPolicy`, there is no direct `course_id` to check
- * `isAssignedTo()` against. Admin still sees everything unconditionally —
- * only the instructor scope is deferred.
+ * THE INSTRUCTOR/ADMIN "READ WITHIN SCOPE" BRANCH IS COMPLETED IN PHASE 10.
+ * Resolved through `$attempt->assessment->resolveCourse()->isAssignedTo()` —
+ * the same polymorphic-chain-then-ask pattern `AssessmentPolicy` now uses.
+ * FR-ASMT-17: instructors may view attempt lists and per-question
+ * breakdowns for their permitted courses only.
  */
 final class AttemptPolicy
 {
@@ -66,8 +63,20 @@ final class AttemptPolicy
             return true;
         }
 
-        // Instructor "within scope" deferred — see class docblock.
-        return $actor->isSuperAdmin();
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $actor->isInstructor()) {
+            return false;
+        }
+
+        // DENY-SAFE: an unresolvable course is denied, never "no
+        // restriction" — same reasoning as AssessmentPolicy's equivalent
+        // guard.
+        $course = $attempt->assessment?->resolveCourse();
+
+        return $course !== null && $course->isAssignedTo($actor);
     }
 
     private function isOwner(User $actor, AssessmentAttempt $attempt): bool

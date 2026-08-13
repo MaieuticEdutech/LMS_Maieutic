@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Assessment;
 use App\Models\AssessmentAttempt;
+use App\Models\Course;
 use App\Models\User;
 
 /*
@@ -75,13 +76,23 @@ it('refuses another student reviewing someone else\'s attempt', function (): voi
     expect($other->can('review', $attempt))->toBeFalse();
 });
 
-it('denies an instructor reviewing an attempt — the deferred scope branch', function (): void {
-    // Documented in AttemptPolicy and PROGRESS.md: resolving "the course
-    // this attempt's assessment belongs to" through the polymorphic
-    // assessable relation isn't built yet, so an instructor is denied
-    // rather than guessed at. Not a bug — see the policy's docblock.
+it('denies an instructor reviewing an attempt on a course they are not assigned to', function (): void {
     $instructor = User::factory()->instructor()->create();
     $attempt = AssessmentAttempt::factory()->graded()->create();
 
     expect($instructor->can('review', $attempt))->toBeFalse();
+});
+
+it('lets an assigned instructor review an attempt on their own course — completed in Phase 10', function (): void {
+    $instructor = User::factory()->instructor()->create();
+    $course = Course::factory()->create();
+    $course->instructors()->attach($instructor);
+
+    $assessment = Assessment::factory()->create([
+        'assessable_type' => Course::class,
+        'assessable_id' => $course->getKey(),
+    ]);
+    $attempt = AssessmentAttempt::factory()->graded()->create(['assessment_id' => $assessment->id]);
+
+    expect($instructor->can('review', $attempt))->toBeTrue();
 });
