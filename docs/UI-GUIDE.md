@@ -252,6 +252,67 @@ Instrument Sans is wired exactly this way today, so the pattern is already prove
 > **Weights are deliberately narrow.** Every extra weight is another file on the critical path. Add
 > one only when a design genuinely needs it — not speculatively.
 
+### Logo — both official variants exist, use them as supplied
+
+The company supplies two official logos. They are in `docs/company logo/`. **Both are transparent
+PNGs**, verified.
+
+| Variant | File | Size | Use on |
+|---|---|---|---|
+| **Red / teal** — the M mark in Red Sea and teal, "aieutic" in red | `image.png` | 205 × 101 | White and paper surfaces |
+| **White** — reversed, with tagline | `image (1).png` | 186 × 63 | `teal-900` panels and any dark surface |
+
+**Where each one goes:**
+
+| Surface | Variant |
+|---|---|
+| Login / auth brand panel (`teal-900`) | **White** |
+| Admin sidebar (`teal-900`) | **White** |
+| Instructor sidebar (`teal-900`) | **White** |
+| Any dark teal section or footer | **White** |
+| Login form panel, public pages, catalogue | **Red / teal** |
+| Email templates, invoices, certificates | **Red / teal** |
+
+#### Rules
+
+1. **Never recolour, invert, redesign or reconstruct the logo.** No `filter: invert()`, no CSS
+   recolouring, no redrawing the M in code. Two official variants exist — pick the right one.
+2. **Never place either variant on a busy or patterned background**, per the brand guideline.
+3. **Never stretch.** Constrain one dimension and let the other follow.
+4. Keep clear space around it — at minimum the height of the M mark on every side.
+5. Give it an accessible name: `alt="Maieutic"`. It is not decorative.
+
+#### The size ceiling — read this before designing a hero
+
+These are small raster files. On a 2× display they stay crisp only up to roughly **half their pixel
+width**:
+
+| Variant | Native | Safe max display width |
+|---|---|---|
+| Red / teal | 205 px | **~100 px** |
+| White | 186 px | **~90 px** |
+
+That is comfortably enough for a sidebar wordmark, a top bar, or an email header. **It is not enough
+for a large hero lockup, a certificate, or print.** Do not design a layout that needs the logo
+bigger than that until vector artwork exists.
+
+For anything larger, keep the reference's approach: set **Maieutic** as live serif text
+(`--font-serif`, 600, `-0.015em`). It scales perfectly, it is already the brand typeface, and it is
+what the prototypes do on the auth panel today.
+
+#### Two things worth knowing
+
+- **The two variants are different lockups, not a colour swap.** The white one carries a tagline the
+  red one does not, and their aspect ratios differ (2.95:1 vs 2.03:1). Do not assume a shared
+  bounding box — size each one for its own placement.
+- **The filenames need fixing when these move into the app.** `image (1).png` has a space and
+  parentheses, which are hostile in URLs and build pipelines. At foundation time they become:
+
+  ```
+  resources/images/logo-maieutic.png          ← red / teal
+  resources/images/logo-maieutic-reversed.png ← white
+  ```
+
 ---
 
 ## 6. Typography
@@ -491,12 +552,105 @@ Numerals for data. Em dashes for asides. Minimal exclamation marks. **No emoji, 
 1. ~~**Font licensing.**~~ **Resolved 2026-08-13** — Newsreader, Hanken Grotesk and JetBrains Mono,
    all SIL Open Font License 1.1, self-hosted through the Vite font pipeline. See §5. The brand
    guideline's Lucida Sans and Posterama are not web-licensed and are not being pursued.
-2. **Logo.** Only a white-background PNG exists. A transparent SVG and a reversed light-on-dark
-   lockup are needed before any `teal-900` panel can carry it. The reference currently sets the
-   wordmark as live serif text.
+2. ~~**Logo.**~~ **Resolved 2026-08-13** — both official variants supplied and verified transparent:
+   red/teal for light surfaces, white for dark. No reversed lockup needs commissioning. See §5.
+   One residual, not blocking: they are small rasters (205 px and 186 px wide), so vector artwork is
+   still wanted for certificates, invoices and print. Live serif text covers large display use until
+   then.
 3. **Icons.** Lucide assumed. Needs self-hosting, and `package.json` is Track C's file.
 4. **Where `sample ui/` lives.** ~300KB of reference HTML plus a React bundle we do not consume. It
    probably belongs in `docs/design/` rather than the application root, and may not belong in git at
    all.
 5. **UI ownership.** Currently Track B owns all views. A per-subdirectory split is under discussion
    and will be settled **after Phase 4 merges**. Until then, follow the existing plan.
+
+---
+
+## 16. Implementation plan
+
+**Nothing in this section starts until Phase 4 is merged.** Srivathsa finishes and merges Phase 4
+first; no UI work below touches his branch while it is in flight.
+
+### Step 0 — the gate
+
+- [ ] Phase 4 merged to `main`
+- [ ] Everyone has pulled `main`
+- [ ] UI ownership decided (open question 5) — this determines who does Steps 3 and 4
+
+### Step 1 — design foundation · one PR, small and fast
+
+The whole system depends on this, so it lands as a single reviewable change and everyone rebases the
+same day.
+
+| Change | File |
+|---|---|
+| Replace the placeholder blue palette with §5's tokens | `resources/css/app.css` |
+| Add the three font families | `vite.config.js` |
+| Move and rename both logos | `resources/images/` |
+| Set base element defaults — serif `h1`–`h3`, mono eyebrow | `resources/css/app.css` |
+
+**Done when:** `npm run build` succeeds, all three fonts self-host into `public/build`, and a
+throwaway page renders serif heading, sans body and tracked mono eyebrow correctly.
+
+**Expect the app to look temporarily wrong.** Existing views are styled against the old blue tokens.
+That is the point of doing it in one hit — the alternative is a slow drift where half the product is
+one palette and half the other.
+
+> Warning: this changes how **every existing screen** renders. It must be a standalone PR — never
+> bundled with feature work — so it can be reverted cleanly if something is off.
+
+### Step 2 — component library · the 12 primitives
+
+Restyle each against the new tokens, working from the reference prototypes. Order matters — later
+ones build on earlier:
+
+1. `button` · `input` · `select` · `textarea` · `checkbox` — the form spine
+2. `card` · `badge` · `table` · `pagination` — the data surfaces
+3. `alert` · `modal` · `empty-state` — feedback and overlays
+
+Each component ships with **all its states**: default, hover, focus-visible, disabled, error,
+loading. A component missing a focus style is not done.
+
+**Done when:** a demo page renders every component in every state, keyboard-navigable, passing
+contrast at 360 px and 1440 px.
+
+### Step 3 — shells · four layouts
+
+Build in this order, because screens are blocked on them:
+
+1. **Auth** — split screen, `teal-900` brand panel + 400 px form column *(unblocks 10 screens)*
+2. **Admin** — 248 px `teal-900` sidebar, drawer below 1024 px
+3. **Student** — content-first top bar
+4. **Public** — editorial, 1240 px, 96 px rhythm
+
+Each shell handles its own responsive collapse, focus trapping and skip-to-content link **before**
+any screen is built inside it. Retrofitting focus management into a finished shell is miserable.
+
+### Step 4 — screens, by phase
+
+Now parallel. Each screen follows the §14 checklist and ships with loading, empty and error states.
+
+| Priority | Screens | Why first |
+|---|---|---|
+| 1 | Auth — all 10 | Already built and functional; only needs restyling. Fastest visible win |
+| 2 | Admin — dashboard, students, instructors, settings | Phase 4's own screens |
+| 3 | Admin — courses, builder | Unblocks Phase 5's UI, whose backend is already merged |
+| 4 | Public — catalogue, course detail | First thing a buyer sees |
+| 5 | Student — dashboard, my courses, player | Needs Phase 6/7 backend |
+| 6 | Assessment, instructor, reporting | Follow their own phases |
+
+### Step 5 — Phase 15
+
+Unchanged, and still needed: cross-browser verification, full WCAG 2.1 AA audit, N+1 profiling,
+responsive sweep at all five breakpoints, component consolidation.
+
+**If Steps 1–4 are done properly, Phase 15 is an audit.** If they are not, it becomes a rewrite.
+That is the whole reason this guide exists.
+
+### What would make this go wrong
+
+- **Skipping Step 1** and styling screens ad hoc — guarantees a Phase 15 rewrite
+- **Building screens before shells** — every screen gets rebuilt when the shell arrives
+- **Treating states as polish** — they are the bulk of the work and they surface last if deferred
+- **Copying the prototypes' inline styles** — produces markup nobody can restyle
+- **Designing around a logo bigger than ~100 px** — the raster assets cannot support it
