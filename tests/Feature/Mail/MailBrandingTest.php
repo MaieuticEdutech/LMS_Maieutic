@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Models\User;
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\EnrollmentGrantedNotification;
+use App\Notifications\EnrollmentRevokedNotification;
 use App\Notifications\PasswordChangedNotification;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
@@ -58,6 +60,10 @@ function renderMail(string $email, User $user): string
         'reset-password' => (new ResetPasswordNotification('token'))->toMail($user),
         'account-activation' => (new AccountActivationNotification('token'))->toMail($user),
         'password-changed' => (new PasswordChangedNotification)->toMail($user),
+        'enrollment-granted' => (new EnrollmentGrantedNotification('Example Course'))->toMail($user),
+        'enrollment-reactivated' => (new EnrollmentGrantedNotification('Example Course', wasReactivated: true))->toMail($user),
+        'enrollment-revoked' => (new EnrollmentRevokedNotification('Example Course', 'Refund processed.'))->toMail($user),
+        'enrollment-expired' => (new EnrollmentRevokedNotification('Example Course', 'Access period ended.', wasAutomatic: true))->toMail($user),
         default => throw new InvalidArgumentException("Unknown email [{$email}]."),
     };
 
@@ -74,7 +80,16 @@ function renderMail(string $email, User $user): string
  */
 function transactionalEmails(): array
 {
-    return ['verify-email', 'reset-password', 'account-activation', 'password-changed'];
+    return [
+        'verify-email',
+        'reset-password',
+        'account-activation',
+        'password-changed',
+        'enrollment-granted',
+        'enrollment-reactivated',
+        'enrollment-revoked',
+        'enrollment-expired',
+    ];
 }
 
 it('renders the organisation name from settings, not config', function (string $email): void {

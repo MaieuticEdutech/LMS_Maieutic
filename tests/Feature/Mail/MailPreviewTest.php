@@ -38,7 +38,11 @@ it('lists every available preview', function (): void {
         ->assertSee('verify-email')
         ->assertSee('reset-password')
         ->assertSee('account-activation')
-        ->assertSee('password-changed');
+        ->assertSee('password-changed')
+        ->assertSee('enrollment-granted')
+        ->assertSee('enrollment-reactivated')
+        ->assertSee('enrollment-revoked')
+        ->assertSee('enrollment-expired');
 });
 
 it('renders each transactional email without error', function (string $slug): void {
@@ -55,6 +59,10 @@ it('renders each transactional email without error', function (string $slug): vo
     'reset-password',
     'account-activation',
     'password-changed',
+    'enrollment-granted',
+    'enrollment-reactivated',
+    'enrollment-revoked',
+    'enrollment-expired',
 ]);
 
 it('returns 404 for an unknown preview name', function (): void {

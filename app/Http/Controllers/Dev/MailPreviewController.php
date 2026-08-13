@@ -7,9 +7,12 @@ namespace App\Http\Controllers\Dev;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\EnrollmentGrantedNotification;
+use App\Notifications\EnrollmentRevokedNotification;
 use App\Notifications\PasswordChangedNotification;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
 use Illuminate\Notifications\Messages\MailMessage;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -65,6 +68,16 @@ final class MailPreviewController extends Controller
             'reset-password' => static fn (User $user): MailMessage => (new ResetPasswordNotification('preview-token-not-a-real-token'))->toMail($user),
             'account-activation' => static fn (User $user): MailMessage => (new AccountActivationNotification('preview-token-not-a-real-token'))->toMail($user),
             'password-changed' => static fn (User $user): MailMessage => (new PasswordChangedNotification)->toMail($user),
+
+            /*
+             * Both enrollment emails have two forms that read very differently,
+             * and both are previewable — the variant is the part most likely to
+             * be got wrong, and the one a reviewer most needs to see.
+             */
+            'enrollment-granted' => static fn (User $user): MailMessage => (new EnrollmentGrantedNotification('Example Course'))->toMail($user),
+            'enrollment-reactivated' => static fn (User $user): MailMessage => (new EnrollmentGrantedNotification('Example Course', wasReactivated: true, expiresAt: CarbonImmutable::now()->addMonths(6)))->toMail($user),
+            'enrollment-revoked' => static fn (User $user): MailMessage => (new EnrollmentRevokedNotification('Example Course', 'Refund processed.'))->toMail($user),
+            'enrollment-expired' => static fn (User $user): MailMessage => (new EnrollmentRevokedNotification('Example Course', 'Access period ended.', wasAutomatic: true))->toMail($user),
         ];
     }
 

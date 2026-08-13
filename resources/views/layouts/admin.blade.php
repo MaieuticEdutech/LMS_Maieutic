@@ -46,6 +46,9 @@
                         ['route' => 'admin.students.index', 'label' => 'Students'],
                         ['route' => 'admin.instructors.index', 'label' => 'Instructors'],
                         ['route' => 'admin.courses.index', 'label' => 'Courses'],
+                        // Phase 6 (Track C). Guarded by the Route::has() check
+                        // below, as every entry here is.
+                        ['route' => 'admin.enrollments.index', 'label' => 'Enrolments'],
                         ['route' => 'admin.settings.index', 'label' => 'Settings'],
                         ['route' => 'admin.audit-log.index', 'label' => 'Audit Log'],
                     ];

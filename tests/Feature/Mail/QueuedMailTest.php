@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Models\User;
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\EnrollmentGrantedNotification;
+use App\Notifications\EnrollmentRevokedNotification;
 use App\Notifications\PasswordChangedNotification;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
@@ -48,6 +50,8 @@ it('implements ShouldQueue on every transactional notification', function (strin
     ResetPasswordNotification::class,
     AccountActivationNotification::class,
     PasswordChangedNotification::class,
+    EnrollmentGrantedNotification::class,
+    EnrollmentRevokedNotification::class,
 ]);
 
 it('places every transactional notification on the named mail queue', function (BaseNotification $notification): void {
@@ -63,6 +67,8 @@ it('places every transactional notification on the named mail queue', function (
     fn () => new ResetPasswordNotification('token'),
     fn () => new AccountActivationNotification('token'),
     fn () => new PasswordChangedNotification,
+    fn () => new EnrollmentGrantedNotification('Example Course'),
+    fn () => new EnrollmentRevokedNotification('Example Course', 'Refund processed.'),
 ]);
 
 /*
