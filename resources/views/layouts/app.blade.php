@@ -30,10 +30,52 @@
         Skip to content
     </a>
 
+    @php($branding = app(\App\Services\Settings\BrandingService::class))
+
     <header class="border-b border-neutral-200 bg-white">
-        <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-            <a href="{{ url('/') }}" class="text-lg font-semibold">{{ config('app.name') }}</a>
-            {{-- Phase 7 adds: Dashboard, My Courses, Profile, Logout. --}}
+        <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8"
+             aria-label="Student navigation">
+            <a href="{{ route('student.home') }}" class="shrink-0">
+                <img src="{{ asset('images/logo-maieutic.png') }}"
+                     alt="{{ $branding->organisationName() }}"
+                     class="h-8 w-auto">
+            </a>
+
+            {{-- Signed-in navigation.
+
+                 Three links written out rather than looped over an array. A
+                 loop would need the array declared in a php block, and a
+                 raw php block in this file stopped every directive after it
+                 from compiling — the resulting error points at an endif
+                 nowhere near the cause. Three items do not need a loop, and
+                 the literal version is both shorter and impossible to get
+                 wrong. --}}
+            @if (auth()->check())
+                <div class="flex items-center gap-1 sm:gap-2">
+                    <a href="{{ route('student.home') }}"
+                       @if (request()->routeIs('student.home')) aria-current="page" @endif
+                       class="rounded-control px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.home') ? 'bg-teal-50 text-teal-700' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900' }}">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ route('student.courses.index') }}"
+                       @if (request()->routeIs('student.courses.*')) aria-current="page" @endif
+                       class="rounded-control px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.courses.*') ? 'bg-teal-50 text-teal-700' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900' }}">
+                        My courses
+                    </a>
+
+                    <a href="{{ route('profile.show') }}"
+                       @if (request()->routeIs('profile.*')) aria-current="page" @endif
+                       class="rounded-control px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('profile.*') ? 'bg-teal-50 text-teal-700' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900' }}">
+                        Profile
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}" class="ml-1">
+                        @csrf
+                        <x-button type="submit" variant="ghost" size="sm">Log out</x-button>
+                    </form>
+                </div>
+            @endif
         </nav>
     </header>
 

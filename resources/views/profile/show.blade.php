@@ -47,6 +47,10 @@
             --}}
         </x-card>
 
+        {{-- Editable details and email, Phase 7. The account card above stays
+             read-only: role and status are an administrator's to set. --}}
+        <livewire:student.profile-form />
+
         <x-card title="Change password" description="Choose a strong password you don't use anywhere else.">
             <form method="POST" action="{{ route('user-password.update') }}" class="space-y-5">
                 @csrf
