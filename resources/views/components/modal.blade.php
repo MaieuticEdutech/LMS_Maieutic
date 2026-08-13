@@ -8,8 +8,29 @@
 {{--
     Accessible dialog, driven by Alpine (bundled with Livewire).
 
-    Opened with:  $dispatch('open-modal', 'delete-course')
-    Closed with:  $dispatch('close-modal', 'delete-course') or Escape.
+    Opened from the BROWSER:  $dispatch('open-modal', 'delete-course')
+    Opened from a COMPONENT:  $this->dispatch('open-modal', 'delete-course')
+    Closed the same way with `close-modal`, or with Escape.
+
+    ═══════════════════════════════════════════════════════════════════════
+    BOTH DISPATCH SOURCES ARE SUPPORTED, AND THEY SEND DIFFERENT SHAPES.
+
+    Alpine's $dispatch passes the payload straight through, so
+    `$event.detail` is the string 'delete-course'.
+
+    Livewire's PHP-side dispatch wraps a scalar payload in an array before it
+    reaches the browser (livewire.esm.js: `if (typeof params === "string")
+    params = [params]`), so `$event.detail` is ['delete-course'].
+
+    A plain `$event.detail === name` therefore matched the browser form and
+    silently ignored the server one: the round-trip completed, the event
+    fired, and no dialog appeared. That was live on the Course Builder's
+    lesson Edit button and on both admin enrolment modals — none of which
+    could fail a Pest test, because Alpine does not run in Pest.
+
+    `modalTarget()` below normalises the two shapes. Do not "simplify" it
+    back to a direct comparison.
+    ═══════════════════════════════════════════════════════════════════════
 
     Accessibility (WCAG 2.1 AA):
       - role="dialog" + aria-modal + aria-labelledby
@@ -39,9 +60,19 @@
 @endphp
 
 <div
-    x-data="{ open: false }"
-    x-on:open-modal.window="if ($event.detail === '{{ $name }}') { open = true; $nextTick(() => $refs.panel.focus()) }"
-    x-on:close-modal.window="if ($event.detail === '{{ $name }}') open = false"
+    x-data="{
+        open: false,
+        /*
+         * Unwraps Livewire's array payload to the plain string Alpine sends.
+         * See the note above — this is why the lesson Edit button and the
+         * enrolment modals did nothing.
+         */
+        modalTarget(detail) {
+            return Array.isArray(detail) ? detail[0] : detail
+        },
+    }"
+    x-on:open-modal.window="if (modalTarget($event.detail) === '{{ $name }}') { open = true; $nextTick(() => $refs.panel.focus()) }"
+    x-on:close-modal.window="if (modalTarget($event.detail) === '{{ $name }}') open = false"
     x-on:keydown.escape.window="open = false"
     x-show="open"
     x-cloak
