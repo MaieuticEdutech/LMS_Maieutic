@@ -219,13 +219,38 @@ palette currently in `resources/css/app.css`.
 **Status colours are fixed.** Green means success, amber means warning, red means danger. Never
 decorative — a red badge must mean something is wrong.
 
-### Fonts
+### Fonts — decided, all three are open source
 
-Self-host via `@fontsource`, exactly as Instrument Sans is today. **No CDN links** — they break the
-CSP and leak user IPs.
+| Family | Role | Licence |
+|---|---|---|
+| **Newsreader** | Serif display — headlines, pull quotes | SIL Open Font License 1.1 |
+| **Hanken Grotesk** | Sans — UI and body | SIL Open Font License 1.1 |
+| **JetBrains Mono** | Mono — eyebrows, labels, metadata | SIL Open Font License 1.1 |
 
-> `package.json` is Track C's file (Shashank). Adding the three font packages needs his sign-off and
-> a recorded Rule 6 justification. Ask first.
+**No licence to buy, no per-domain terms, no attribution in the UI.** The OFL permits commercial
+use, embedding, self-hosting and modification. The only obligation is that the licence text
+accompanies the font files if they are ever redistributed on their own — which we never do.
+
+This closes the earlier question about Lucida Sans and Posterama from the brand guideline. Neither
+is web-licensed, both would cost money per domain, and neither suits an editorial system. The three
+above are the substitutes the design system chose, and they stand.
+
+**Adding them is a `vite.config.js` change, not a `package.json` one.** Laravel's Vite plugin
+downloads fonts at build time via Bunny Fonts and self-hosts the result — no npm dependency, no CDN
+at runtime, no user IPs leaking to Google:
+
+```js
+fonts: [
+    bunny('Newsreader',     { weights: [400, 500, 600] }),
+    bunny('Hanken Grotesk', { weights: [400, 500, 600, 700] }),
+    bunny('JetBrains Mono', { weights: [400, 500] }),
+],
+```
+
+Instrument Sans is wired exactly this way today, so the pattern is already proven in this repo.
+
+> **Weights are deliberately narrow.** Every extra weight is another file on the critical path. Add
+> one only when a design genuinely needs it — not speculatively.
 
 ---
 
@@ -463,9 +488,9 @@ Numerals for data. Em dashes for asides. Minimal exclamation marks. **No emoji, 
 
 ## 15. Open questions — ask, do not guess
 
-1. **Font licensing.** Newsreader / Hanken Grotesk / JetBrains Mono are substitutes chosen by the
-   design system. The brand guideline names Lucida Sans and Posterama, neither web-licensed. If
-   Maieutic owns web licences for the originals, they replace these.
+1. ~~**Font licensing.**~~ **Resolved 2026-08-13** — Newsreader, Hanken Grotesk and JetBrains Mono,
+   all SIL Open Font License 1.1, self-hosted through the Vite font pipeline. See §5. The brand
+   guideline's Lucida Sans and Posterama are not web-licensed and are not being pursued.
 2. **Logo.** Only a white-background PNG exists. A transparent SVG and a reversed light-on-dark
    lockup are needed before any `teal-900` panel can carry it. The reference currently sets the
    wordmark as live serif text.
