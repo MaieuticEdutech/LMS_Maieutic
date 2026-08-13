@@ -133,7 +133,7 @@
                                  is never carried by colour alone (§12). --}}
                             <x-badge :variant="$enrollment->status->badgeVariant()">{{ $enrollment->status->label() }}</x-badge>
 
-                            @if ($enrollment->expires_at !== null && $enrollment->status->grantsAccess())
+                            @if ($enrollment->expires_at !== null && $enrollment->status->isAccessGranting())
                                 <span class="mt-1 block text-xs text-neutral-500">
                                     Until {{ $enrollment->expires_at->format('d M Y') }}
                                 </span>
@@ -149,7 +149,7 @@
                                         wire:click="reinstate({{ $enrollment->id }})"
                                         wire:loading.attr="disabled"
                                     >Reinstate</x-button>
-                                @elseif ($enrollment->status->grantsAccess())
+                                @elseif ($enrollment->status->isAccessGranting())
                                     <x-button variant="ghost" size="sm" wire:click="confirmSuspend({{ $enrollment->id }})">Suspend</x-button>
                                 @endif
 

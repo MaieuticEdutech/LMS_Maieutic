@@ -61,14 +61,27 @@ enum EnrollmentStatus: string
     }
 
     /**
-     * Does this status grant access to course content?
+     * Is this status one of the two that CAN grant access?
      *
-     * READ-ONLY CONVENIENCE FOR DISPLAY, NOT AN ACCESS CHECK. The authority
-     * is `EnrollmentAccessService::grantsAccess()` (rule S-8), which also
-     * considers expiry dates this enum cannot see. Use it to label a row,
-     * never to decide whether to serve content.
+     * ═════════════════════════════════════════════════════════════════════
+     * NOT AN ACCESS CHECK. NEVER USE IT AS ONE.
+     *
+     * The authority is `EnrollmentAccessService::grantsAccess()` (rule S-8),
+     * which also weighs `expires_at` — something this enum cannot see. An
+     * enrolment can be `active` and expired, and this method still returns
+     * true for it.
+     *
+     * DELIBERATELY NOT NAMED `grantsAccess()`. That name collided with the
+     * real gate, and `$enrollment->status->grantsAccess()` read exactly like
+     * an authorisation check while quietly skipping expiry — the kind of
+     * near-miss that gets copied into a policy by someone reading fast.
+     * `isAccessGranting()` describes the STATUS, not a permission.
+     *
+     * Legitimate uses: labelling a row, deciding whether to offer a "suspend"
+     * button. Never: deciding whether to serve a lesson.
+     * ═════════════════════════════════════════════════════════════════════
      */
-    public function grantsAccess(): bool
+    public function isAccessGranting(): bool
     {
         return $this === self::Active || $this === self::Completed;
     }
