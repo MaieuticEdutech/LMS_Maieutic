@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -293,8 +294,39 @@ final class CourseBuilder extends Component
         ));
     }
 
+    /**
+     * Re-render when a child component changes the structure.
+     *
+     * `LessonList` already dispatched `lesson-list-changed` and nothing was
+     * listening, so the header kept whatever it had rendered with. Adding a
+     * lesson updated the tree — that component re-renders itself — while the
+     * summary above it stayed stale until a full page reload.
+     */
+    #[On('lesson-list-changed')]
+    #[On('module-list-changed')]
+    public function structureChanged(): void
+    {
+        // No body needed: receiving the event is what triggers the re-render,
+        // and render() recomputes the counts from the database.
+    }
+
     public function render(): View
     {
+        /*
+         * Counts are loaded HERE rather than in mount(), and this is the whole
+         * bug: the header reads `$course->modules_count` / `lessons_count`,
+         * which are `withCount` aggregates. Nothing ever loaded them, so both
+         * were always absent and rendered as 0 — a course with three modules
+         * reported "0 modules · 0 lessons".
+         *
+         * Loading them in mount() would not have been enough either: every
+         * mutation on this component calls `$course->refresh()`, and refresh()
+         * reloads the row's own columns while DISCARDING aggregates. They have
+         * to be recomputed per render, which is also what makes the count
+         * correct immediately after a child adds a lesson.
+         */
+        $this->course?->loadCount(['modules', 'lessons']);
+
         return view('livewire.admin.courses.builder');
     }
 }
