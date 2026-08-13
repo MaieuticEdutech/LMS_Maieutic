@@ -41,14 +41,49 @@ beforeEach(function (): void {
     $this->storage = app(MediaStorageService::class);
 });
 
+afterEach(function (): void {
+    // Leave nothing behind. These are real files on a real disk — the whole
+    // point of the helper below — so they need real cleanup.
+    $directory = storage_path('framework/testing/uploads');
+
+    if (is_dir($directory)) {
+        foreach (glob($directory.DIRECTORY_SEPARATOR.'upload_*') ?: [] as $file) {
+            @unlink($file);
+        }
+    }
+});
+
 /**
  * Write real bytes to a temp file and wrap it as an upload.
  *
  * The point is that finfo sees genuine content, so the sniff is real.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * WHY NOT sys_get_temp_dir(): this originally wrote into the system temp
+ * directory, and failed on two of three Windows machines while passing on the
+ * third and in CI. On Windows, %TEMP% is a busy shared directory that
+ * real-time antivirus scans on write — and a scanner holding a brief lock is
+ * enough for the finfo_file() read that follows to fail. Nothing in the test
+ * holds a handle open; file_put_contents() closes what it opens.
+ *
+ * Writing inside the project's own storage removes the shared directory, and
+ * with it the interference. A test that passes or fails depending on which
+ * machine runs it is worse than no test, because it teaches the team to
+ * ignore a red suite.
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * The directory is emptied after every test, so a run leaves nothing behind.
  */
 function upload(string $filename, string $bytes, ?string $claimedMime = null): UploadedFile
 {
-    $path = tempnam(sys_get_temp_dir(), 'lmsup');
+    $directory = storage_path('framework/testing/uploads');
+
+    if (! is_dir($directory)) {
+        mkdir($directory, 0777, true);
+    }
+
+    // Unique per call, so parallel or repeated cases never collide.
+    $path = $directory.DIRECTORY_SEPARATOR.'upload_'.bin2hex(random_bytes(8));
     file_put_contents($path, $bytes);
 
     return new UploadedFile(
