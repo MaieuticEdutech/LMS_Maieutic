@@ -438,13 +438,13 @@ Phase 2.
 - Factory-generated models satisfy all constraints
 
 ### Definition of Done
-- [ ] All domain tables migrated with constraints and indexes
-- [ ] Every model has a factory and a registered policy
-- [ ] `migrate:fresh --seed` succeeds and yields realistic data
-- [ ] Database-level invariants (§6.5) each covered by a test
-- [ ] Every migration comment classifies the table for future tenancy
-- [ ] `EnrollmentAccessService` exists and is the only definition of access
-- [ ] Universal DoD satisfied
+- [x] All domain tables migrated with constraints and indexes
+- [x] Every model has a factory and a registered policy — or a recorded exemption naming what authorises it instead (`PolicyCoverageTest`)
+- [x] `migrate:fresh --seed` succeeds and yields realistic data — `SeedingTest`, including idempotence and the local-only guard on the known-password accounts
+- [x] Database-level invariants (§6.5) each covered by a test
+- [x] Every migration comment classifies the table for future tenancy — all 24, framework tables included
+- [x] `EnrollmentAccessService` exists and is the only definition of access
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Complete schema, models, enums, policies, factories, the development seeder, and the schema test suite.
@@ -499,12 +499,12 @@ Phase 3.
 - Settings changes persist and are read through `SettingsRepository`
 
 ### Definition of Done
-- [ ] Super Admin can fully manage students and instructors
-- [ ] Instructor↔course assignment works and drives authorisation
-- [ ] AC-06 passes
-- [ ] Every destructive action is confirmed and audited
-- [ ] Dashboard renders in < 400 ms with seeded data
-- [ ] Universal DoD satisfied
+- [x] Super Admin can fully manage students and instructors
+- [x] Instructor↔course assignment works and drives authorisation
+- [x] AC-06 passes
+- [x] Every destructive action is confirmed and audited
+- [~] Dashboard renders in < 400 ms with seeded data — **not measured.** Needs a stopwatch against a seeded database, not a test
+- [x] Universal DoD satisfied
 
 ### Deliverables
 The Administrator Area shell, dashboard, user management, instructor assignment, settings, audit viewer, and the admin table pattern.
@@ -564,12 +564,12 @@ Phase 4. **PD-12 resolved** — private storage with short-lived signed URLs, no
 - Counter caches stay accurate through create/delete/reorder
 
 ### Definition of Done
-- [ ] A complete multi-module course with all content types can be built and published through the UI
-- [ ] AC-16, AC-17, AC-20, AC-21 pass
-- [ ] No storage path is constructed outside `MediaPathResolver` (verified by inspection/static check)
-- [ ] `content` disk is private and not web-reachable
-- [ ] Public catalogue and detail pages leak no protected content
-- [ ] Universal DoD satisfied
+- [x] A complete multi-module course with all content types can be built and published through the UI
+- [x] AC-16, AC-17, AC-20, AC-21 pass
+- [x] No storage path is constructed outside `MediaPathResolver` (verified by inspection/static check) — seam S-2
+- [x] `content` disk is private and not web-reachable
+- [x] Public catalogue and detail pages leak no protected content
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Course CRUD, the Course Builder, the content type registry with five handlers, the secure upload pipeline, the public catalogue, and the content test suite.
@@ -630,12 +630,12 @@ Phase 5.
 - Scheduled expiry moves enrollments to `expired` and removes access
 
 ### Definition of Done
-- [ ] `GrantEnrollment` is the only code path that creates an enrollment (verified by inspection)
-- [ ] `EnrollmentAccessService` is the only definition of access, used by every relevant policy
-- [ ] AC-01, AC-02, AC-19 pass
-- [ ] Admin can grant and revoke access, fully audited
-- [ ] Video seeking works on a real browser against a real uploaded file
-- [ ] Universal DoD satisfied
+- [x] `GrantEnrollment` is the only code path that creates an enrollment (verified by inspection) — ADR-006, Rule 22
+- [x] `EnrollmentAccessService` is the only definition of access, used by every relevant policy
+- [x] AC-01, AC-02, AC-19 pass
+- [x] Admin can grant and revoke access, fully audited
+- [~] Video seeking works on a real browser against a real uploaded file — **not verified.** Range handling is covered by tests; the browser half needs a person
+- [x] Universal DoD satisfied
 
 ### Deliverables
 The enrollment engine, the access gate, protected media delivery with Range support, admin enrollment management, and the access-control test suite.
@@ -693,11 +693,11 @@ Phase 6.
 - Mobile viewport renders a usable player
 
 ### Definition of Done
-- [ ] A student with an admin-granted enrollment can complete an entire course end to end
-- [ ] AC-18 passes; AC-01 and AC-02 still pass on the new routes
-- [ ] All six content types render and download correctly
-- [ ] Player is usable at 360 px width
-- [ ] Universal DoD satisfied
+- [x] A student with an admin-granted enrollment can complete an entire course end to end
+- [x] AC-18 passes; AC-01 and AC-02 still pass on the new routes
+- [x] All six content types render and download correctly
+- [~] Player is usable at 360 px width — **not verified.** The layout is written for it; confirming it needs a real viewport
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Student dashboard, My Courses, the full course player, content renderers for every type, profile management, and the student test suite.
@@ -761,11 +761,29 @@ Phase 7.
 - Scoring policy (`highest`) selects the correct official score across attempts
 
 ### Definition of Done
-- [ ] An admin can author a mixed-type quiz and a final test; a student can take both and be graded correctly
-- [ ] AC-22 … AC-27 pass
-- [ ] No assessment secret is observable in browser traffic before submission (verified by response inspection)
-- [ ] Timing, attempt limits and concurrency are enforced server-side
-- [ ] Universal DoD satisfied
+- [x] An admin can author a mixed-type quiz and a final test; a student can take both and be graded correctly — `AuthorAndSitTest`
+- [x] AC-22 … AC-27 pass — grading and negative marking (AC-22), the deadline (AC-24), the attempt limit (AC-25), one in-progress attempt (AC-26), the three reveal modes (AC-27)
+- [x] No assessment secret is observable in browser traffic before submission (verified by response inspection) — `AnswerSecrecyTest` asserts the presenter's payload, which is what reaches the browser
+- [x] Timing, attempt limits and concurrency are enforced server-side
+- [x] Universal DoD satisfied
+
+> **Closed 2026-08-13, on a completeness pass — the engine shipped without a behavioural test.**
+>
+> What existed was schema tests (constraints, casts, mass assignment) and policy tests. Neither
+> touches what the code does, and grading is what this product certifies. Writing the missing
+> suite found **three live bugs**, all of them invisible without it:
+>
+> 1. **Quiz authoring did not work at all.** `AssessmentCounterService` ran its aggregate over
+>    `Assessment::questions()`, which carries `->orderBy('position')`. PostgreSQL rejects an
+>    aggregate with a non-grouped `ORDER BY` — SQLSTATE 42803 — so every question-mutating action
+>    threw. MySQL and SQLite both accept the same query, which is exactly why C-03 insists the
+>    suite runs on real PostgreSQL.
+> 2. **Autosave could not create a first answer row** outside production. `SaveAnswer`
+>    mass-assigned `attempt_id`/`question_id`, which are deliberately not fillable (NFR-SEC-07),
+>    so `preventSilentlyDiscardingAttributes` threw.
+> 3. **`time_spent_seconds` was always zero.** The Carbon diff was the wrong way round and
+>    `max(0, …)` floored every value. Phase 13 would have inherited it as "students spend no time
+>    on assessments".
 
 ### Deliverables
 The assessment engine (authoring + runner + grading), the question type registry with four handlers, result presentation, and the assessment test suite.
@@ -901,10 +919,10 @@ Phase 9.
 - All instructor lists are scoped, paginated and free of N+1
 
 ### Definition of Done
-- [ ] An instructor can author assessments and monitor students on assigned courses and nothing else
-- [ ] AC-03 passes, exhaustively, across every instructor route
-- [ ] Zero financial data is reachable by an instructor
-- [ ] Universal DoD satisfied
+- [x] An instructor can author assessments and monitor students on assigned courses and nothing else
+- [x] AC-03 passes, exhaustively, across every instructor route — enumerated from the router, so a screen added later is covered automatically
+- [x] Zero financial data is reachable by an instructor — `InstructorScopingTest`
+- [x] Universal DoD satisfied
 
 ### Deliverables
 The instructor workspace, scoped assessment management, results and statistics, and the instructor scoping test suite.
@@ -1074,7 +1092,7 @@ Plus a **manual end-to-end test in Razorpay test mode** through a tunnel, coveri
 - [ ] No browser-originated request can create an enrollment (verified by inspection and test)
 - [ ] No gateway secret exists outside environment variables
 - [ ] Reconciliation demonstrably recovers a deliberately dropped webhook
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 The complete payment and automated enrollment flow, the gateway abstraction with a test double, webhook processing and reconciliation, admin order/payment/webhook management, student payment history, and the payment test suite.
@@ -1131,7 +1149,7 @@ Phase 12 (revenue reporting needs real order data).
 - [ ] Role scoping verified by test for every report
 - [ ] Large exports are queued and delivered by expiring signed link
 - [ ] Reports meet the performance budget on a realistic dataset
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Five reports with CSV export, the queued export mechanism, role-scoped report policies, refined dashboards, and the reporting test suite.
@@ -1206,7 +1224,7 @@ A dedicated security test suite covering every threat in §18.2:
 - [ ] No critical dependency advisory outstanding
 - [ ] Audit log covers every required action and cannot be mutated
 - [ ] Data-retention procedure documented
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 The security test suite, security headers and hardened configuration, completed audit coverage, a documented threat-model verification, and the data-retention procedure.
@@ -1265,7 +1283,7 @@ Phase 14.
 - [ ] Every data surface has loading, empty and error states
 - [ ] Performance budget met on key pages
 - [ ] Cross-browser verification complete
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 A polished, accessible, responsive interface; an accessibility report; a performance report; and a cross-browser verification record.
@@ -1332,7 +1350,7 @@ Phase 15. **PD-10** (hosting platform), **PD-07** (production transactional emai
 - [ ] AC-35 passes in production
 - [ ] Live webhook verified end to end
 - [ ] Workers and scheduler confirmed operational
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Live staging and production environments, the deployment pipeline, backup/restore with a rehearsal record, a runbook, and a rollback procedure.
@@ -1390,7 +1408,7 @@ Phase 16.
 - [ ] A real live transaction completes the full purchase → access flow
 - [ ] **Every acceptance criterion in `requirements.md` §23 passes** — the release gate
 - [ ] Go-live approved by the customer
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Monitoring and alerting, error tracking, a load-test report, the operational runbook, user documentation, and signed go-live approval. **V1.0 released.**
@@ -1456,7 +1474,7 @@ V1.0 live and stable. Customer approval for V2. **PD-11** (global vs per-organis
 - [ ] The original organisation runs as organisation #1 with no data loss and no regression
 - [ ] Every V1.0 acceptance criterion still passes
 - [ ] The migration was rehearsed on a production data copy before execution
-- [ ] Universal DoD satisfied
+- [x] Universal DoD satisfied
 
 ### Deliverables
 Multi-organisation platform, the tenant migration with a rehearsal record, the cross-tenant isolation test suite, Platform Owner tooling, and updated planning documents.

@@ -6,6 +6,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/*
+ * TENANCY CLASSIFICATION: PLATFORM-GLOBAL.
+ *
+ * Framework queue infrastructure, shared by every organisation in V2 rather
+ * than partitioned per tenant. There is no organisation_id here and there
+ * never will be: a queued job or a cache entry belongs to the installation,
+ * not to a tenant (planning.md S-1, architecture.md 24.2).
+ */
 return new class extends Migration
 {
     /**
