@@ -2,22 +2,22 @@
     <x-card>
         <div class="flex items-start justify-between">
             <div>
-                <h2 class="text-lg font-semibold text-zinc-900">{{ $instructor->name }}</h2>
-                <p class="text-sm text-zinc-500">{{ $instructor->email }}</p>
+                <h2 class="text-lg font-semibold text-neutral-900">{{ $instructor->name }}</h2>
+                <p class="text-sm text-neutral-500">{{ $instructor->email }}</p>
                 @if ($instructor->phone)
-                    <p class="text-sm text-zinc-500">{{ $instructor->phone }}</p>
+                    <p class="text-sm text-neutral-500">{{ $instructor->phone }}</p>
                 @endif
                 @if ($instructor->instructorProfile?->headline)
-                    <p class="mt-2 text-sm font-medium text-zinc-700">{{ $instructor->instructorProfile->headline }}</p>
+                    <p class="mt-2 text-sm font-medium text-neutral-700">{{ $instructor->instructorProfile->headline }}</p>
                 @endif
                 @if ($instructor->instructorProfile?->bio)
-                    <p class="mt-1 text-sm text-zinc-500">{{ $instructor->instructorProfile->bio }}</p>
+                    <p class="mt-1 text-sm text-neutral-500">{{ $instructor->instructorProfile->bio }}</p>
                 @endif
             </div>
             <x-badge :variant="$instructor->status->badgeVariant()">{{ $instructor->status->label() }}</x-badge>
         </div>
 
-        <div class="mt-4 flex flex-wrap gap-2 border-t border-zinc-200 pt-4">
+        <div class="mt-4 flex flex-wrap gap-2 border-t border-neutral-200 pt-4">
             @can('update', $instructor)
                 <x-button :href="route('admin.instructors.edit', $instructor)" variant="secondary" size="sm" wire:navigate>Edit</x-button>
 
@@ -47,7 +47,7 @@
     @can('delete', $instructor)
         <div x-data="{ confirmation: '' }">
             <x-modal name="delete-instructor" title="Delete instructor">
-                <p class="text-sm text-zinc-600">
+                <p class="text-sm text-neutral-600">
                     This soft-deletes <span class="font-medium">{{ $instructor->email }}</span>. Their audit
                     history and authored content are preserved. Type the instructor's email address to confirm.
                 </p>
@@ -60,7 +60,7 @@
                         type="button"
                         wire:click="delete"
                         x-bind:disabled="confirmation !== '{{ $instructor->email }}'"
-                        class="inline-flex items-center justify-center rounded-control bg-danger-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-danger-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center justify-center rounded-control bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Delete instructor
                     </button>

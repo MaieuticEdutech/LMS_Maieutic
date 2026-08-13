@@ -6,7 +6,7 @@
             <x-input wire:model="phone" type="tel" label="Phone (optional)" name="phone" />
 
             @unless ($student)
-                <p class="text-xs text-zinc-500">
+                <p class="text-xs text-neutral-500">
                     No password is set here — the student receives an activation link by email to choose
                     their own, the same as a purchase-created account.
                 </p>

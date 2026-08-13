@@ -26,12 +26,12 @@
 
             @foreach ($instructors as $instructor)
                 <tr wire:key="instructor-{{ $instructor->id }}">
-                    <td class="px-3 py-2 font-medium text-zinc-900">{{ $instructor->name }}</td>
-                    <td class="px-3 py-2 text-zinc-500">{{ $instructor->email }}</td>
+                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $instructor->name }}</td>
+                    <td class="px-3 py-2 text-neutral-500">{{ $instructor->email }}</td>
                     <td class="px-3 py-2"><x-badge :variant="$instructor->status->badgeVariant()">{{ $instructor->status->label() }}</x-badge></td>
-                    <td class="px-3 py-2 text-zinc-500">{{ $instructor->created_at?->format('d M Y') }}</td>
+                    <td class="px-3 py-2 text-neutral-500">{{ $instructor->created_at?->format('d M Y') }}</td>
                     <td class="px-3 py-2 text-right">
-                        <a href="{{ route('admin.instructors.show', $instructor) }}" wire:navigate class="text-brand-600 hover:underline">View</a>
+                        <a href="{{ route('admin.instructors.show', $instructor) }}" wire:navigate class="text-teal-600 hover:underline">View</a>
                     </td>
                 </tr>
             @endforeach

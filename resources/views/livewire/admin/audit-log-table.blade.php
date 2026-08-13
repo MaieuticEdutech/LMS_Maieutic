@@ -28,18 +28,18 @@
 
             @foreach ($entries as $entry)
                 <tr wire:key="audit-log-{{ $entry->id }}">
-                    <td class="whitespace-nowrap px-3 py-2 text-zinc-500">{{ $entry->created_at?->format('d M Y, H:i') }}</td>
-                    <td class="px-3 py-2 font-medium text-zinc-900">{{ $entry->user?->name ?? 'System' }}</td>
-                    <td class="px-3 py-2 font-mono text-xs text-zinc-600">{{ $entry->action }}</td>
-                    <td class="max-w-md px-3 py-2 text-zinc-500">{{ $entry->description }}</td>
-                    <td class="px-3 py-2 text-zinc-500">
+                    <td class="whitespace-nowrap px-3 py-2 text-neutral-500">{{ $entry->created_at?->format('d M Y, H:i') }}</td>
+                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $entry->user?->name ?? 'System' }}</td>
+                    <td class="px-3 py-2 font-mono text-xs text-neutral-600">{{ $entry->action }}</td>
+                    <td class="max-w-md px-3 py-2 text-neutral-500">{{ $entry->description }}</td>
+                    <td class="px-3 py-2 text-neutral-500">
                         @if ($entry->changes)
                             <details>
-                                <summary class="cursor-pointer text-brand-600 hover:underline">View details</summary>
-                                <pre class="mt-1 max-w-md overflow-x-auto whitespace-pre-wrap text-xs text-zinc-500">{{ json_encode($entry->changes, JSON_PRETTY_PRINT) }}</pre>
+                                <summary class="cursor-pointer text-teal-600 hover:underline">View details</summary>
+                                <pre class="mt-1 max-w-md overflow-x-auto whitespace-pre-wrap text-xs text-neutral-500">{{ json_encode($entry->changes, JSON_PRETTY_PRINT) }}</pre>
                             </details>
                         @else
-                            <span class="text-zinc-400">&mdash;</span>
+                            <span class="text-neutral-400">&mdash;</span>
                         @endif
                     </td>
                 </tr>
