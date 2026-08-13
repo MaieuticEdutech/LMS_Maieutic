@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 use App\Livewire\Admin\AuditLogTable;
-use App\Livewire\Admin\CoursesTable;
+use App\Livewire\Admin\Courses\CourseBuilder;
+use App\Livewire\Admin\Courses\CoursesTable;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\InstructorDetail;
 use App\Livewire\Admin\InstructorForm;
@@ -70,7 +71,12 @@ Route::prefix('admin')
         // Phase 4 Checkpoint 5.
         Route::get('/settings', SettingsForm::class)->name('settings.index');
 
-        // Phase 4 Checkpoint 6. Read-only — course CRUD is Phase 5.
+        // Phase 4 Checkpoint 6 shipped this read-only; Phase 5 adds create
+        // and the Course Builder. CourseBuilder is a single combined
+        // meta + structure screen (architecture.md §9.3) — there is no
+        // separate edit route, "editing" a course always means the builder.
         Route::get('/courses', CoursesTable::class)->name('courses.index');
+        Route::get('/courses/create', CourseBuilder::class)->name('courses.create');
+        Route::get('/courses/{course}/builder', CourseBuilder::class)->name('courses.builder');
         Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
     });
