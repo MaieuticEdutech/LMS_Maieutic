@@ -44,12 +44,12 @@
         <x-button type="submit" class="w-full">Activate my account</x-button>
     </form>
 
-    <form method="POST" action="{{ route('activate.resend') }}" class="mt-5 border-t border-zinc-200 pt-5">
+    <form method="POST" action="{{ route('activate.resend') }}" class="mt-5 border-t border-neutral-200 pt-5">
         @csrf
         <input type="hidden" name="email" value="{{ old('email', $email) }}">
-        <p class="text-sm text-zinc-500">
+        <p class="text-sm text-neutral-500">
             Link expired?
-            <button type="submit" class="font-medium text-brand-600 hover:text-brand-700">
+            <button type="submit" class="font-medium text-teal-600 underline-offset-[0.18em] transition-colors hover:text-teal-700 hover:underline">
                 Send me a new one
             </button>
         </p>

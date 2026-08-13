@@ -2,6 +2,7 @@
 
 @section('title', 'Verify your email')
 @section('heading', 'Confirm your email address')
+@section('subheading', 'One step left before you can sign in.')
 
 @section('content')
     {{--
@@ -16,7 +17,7 @@
         </x-alert>
     @endif
 
-    <p class="text-sm text-zinc-600">
+    <p class="text-sm text-neutral-600">
         We've sent a verification link to your email address. Please click it to activate your
         account. If it hasn't arrived, check your spam folder or request a new one below.
     </p>

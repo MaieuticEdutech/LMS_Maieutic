@@ -48,5 +48,5 @@
 
 @section('footer')
     Already have an account?
-    <a href="{{ route('login') }}" class="font-medium text-brand-600 hover:text-brand-700">Sign in</a>
+    <a href="{{ route('login') }}" class="font-medium text-teal-600 underline-offset-[0.18em] transition-colors hover:text-teal-700 hover:underline">Sign in</a>
 @endsection

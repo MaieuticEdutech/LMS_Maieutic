@@ -1,7 +1,8 @@
 @extends('layouts.auth')
 
 @section('title', 'Sign in')
-@section('heading', 'Sign in to your account')
+@section('heading', 'Sign in')
+@section('subheading', 'Welcome back — pick up where you left off.')
 
 @section('content')
     {{--
@@ -38,7 +39,7 @@
         <div class="flex items-center justify-between">
             <x-checkbox name="remember" label="Remember me" :checked="old('remember')" />
 
-            <a href="{{ route('password.request') }}" class="text-sm font-medium text-brand-600 hover:text-brand-700">
+            <a href="{{ route('password.request') }}" class="text-sm font-medium text-teal-600 underline-offset-[0.18em] transition-colors hover:text-teal-700 hover:underline">
                 Forgot password?
             </a>
         </div>
@@ -49,5 +50,5 @@
 
 @section('footer')
     Don't have an account?
-    <a href="{{ route('register') }}" class="font-medium text-brand-600 hover:text-brand-700">Create one</a>
+    <a href="{{ route('register') }}" class="font-medium text-teal-600 underline-offset-[0.18em] transition-colors hover:text-teal-700 hover:underline">Create one</a>
 @endsection

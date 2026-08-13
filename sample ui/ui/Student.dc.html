@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/effects.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/semantic.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/base.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/styles.css">
+<script src="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--surface-page); }
+  a { color: var(--teal-600); }
+  a:hover { color: var(--teal-700); }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+<div data-screen-label="Student app" style="display:flex; min-height:100vh; background:var(--surface-page); font-family:var(--font-sans); color:var(--text-body); font-size:15px; line-height:1.5;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px; flex:none; background:var(--surface-card); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="padding:22px 20px 18px; border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--font-serif); font-size:26px; font-weight:600; letter-spacing:-0.015em; color:var(--teal-600); line-height:1;">Maieutic</div>
+      <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.16em; color:var(--text-muted); margin-top:6px;">STUDENT&nbsp;·&nbsp;LMS</div>
+    </div>
+    <nav style="padding:14px 12px; display:flex; flex-direction:column; gap:2px; flex:1;">
+      <div data-screen="dashboard" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+          Dashboard
+        </div>
+      </div>
+      <div data-screen="mycourses" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isMy }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          My Courses
+        </div>
+      </div>
+      <div data-screen="browse" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88"></polygon></svg>
+          Browse Courses
+        </div>
+      </div>
+      <div data-screen="progress" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isProgress }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 18"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+          My Progress
+        </div>
+      </div>
+      <div data-screen="quizzes" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isQuizzesNav }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg>
+          Tests &amp; Quizzes
+        </div>
+      </div>
+      <div data-screen="profile" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Profile
+        </div>
+      </div>
+    </nav>
+    <div style="padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+      <div style="width:34px; height:34px; border-radius:999px; background:var(--teal-600); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; flex:none;">AS</div>
+      <div style="min-width:0;">
+        <div style="font-weight:600; font-size:13.5px; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Ananya Sharma</div>
+        <div style="font-size:12px; color:var(--text-muted);">Student</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column;">
+    <!-- Topbar -->
+    <header style="height:60px; flex:none; background:rgba(250,249,246,0.85); backdrop-filter:blur(8px); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; padding:0 32px; position:sticky; top:0; z-index:20;">
+      <div style="flex:1; max-width:420px; display:flex; align-items:center; gap:9px; height:38px; padding:0 13px; background:var(--surface-card); border:1px solid var(--border); border-radius:8px; color:var(--text-muted);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font-size:14px;">Search lessons, courses…</span>
+        <span style="margin-left:auto; font-family:var(--font-mono); font-size:11px; border:1px solid var(--border); border-radius:5px; padding:1px 6px;">⌘K</span>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="position:relative; width:36px; height:36px; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-heading); cursor:pointer; background:var(--surface-card);" style-hover="background:var(--surface-sunken);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:999px; background:var(--red-600); border:1.5px solid #fff;"></span>
+      </div>
+      <div style="width:34px; height:34px; border-radius:999px; background:var(--teal-600); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; cursor:pointer;">AS</div>
+    </header>
+
+    <div style="flex:1; padding:36px 40px 64px; max-width:1180px; width:100%; box-sizing:border-box; margin:0 auto;">
+
+      <!-- ============ DASHBOARD ============ -->
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <section data-screen-label="Student dashboard">
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">WEDNESDAY, 13 AUGUST</div>
+          <h1 style="font-family:var(--font-serif); font-size:38px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px; line-height:1.15;">Welcome back, Ananya.</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:16px;">You're 60% through Full-Stack Web Development — one lesson today keeps the streak.</p>
+
+          <div style="display:grid; grid-template-columns: 1fr 300px; gap:20px; margin-bottom:20px;">
+            <!-- Continue learning -->
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:22px; display:flex; gap:20px; align-items:center;">
+              <div style="width:132px; height:92px; border-radius:10px; flex:none; position:relative; overflow:hidden;"><div style="{{ thumbFS }}"></div>
+                <span style="position:absolute; left:10px; bottom:8px; font-family:var(--font-serif); font-size:30px; color:var(--teal-700); opacity:0.55; line-height:1;">F</span>
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:5px;">CONTINUE LEARNING</div>
+                <div style="font-family:var(--font-serif); font-size:21px; font-weight:600; color:var(--text-heading); letter-spacing:-0.01em;">Full-Stack Web Development</div>
+                <div style="font-size:13.5px; color:var(--text-muted); margin:3px 0 12px;">Up next: Closures in practice · Module 2 · 19 min</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="flex:1; height:6px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="width:60%; height:100%; background:var(--teal-600); border-radius:999px;"></div></div>
+                  <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-heading);">60%</span>
+                </div>
+              </div>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ toPlayer }}">Resume lesson</x-import>
+            </div>
+            <!-- Stats -->
+            <div style="display:grid; grid-template-rows:1fr 1fr; gap:12px;">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:16px 20px; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.14em; color:var(--text-muted);">LESSONS COMPLETED</div>
+                <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-family:var(--font-serif); font-size:30px; font-weight:600; color:var(--text-heading);">42</span><span style="font-size:12.5px; color:var(--honeydew); font-weight:600;">+6 this week</span></div>
+              </div>
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:16px 20px; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.14em; color:var(--text-muted);">AVERAGE QUIZ SCORE</div>
+                <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-family:var(--font-serif); font-size:30px; font-weight:600; color:var(--text-heading);">81%</span><span style="font-size:12.5px; color:var(--text-muted);">across 7 attempts</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:28px;">
+            <!-- Upcoming tests -->
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 22px;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;">
+                <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Upcoming tests</h2>
+                <a href="#" onClick="{{ goQuizzes }}" style="font-size:13px; text-decoration:none; font-weight:600;">All tests →</a>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:14px; padding:11px 0; border-top:1px solid var(--border);">
+                  <div style="width:44px; height:44px; border-radius:10px; background:var(--marigold); display:flex; flex-direction:column; align-items:center; justify-content:center; flex:none;"><span style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; color:var(--neutral-600);">AUG</span><span style="font-weight:700; font-size:16px; color:var(--text-heading); line-height:1;">18</span></div>
+                  <div style="flex:1; min-width:0;"><div style="font-weight:600; color:var(--text-heading); font-size:14.5px;">Module 2 quiz — JavaScript essentials</div><div style="font-size:12.5px; color:var(--text-muted);">Full-Stack Web Development · 5 questions · 15 min</div></div>
+                  <button onClick="{{ startQuiz }}" style="font-family:var(--font-sans); font-weight:600; font-size:13px; color:var(--teal-600); background:var(--teal-50); border:none; border-radius:8px; padding:8px 14px; cursor:pointer;" style-hover="background:var(--teal-100);">Start</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:14px; padding:11px 0; border-top:1px solid var(--border);">
+                  <div style="width:44px; height:44px; border-radius:10px; background:var(--marigold); display:flex; flex-direction:column; align-items:center; justify-content:center; flex:none;"><span style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; color:var(--neutral-600);">AUG</span><span style="font-weight:700; font-size:16px; color:var(--text-heading); line-height:1;">22</span></div>
+                  <div style="flex:1; min-width:0;"><div style="font-weight:600; color:var(--text-heading); font-size:14.5px;">SQL joins checkpoint</div><div style="font-size:12.5px; color:var(--text-muted);">SQL &amp; Database Design · 8 questions · 20 min</div></div>
+                  <span style="font-size:12.5px; color:var(--text-muted);">Opens Aug 20</span>
+                </div>
+              </div>
+            </div>
+            <!-- Recent results -->
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 22px;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;">
+                <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Recent results</h2>
+                <a href="#" onClick="{{ goProgress }}" style="font-size:13px; text-decoration:none; font-weight:600;">My progress →</a>
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ recentResults }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex; align-items:center; gap:14px; padding:11px 0; border-top:1px solid var(--border);">
+                    <div style="flex:1; min-width:0;"><div style="font-weight:600; color:var(--text-heading); font-size:14.5px;">{{ r.title }}</div><div style="font-size:12.5px; color:var(--text-muted);">{{ r.course }} · {{ r.date }}</div></div>
+                    <span style="font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--text-heading);">{{ r.score }}</span>
+                    <span style="{{ r.badgeStyle }}">{{ r.badge }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <!-- My courses strip -->
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;">
+            <h2 style="font-family:var(--font-serif); font-size:23px; font-weight:600; margin:0; color:var(--text-heading); letter-spacing:-0.01em;">My courses</h2>
+            <a href="#" onClick="{{ goMyCourses }}" style="font-size:13.5px; text-decoration:none; font-weight:600;">View all →</a>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:18px;">
+            <sc-for list="{{ myCourses }}" as="c" hint-placeholder-count="3">
+              <div onClick="{{ toPlayer }}" style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:box-shadow 200ms var(--ease-standard), transform 200ms var(--ease-standard);" style-hover="box-shadow:var(--shadow-md); transform:translateY(-1px); border-color:var(--border-strong);">
+                <div style="height:110px; position:relative; overflow:hidden;"><div style="{{ c.thumbStyle }}"></div>
+                  <span style="position:absolute; left:14px; bottom:10px; font-family:var(--font-serif); font-size:34px; color:var(--teal-700); opacity:0.5; line-height:1;">{{ c.initial }}</span>
+                </div>
+                <div style="padding:16px 18px 18px;">
+                  <div style="font-weight:600; font-size:15.5px; color:var(--text-heading); letter-spacing:-0.01em; margin-bottom:2px;">{{ c.title }}</div>
+                  <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;">{{ c.instructor }}</div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:1; height:5px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ c.barStyle }}"></div></div>
+                    <span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">{{ c.pct }}%</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ MY COURSES ============ -->
+      <sc-if value="{{ isMy }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="My courses">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:26px;">
+            <div>
+              <h1 style="font-family:var(--font-serif); font-size:34px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">My courses</h1>
+              <p style="margin:0; color:var(--text-muted);">3 enrolled · 42 lessons completed</p>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="secondary" on-click="{{ goBrowse }}">Browse more courses</x-import>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+            <sc-for list="{{ myCourses }}" as="c" hint-placeholder-count="3">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; transition:box-shadow 200ms var(--ease-standard);" style-hover="box-shadow:var(--shadow-md); border-color:var(--border-strong);">
+                <div style="height:132px; position:relative; overflow:hidden;"><div style="{{ c.thumbStyle }}"></div>
+                  <span style="position:absolute; left:16px; bottom:12px; font-family:var(--font-serif); font-size:40px; color:var(--teal-700); opacity:0.5; line-height:1;">{{ c.initial }}</span>
+                </div>
+                <div style="padding:18px 20px 20px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                  <div>
+                    <div style="font-family:var(--font-serif); font-weight:600; font-size:18.5px; color:var(--text-heading); letter-spacing:-0.01em;">{{ c.title }}</div>
+                    <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">{{ c.instructor }}</div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:1; height:6px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ c.barStyle }}"></div></div>
+                    <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-heading);">{{ c.pct }}%</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-muted);">
+                    <span>{{ c.done }} of {{ c.lessons }} lessons</span><span>{{ c.last }}</span>
+                  </div>
+                  <div style="margin-top:auto;">
+                    <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,36px" size="sm" block="{{ true }}" variant="{{ c.btnVariant }}" on-click="{{ toPlayer }}">{{ c.btnLabel }}</x-import>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ BROWSE ============ -->
+      <sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Browse courses">
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">COURSE CATALOGUE</div>
+          <h1 style="font-family:var(--font-serif); font-size:34px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Learn by building.</h1>
+          <p style="margin:0 0 24px; color:var(--text-muted); font-size:16px; max-width:60ch;">Bootcamp-grade software engineering courses, taught through questions — not information dumps.</p>
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+            <div style="flex:1; max-width:340px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,44px" placeholder="Search courses…" on-change="{{ onSearch }}"></x-import>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="5">
+                <button data-cat="{{ ch.name }}" onClick="{{ pickChip }}" style="{{ ch.style }}" style-hover="border-color:var(--border-strong);">{{ ch.name }}</button>
+              </sc-for>
+            </div>
+            <select style="margin-left:auto; font-family:var(--font-sans); font-size:13.5px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px;">
+              <option>Most popular</option><option>Newest</option><option>Price: low to high</option><option>Price: high to low</option>
+            </select>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+            <sc-for list="{{ catalog }}" as="c" hint-placeholder-count="6">
+              <div data-id="{{ c.id }}" onClick="{{ openCourse }}" style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; transition:box-shadow 200ms var(--ease-standard), transform 200ms var(--ease-standard);" style-hover="box-shadow:var(--shadow-md); transform:translateY(-1px); border-color:var(--border-strong);">
+                <div style="height:126px; position:relative; overflow:hidden;"><div style="{{ c.thumbStyle }}"></div>
+                  <span style="position:absolute; left:16px; bottom:12px; font-family:var(--font-serif); font-size:38px; color:var(--teal-700); opacity:0.5; line-height:1;">{{ c.initial }}</span>
+                </div>
+                <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:8px; flex:1;">
+                  <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.14em; color:var(--teal-600);">{{ c.cat }}</div>
+                  <div style="font-family:var(--font-serif); font-weight:600; font-size:18px; color:var(--text-heading); letter-spacing:-0.01em; line-height:1.25;">{{ c.title }}</div>
+                  <p style="margin:0; font-size:13px; color:var(--text-muted); line-height:1.5;">{{ c.desc }}</p>
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:10px; border-top:1px solid var(--border);">
+                    <div style="font-size:12.5px; color:var(--text-muted);">{{ c.instructor }} · {{ c.lessons }} lessons</div>
+                    <div style="font-weight:700; font-size:15.5px; color:var(--text-heading);">{{ c.price }}</div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ COURSE DETAILS ============ -->
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Course details">
+          <a href="#" onClick="{{ goBrowse }}" style="display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; text-decoration:none; margin-bottom:20px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            Back to catalogue
+          </a>
+          <div style="display:grid; grid-template-columns:1fr 340px; gap:32px; align-items:start;">
+            <div>
+              <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">BACKEND · INTERMEDIATE</div>
+              <h1 style="font-family:var(--font-serif); font-size:40px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 12px; line-height:1.12;">System Design Fundamentals</h1>
+              <p style="margin:0 0 8px; font-size:16.5px; color:var(--text-body); line-height:1.6; max-width:62ch;">Scale from a single server to distributed systems. Load balancing, caching, queues, sharding — and the trade-offs behind every choice, examined the Socratic way.</p>
+              <div style="display:flex; align-items:center; gap:10px; margin:16px 0 30px;">
+                <div style="width:34px; height:34px; border-radius:999px; background:var(--neutral-200); color:var(--neutral-700); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12.5px;">KR</div>
+                <div><div style="font-weight:600; font-size:14px; color:var(--text-heading);">Dr. Kavita Rao</div><div style="font-size:12.5px; color:var(--text-muted);">Principal Engineer · ex-Flipkart infrastructure</div></div>
+              </div>
+              <h2 style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading); margin:0 0 14px;">What you'll learn</h2>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; margin-bottom:34px;">
+                <sc-for list="{{ learnPoints }}" as="p" hint-placeholder-count="6">
+                  <div style="display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--text-body);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-top:2px;"><path d="M20 6 9 17l-5-5"></path></svg>
+                    <span>{{ p }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <h2 style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading); margin:0 0 14px;">Course structure</h2>
+              <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface-card);">
+                <sc-for list="{{ previewModules }}" as="m" hint-placeholder-count="4">
+                  <div style="border-top:1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:12px; padding:13px 18px; background:var(--neutral-50);">
+                      <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">{{ m.num }}</span>
+                      <span style="font-weight:600; font-size:14.5px; color:var(--text-heading); flex:1;">{{ m.title }}</span>
+                      <span style="font-size:12.5px; color:var(--text-muted);">{{ m.meta }}</span>
+                    </div>
+                    <sc-for list="{{ m.lessons }}" as="l" hint-placeholder-count="2">
+                      <div style="display:flex; align-items:center; gap:12px; padding:10px 18px 10px 42px; border-top:1px solid var(--neutral-100); font-size:13.5px;">
+                        <sc-if value="{{ l.free }}" hint-placeholder-val="{{ false }}">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--teal-600)" stroke="none" style="flex:none;"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                        </sc-if>
+                        <sc-if value="{{ l.locked }}" hint-placeholder-val="{{ true }}">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neutral-400)" stroke-width="1.75" stroke-linecap="round" style="flex:none;"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        </sc-if>
+                        <span style="{{ l.style }}">{{ l.t }}</span>
+                        <sc-if value="{{ l.free }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:var(--teal-600); background:var(--teal-50); border-radius:999px; padding:2px 9px;">Preview</span></sc-if>
+                        <span style="color:var(--text-muted); font-family:var(--font-mono); font-size:11.5px;">{{ l.dur }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <!-- Purchase card -->
+            <div style="position:sticky; top:84px; background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:var(--shadow-sm);">
+              <div style="height:150px; position:relative; overflow:hidden;"><div style="{{ thumbSD }}"></div>
+                <span style="position:absolute; left:16px; bottom:12px; font-family:var(--font-serif); font-size:44px; color:var(--teal-700); opacity:0.5; line-height:1;">S</span>
+              </div>
+              <div style="padding:20px 22px 22px;">
+                <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:16px;">
+                  <span style="font-family:var(--font-serif); font-size:32px; font-weight:600; color:var(--text-heading);">₹11,999</span>
+                  <span style="font-size:14px; color:var(--text-muted); text-decoration:line-through;">₹15,999</span>
+                </div>
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,44px" block="{{ true }}" on-click="{{ buy }}">Purchase course</x-import>
+                <div style="font-size:12px; color:var(--text-muted); text-align:center; margin:10px 0 16px;">30-day refund guarantee · Lifetime access</div>
+                <div style="display:flex; flex-direction:column; gap:9px; font-size:13.5px; color:var(--text-body); border-top:1px solid var(--border); padding-top:16px;">
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Modules</span><span style="font-weight:600;">6</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Lessons</span><span style="font-weight:600;">42</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Video</span><span style="font-weight:600;">18h 40m</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Level</span><span style="font-weight:600;">Intermediate</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Certificate</span><span style="font-weight:600;">On completion</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ CHECKOUT ============ -->
+      <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Checkout" style="max-width:960px; margin:0 auto;">
+          <a href="#" onClick="{{ openSD }}" style="display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; text-decoration:none; margin-bottom:20px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            Back to course
+          </a>
+          <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 26px;">Checkout</h1>
+          <div style="display:grid; grid-template-columns:1fr 360px; gap:28px; align-items:start;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:26px 28px;">
+              <h2 style="font-family:var(--font-serif); font-size:20px; font-weight:600; margin:0 0 18px; color:var(--text-heading);">Payment method</h2>
+              <div style="display:flex; gap:10px; margin-bottom:22px;">
+                <div style="flex:1; border:1.5px solid var(--teal-600); background:var(--teal-50); border-radius:10px; padding:12px 16px; font-weight:600; font-size:14px; color:var(--teal-700); cursor:pointer;">UPI</div>
+                <div style="flex:1; border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-weight:600; font-size:14px; color:var(--text-muted); cursor:pointer;" style-hover="border-color:var(--border-strong);">Card</div>
+                <div style="flex:1; border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-weight:600; font-size:14px; color:var(--text-muted); cursor:pointer;" style-hover="border-color:var(--border-strong);">Net banking</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="UPI ID" placeholder="ananya@okhdfcbank" hint="You'll approve the request in your UPI app."></x-import>
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Email for receipt" default-value="ananya.sharma@gmail.com"></x-import>
+              </div>
+              <div style="margin-top:24px;">
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,54px" size="lg" block="{{ true }}" loading="{{ paying }}" on-click="{{ pay }}">Pay ₹14,159</x-import>
+                <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; font-size:12px; color:var(--text-muted);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  Payments are encrypted and processed securely.
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:22px 24px;">
+              <h2 style="font-family:var(--font-serif); font-size:18px; font-weight:600; margin:0 0 16px; color:var(--text-heading);">Order summary</h2>
+              <div style="display:flex; gap:14px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+                <div style="width:72px; height:52px; border-radius:8px; flex:none; position:relative; overflow:hidden;"><div style="{{ thumbSD }}"></div></div>
+                <div><div style="font-weight:600; font-size:14px; color:var(--text-heading); line-height:1.3;">System Design Fundamentals</div><div style="font-size:12.5px; color:var(--text-muted);">Dr. Kavita Rao</div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:9px; font-size:14px; padding:16px 0; border-bottom:1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Course price</span><span>₹15,999</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Launch discount</span><span style="color:var(--honeydew); font-weight:600;">− ₹4,000</span></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">GST (18%)</span><span>₹2,160</span></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding-top:16px; font-weight:700; font-size:16.5px; color:var(--text-heading);"><span>Total</span><span>₹14,159</span></div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ PAYMENT SUCCESS ============ -->
+      <sc-if value="{{ isSuccess }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Payment success" style="max-width:560px; margin:40px auto 0; text-align:center; animation:fade-in 400ms var(--ease-out);">
+          <div style="width:72px; height:72px; border-radius:999px; background:var(--teal-50); border:1.5px solid var(--teal-200); display:flex; align-items:center; justify-content:center; margin:0 auto 22px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">ORDER #MAI-2026-04817</div>
+          <h1 style="font-family:var(--font-serif); font-size:36px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 10px;">Payment successful</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:16px; line-height:1.6;">₹14,159 paid via UPI. <strong style="color:var(--text-heading);">System Design Fundamentals</strong> has been added to My Courses, and a receipt is on its way to ananya.sharma@gmail.com.</p>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:18px 22px; display:flex; align-items:center; gap:16px; text-align:left; margin-bottom:26px;">
+            <div style="width:86px; height:60px; border-radius:8px; flex:none; position:relative; overflow:hidden;"><div style="{{ thumbSD }}"></div></div>
+            <div style="flex:1;"><div style="font-weight:600; color:var(--text-heading);">System Design Fundamentals</div><div style="font-size:13px; color:var(--text-muted);">6 modules · 42 lessons · Dr. Kavita Rao</div></div>
+            <span style="font-size:11.5px; font-weight:700; color:var(--teal-700); background:var(--teal-50); border-radius:999px; padding:4px 12px;">Enrolled</span>
+          </div>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ goMyCourses }}">Start learning</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="secondary" on-click="{{ goDash }}">View receipt</x-import>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ COURSE PLAYER ============ -->
+      <sc-if value="{{ isPlayer }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Course player">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+            <div>
+              <a href="#" onClick="{{ goMyCourses }}" style="font-size:12.5px; font-weight:600; text-decoration:none;">My Courses</a>
+              <span style="color:var(--text-subtle); margin:0 6px;">/</span>
+              <span style="font-size:12.5px; color:var(--text-muted);">Full-Stack Web Development</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:12.5px; color:var(--text-muted);">Course progress</span>
+              <div style="width:140px; height:6px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ courseBar }}"></div></div>
+              <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-heading);">{{ coursePct }}%</span>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:320px 1fr; gap:24px; align-items:start;">
+            <!-- Curriculum -->
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; position:sticky; top:84px; max-height:calc(100vh - 110px); overflow-y:auto;">
+              <sc-for list="{{ modules }}" as="m" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex; align-items:center; gap:10px; padding:13px 16px; background:var(--neutral-50); border-bottom:1px solid var(--border); border-top:1px solid var(--border);">
+                    <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">{{ m.num }}</span>
+                    <span style="font-weight:600; font-size:13.5px; color:var(--text-heading); flex:1;">{{ m.title }}</span>
+                    <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">{{ m.count }}</span>
+                  </div>
+                  <sc-if value="{{ m.lockedNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:12.5px; color:var(--text-muted);">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      {{ m.lockedNote }}
+                    </div>
+                  </sc-if>
+                  <sc-for list="{{ m.lessons }}" as="l" hint-placeholder-count="3">
+                    <div data-id="{{ l.id }}" onClick="{{ pickLesson }}" style="{{ l.rowStyle }}" style-hover="background:var(--neutral-50);">
+                      <sc-if value="{{ l.isDone }}" hint-placeholder-val="{{ false }}">
+                        <span style="width:20px; height:20px; border-radius:999px; background:var(--teal-600); display:flex; align-items:center; justify-content:center; flex:none;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                      </sc-if>
+                      <sc-if value="{{ l.isCur }}" hint-placeholder-val="{{ false }}">
+                        <span style="width:20px; height:20px; border-radius:999px; border:1.5px solid var(--teal-600); display:flex; align-items:center; justify-content:center; flex:none;"><svg width="9" height="9" viewBox="0 0 24 24" fill="var(--teal-600)" stroke="none"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></span>
+                      </sc-if>
+                      <sc-if value="{{ l.isOpen }}" hint-placeholder-val="{{ false }}">
+                        <span style="width:20px; height:20px; border-radius:999px; border:1.5px solid var(--neutral-300); flex:none;"></span>
+                      </sc-if>
+                      <sc-if value="{{ l.isLocked }}" hint-placeholder-val="{{ false }}">
+                        <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex:none; color:var(--neutral-400);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                      </sc-if>
+                      <span style="{{ l.tStyle }}">{{ l.t }}</span>
+                      <span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-subtle); flex:none;">{{ l.dur }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <!-- Content -->
+            <div style="min-width:0;">
+              <div style="aspect-ratio:16/9; background:var(--teal-900); border-radius:16px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <div style="position:absolute; inset:0; background:linear-gradient(315deg, rgba(0,97,92,0.5) 0 8%, transparent 8.3%), linear-gradient(315deg, rgba(128,13,7,0.5) 0 11%, transparent 11.3%);"></div>
+                <div style="width:76px; height:76px; border-radius:999px; background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.35); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 200ms var(--ease-standard);" style-hover="background:rgba(255,255,255,0.22);">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" stroke="none" style="margin-left:4px;"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+                </div>
+                <div style="position:absolute; left:20px; bottom:16px; right:20px; display:flex; align-items:center; gap:12px;">
+                  <div style="flex:1; height:4px; background:rgba(255,255,255,0.22); border-radius:999px;"><div style="width:34%; height:100%; background:#fff; border-radius:999px;"></div></div>
+                  <span style="font-family:var(--font-mono); font-size:11.5px; color:rgba(255,255,255,0.85);">06:24 / 19:02</span>
+                </div>
+                <div style="position:absolute; left:20px; top:16px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.14em; color:rgba(255,255,255,0.65);">VIDEO PLACEHOLDER · 1080P</div>
+              </div>
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin:22px 0 4px;">
+                <div>
+                  <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:6px;">{{ curCrumb }}</div>
+                  <h1 style="font-family:var(--font-serif); font-size:28px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0;">{{ curTitle }}</h1>
+                </div>
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ markComplete }}">{{ markLabel }}</x-import>
+              </div>
+              <!-- Tabs -->
+              <div style="display:flex; gap:24px; border-bottom:1px solid var(--border); margin:18px 0 20px;">
+                <button data-tab="overview" onClick="{{ setTab }}" style="{{ tabStyleOverview }}">Overview</button>
+                <button data-tab="notes" onClick="{{ setTab }}" style="{{ tabStyleNotes }}">Notes</button>
+                <button data-tab="resources" onClick="{{ setTab }}" style="{{ tabStyleResources }}">Resources</button>
+              </div>
+              <sc-if value="{{ tabOverview }}" hint-placeholder-val="{{ true }}">
+                <div style="max-width:68ch; font-size:15px; line-height:1.65; color:var(--text-body);">
+                  <p style="margin:0 0 14px;">Why does a function remember variables from a scope that has already finished executing? This lesson works through closures the way an interviewer would — starting from a bug you have almost certainly written.</p>
+                  <p style="margin:0;">You'll trace the scope chain by hand, build a counter factory, and finish by explaining — in one sentence — why closures make private state possible in JavaScript.</p>
+                </div>
+              </sc-if>
+              <sc-if value="{{ tabNotes }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width:68ch; background:var(--marigold); border:1px solid var(--neutral-200); border-radius:12px; padding:18px 22px; font-size:14.5px; line-height:1.65;">
+                  <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.14em; color:var(--neutral-600); margin-bottom:8px;">LESSON NOTES</div>
+                  <p style="margin:0 0 10px;">A closure = a function + the lexical environment it was created in. Three things to remember:</p>
+                  <p style="margin:0;">1. Scope is decided where a function is <em>written</em>, not where it is called. &nbsp;2. Each call creates a fresh environment. &nbsp;3. Returned functions keep their environment alive.</p>
+                </div>
+              </sc-if>
+              <sc-if value="{{ tabResources }}" hint-placeholder-val="{{ false }}">
+                <div style="max-width:560px; display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:12px; background:var(--surface-card); border:1px solid var(--border); border-radius:12px; padding:13px 16px;" style-hover="border-color:var(--border-strong);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v5h5"></path></svg>
+                    <div style="flex:1;"><div style="font-weight:600; font-size:13.5px; color:var(--text-heading);">Closures — worked examples.pdf</div><div style="font-size:12px; color:var(--text-muted);">PDF · 1.2 MB</div></div>
+                    <a href="#" style="font-size:13px; font-weight:600; text-decoration:none;">Download</a>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:12px; background:var(--surface-card); border:1px solid var(--border); border-radius:12px; padding:13px 16px;" style-hover="border-color:var(--border-strong);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v5h5"></path></svg>
+                    <div style="flex:1;"><div style="font-weight:600; font-size:13.5px; color:var(--text-heading);">Scope &amp; closures — slides.pptx</div><div style="font-size:12px; color:var(--text-muted);">PPT · 4.8 MB</div></div>
+                    <a href="#" style="font-size:13px; font-weight:600; text-decoration:none;">Download</a>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:12px; background:var(--surface-card); border:1px solid var(--border); border-radius:12px; padding:13px 16px;" style-hover="border-color:var(--border-strong);">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v5h5"></path></svg>
+                    <div style="flex:1;"><div style="font-weight:600; font-size:13.5px; color:var(--text-heading);">Starter code — counter factory.zip</div><div style="font-size:12px; color:var(--text-muted);">ZIP · 14 KB</div></div>
+                    <a href="#" style="font-size:13px; font-weight:600; text-decoration:none;">Download</a>
+                  </div>
+                </div>
+              </sc-if>
+              <div style="display:flex; justify-content:space-between; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+                <button onClick="{{ prevLesson }}" style="display:flex; align-items:center; gap:8px; font-family:var(--font-sans); font-weight:600; font-size:13.5px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border-strong); border-radius:10px; padding:10px 16px; cursor:pointer;" style-hover="background:var(--surface-sunken);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                  Previous lesson
+                </button>
+                <button onClick="{{ nextLesson }}" style="display:flex; align-items:center; gap:8px; font-family:var(--font-sans); font-weight:600; font-size:13.5px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border-strong); border-radius:10px; padding:10px 16px; cursor:pointer;" style-hover="background:var(--surface-sunken);">
+                  Next lesson
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ TESTS & QUIZZES LIST ============ -->
+      <sc-if value="{{ isQuizzes }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Tests and quizzes">
+          <h1 style="font-family:var(--font-serif); font-size:34px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">Tests &amp; quizzes</h1>
+          <p style="margin:0 0 26px; color:var(--text-muted);">2 upcoming · 7 completed · 81% average</p>
+          <h2 style="font-family:var(--font-serif); font-size:20px; font-weight:600; color:var(--text-heading); margin:0 0 12px;">Upcoming</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:34px;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 22px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div><div style="font-weight:600; font-size:16px; color:var(--text-heading);">Module 2 quiz — JavaScript essentials</div><div style="font-size:13px; color:var(--text-muted); margin-top:2px;">Full-Stack Web Development</div></div>
+                <span style="font-size:11.5px; font-weight:700; color:var(--neutral-700); background:var(--marigold); border-radius:999px; padding:4px 11px; flex:none;">Due Aug 18</span>
+              </div>
+              <div style="display:flex; gap:18px; font-size:13px; color:var(--text-muted);">
+                <span>5 questions</span><span>15 minutes</span><span>2 attempts allowed</span><span>Pass: 70%</span>
+              </div>
+              <div><x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" on-click="{{ startQuiz }}">Start quiz</x-import></div>
+            </div>
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 22px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div><div style="font-weight:600; font-size:16px; color:var(--text-heading);">SQL joins checkpoint</div><div style="font-size:13px; color:var(--text-muted); margin-top:2px;">SQL &amp; Database Design</div></div>
+                <span style="font-size:11.5px; font-weight:700; color:var(--neutral-700); background:var(--marigold); border-radius:999px; padding:4px 11px; flex:none;">Due Aug 22</span>
+              </div>
+              <div style="display:flex; gap:18px; font-size:13px; color:var(--text-muted);">
+                <span>8 questions</span><span>20 minutes</span><span>1 attempt</span><span>Pass: 70%</span>
+              </div>
+              <div><x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary" disabled="{{ true }}">Opens Aug 20</x-import></div>
+            </div>
+          </div>
+          <h2 style="font-family:var(--font-serif); font-size:20px; font-weight:600; color:var(--text-heading); margin:0 0 12px;">Completed</h2>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+            <div style="display:grid; grid-template-columns:2.2fr 1.6fr 0.8fr 0.8fr 0.9fr; gap:12px; padding:11px 22px; background:var(--neutral-50); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.12em; color:var(--text-muted);">
+              <span>ASSESSMENT</span><span>COURSE</span><span>DATE</span><span>SCORE</span><span>RESULT</span>
+            </div>
+            <sc-for list="{{ completedQuizzes }}" as="q" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:2.2fr 1.6fr 0.8fr 0.8fr 0.9fr; gap:12px; padding:14px 22px; border-bottom:1px solid var(--neutral-100); font-size:13.5px; align-items:center;" style-hover="background:var(--neutral-50);">
+                <span style="font-weight:600; color:var(--text-heading);">{{ q.title }}</span>
+                <span style="color:var(--text-muted);">{{ q.course }}</span>
+                <span style="color:var(--text-muted);">{{ q.date }}</span>
+                <span style="font-family:var(--font-mono); font-weight:700; color:var(--text-heading);">{{ q.score }}</span>
+                <span><span style="{{ q.badgeStyle }}">{{ q.badge }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ QUIZ TAKING ============ -->
+      <sc-if value="{{ isQuiz }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Quiz" style="max-width:760px; margin:0 auto;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+            <div>
+              <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:4px;">FULL-STACK WEB DEVELOPMENT</div>
+              <h1 style="font-family:var(--font-serif); font-size:26px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0;">Module 2 quiz — JavaScript essentials</h1>
+            </div>
+            <sc-if value="{{ showTimer }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; align-items:center; gap:8px; background:var(--surface-card); border:1px solid var(--border); border-radius:10px; padding:9px 14px; font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--text-heading);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {{ timeStr }}
+              </div>
+            </sc-if>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+            <span style="font-size:13px; color:var(--text-muted); flex:none;">Question {{ qNum }} of {{ qTotal }}</span>
+            <div style="flex:1; height:5px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ quizBar }}"></div></div>
+            <div style="display:flex; gap:6px; flex:none;">
+              <sc-for list="{{ qDots }}" as="d" hint-placeholder-count="5">
+                <span data-q="{{ d.i }}" onClick="{{ jumpQ }}" style="{{ d.style }}"></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:30px 34px;">
+            <h2 style="font-family:var(--font-serif); font-size:23px; font-weight:600; color:var(--text-heading); letter-spacing:-0.01em; margin:0 0 22px; line-height:1.35;">{{ qText }}</h2>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <sc-for list="{{ qOpts }}" as="o" hint-placeholder-count="4">
+                <div data-opt="{{ o.i }}" onClick="{{ pickOpt }}" style="{{ o.style }}" style-hover="border-color:var(--teal-300);">
+                  <span style="{{ o.dotStyle }}"></span>
+                  <span style="flex:1;">{{ o.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px;">
+            <button onClick="{{ prevQ }}" style="display:flex; align-items:center; gap:8px; font-family:var(--font-sans); font-weight:600; font-size:13.5px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border-strong); border-radius:10px; padding:10px 16px; cursor:pointer;" style-hover="background:var(--surface-sunken);">Previous</button>
+            <span style="font-size:12.5px; color:var(--text-muted);">{{ answeredNote }}</span>
+            <sc-if value="{{ notLastQ }}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ nextQ }}">Next question</x-import>
+            </sc-if>
+            <sc-if value="{{ isLastQ }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ askSubmit }}">Submit quiz</x-import>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ QUIZ RESULT ============ -->
+      <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Quiz result" style="max-width:720px; margin:0 auto; animation:fade-in 400ms var(--ease-out);">
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:36px 40px; display:flex; gap:36px; align-items:center; margin-bottom:22px;">
+            <div style="position:relative; width:132px; height:132px; flex:none;">
+              <svg width="132" height="132" viewBox="0 0 132 132">
+                <circle cx="66" cy="66" r="58" fill="none" stroke="var(--neutral-100)" stroke-width="10"></circle>
+                <circle cx="66" cy="66" r="58" fill="none" stroke="{{ ringColor }}" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{ ringDash }}" transform="rotate(-90 66 66)"></circle>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <span style="font-family:var(--font-serif); font-size:34px; font-weight:600; color:var(--text-heading); line-height:1;">{{ scorePct }}%</span>
+                <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.14em; color:var(--text-muted); margin-top:4px;">SCORE</span>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <span style="{{ resultBadgeStyle }}">{{ resultBadge }}</span>
+              <h1 style="font-family:var(--font-serif); font-size:30px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:12px 0 6px;">{{ resultHeadline }}</h1>
+              <p style="margin:0 0 16px; color:var(--text-muted); font-size:14.5px;">Module 2 quiz — JavaScript essentials · Attempt 1 of 2 · Pass mark 70%</p>
+              <div style="display:flex; gap:26px;">
+                <div><div style="font-family:var(--font-serif); font-size:23px; font-weight:600; color:var(--text-heading);">{{ nCorrect }}</div><div style="font-size:12px; color:var(--text-muted);">Correct</div></div>
+                <div><div style="font-family:var(--font-serif); font-size:23px; font-weight:600; color:var(--text-heading);">{{ nWrong }}</div><div style="font-size:12px; color:var(--text-muted);">Incorrect</div></div>
+                <div><div style="font-family:var(--font-serif); font-size:23px; font-weight:600; color:var(--text-heading);">{{ timeTaken }}</div><div style="font-size:12px; color:var(--text-muted);">Time taken</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:24px;">
+            <div style="padding:15px 24px; border-bottom:1px solid var(--border); font-weight:600; color:var(--text-heading);">Answer review</div>
+            <sc-for list="{{ review }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex; gap:14px; padding:14px 24px; border-bottom:1px solid var(--neutral-100); align-items:flex-start;">
+                <sc-if value="{{ r.ok }}" hint-placeholder-val="{{ true }}">
+                  <span style="width:20px; height:20px; border-radius:999px; background:var(--teal-50); color:var(--teal-600); display:flex; align-items:center; justify-content:center; flex:none; margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                </sc-if>
+                <sc-if value="{{ r.bad }}" hint-placeholder-val="{{ false }}">
+                  <span style="width:20px; height:20px; border-radius:999px; background:var(--red-50); color:var(--red-600); display:flex; align-items:center; justify-content:center; flex:none; margin-top:1px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></span>
+                </sc-if>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-weight:600; font-size:14px; color:var(--text-heading); line-height:1.4;">{{ r.q }}</div>
+                  <div style="font-size:13px; color:var(--text-muted); margin-top:3px;">{{ r.note }}</div>
+                </div>
+                <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted); flex:none;">{{ r.marks }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ toPlayer }}">Back to course</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="secondary" on-click="{{ goQuizzes }}">All tests &amp; quizzes</x-import>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ MY PROGRESS ============ -->
+      <sc-if value="{{ isProgress }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="My progress">
+          <h1 style="font-family:var(--font-serif); font-size:34px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 26px;">My progress</h1>
+          <div style="display:grid; grid-template-columns:320px 1fr; gap:20px; margin-bottom:20px; align-items:stretch;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:26px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+              <div style="position:relative; width:150px; height:150px;">
+                <svg width="150" height="150" viewBox="0 0 150 150">
+                  <circle cx="75" cy="75" r="65" fill="none" stroke="var(--neutral-100)" stroke-width="11"></circle>
+                  <circle cx="75" cy="75" r="65" fill="none" stroke="var(--teal-600)" stroke-width="11" stroke-linecap="round" stroke-dasharray="237 408" transform="rotate(-90 75 75)"></circle>
+                </svg>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <span style="font-family:var(--font-serif); font-size:38px; font-weight:600; color:var(--text-heading); line-height:1;">58%</span>
+                  <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.14em; color:var(--text-muted); margin-top:5px;">OVERALL</span>
+                </div>
+              </div>
+              <div style="text-align:center; font-size:13px; color:var(--text-muted);">42 of 73 lessons completed<br>across 3 courses</div>
+            </div>
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px;">
+                <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Learning activity</h2>
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">LAST 12 WEEKS · LESSONS / WEEK</span>
+              </div>
+              <div style="display:flex; align-items:flex-end; gap:10px; height:150px;">
+                <sc-for list="{{ activity }}" as="w" hint-placeholder-count="12">
+                  <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                    <span style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">{{ w.n }}</span>
+                    <div style="{{ w.style }}"></div>
+                    <span style="font-family:var(--font-mono); font-size:9px; color:var(--text-subtle);">{{ w.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:20px;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:22px 26px;">
+              <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0 0 16px; color:var(--text-heading);">Course-wise progress</h2>
+              <div style="display:flex; flex-direction:column; gap:18px;">
+                <sc-for list="{{ myCourses }}" as="c" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:7px;">
+                      <span style="font-weight:600; color:var(--text-heading);">{{ c.title }}</span>
+                      <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">{{ c.done }}/{{ c.lessons }} · {{ c.pct }}%</span>
+                    </div>
+                    <div style="height:7px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ c.barStyle }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:22px 26px;">
+              <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0 0 12px; color:var(--text-heading);">Assessment scores</h2>
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ completedQuizzes }}" as="q" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--neutral-100);">
+                    <div style="flex:1; min-width:0;"><div style="font-weight:600; font-size:13.5px; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ q.title }}</div><div style="font-size:12px; color:var(--text-muted);">{{ q.date }}</div></div>
+                    <span style="font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-heading);">{{ q.score }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ PROFILE ============ -->
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Profile" style="max-width:720px;">
+          <h1 style="font-family:var(--font-serif); font-size:34px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 26px;">Profile</h1>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:26px 30px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:18px; margin-bottom:24px;">
+              <div style="width:64px; height:64px; border-radius:999px; background:var(--teal-600); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:22px;">AS</div>
+              <div>
+                <div style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading);">Ananya Sharma</div>
+                <div style="font-size:13px; color:var(--text-muted);">Student since March 2026 · 3 courses</div>
+              </div>
+              <div style="margin-left:auto;"><x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary">Change photo</x-import></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Full name" default-value="Ananya Sharma"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Email" default-value="ananya.sharma@gmail.com"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Phone" default-value="+91 98204 33187"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="City" default-value="Pune, Maharashtra"></x-import>
+            </div>
+            <div style="margin-top:22px; display:flex; gap:10px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ saveProfile }}">Save changes</x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost">Cancel</x-import>
+            </div>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:24px 30px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:600; font-size:15.5px; color:var(--text-heading);">Password</div>
+              <div style="font-size:13px; color:var(--text-muted);">Last changed 4 months ago</div>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary">Change password</x-import>
+          </div>
+        </section>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ============ CONFIRM DIALOG ============ -->
+  <sc-if value="{{ showConfirm }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(26,24,21,0.4); z-index:100; display:flex; align-items:center; justify-content:center; animation:fade-in 200ms var(--ease-out);">
+      <div style="width:440px; background:var(--surface-card); border-radius:16px; box-shadow:var(--shadow-lg); padding:28px 30px;">
+        <h2 style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading); margin:0 0 8px;">Submit quiz?</h2>
+        <p style="margin:0 0 22px; font-size:14.5px; color:var(--text-muted); line-height:1.55;">{{ confirmNote }} You won't be able to change your answers after submitting. This uses attempt 1 of 2.</p>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost" on-click="{{ cancelSubmit }}">Keep answering</x-import>
+          <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ confirmSubmit }}">Submit quiz</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOAST ============ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:28px; left:50%; transform:translateX(-50%); z-index:110; background:var(--teal-900); color:#fff; border-radius:12px; padding:13px 20px; display:flex; align-items:center; gap:11px; box-shadow:var(--shadow-lg); animation:toast-in 300ms var(--ease-out); font-size:14px; font-weight:500;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hosta)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+      {{ toast }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;startScreen&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;dashboard&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;dashboard&quot;, &quot;mycourses&quot;, &quot;browse&quot;, &quot;coursedetail&quot;, &quot;checkout&quot;, &quot;player&quot;, &quot;quizzes&quot;, &quot;quiz&quot;, &quot;progress&quot;, &quot;profile&quot;], &quot;section&quot;: &quot;Prototype&quot; },
+  &quot;showQuizTimer&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Prototype&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    screen: null, tab: 'overview', curId: '1-2', done: { '0-0': 1, '0-1': 1, '0-2': 1, '1-0': 1, '1-1': 1, '1-3': 1, '2-0': 1, '2-1': 1 },
+    showConfirm: false, toast: null, paying: false,
+    qIndex: 0, answers: {}, quizSecs: 900, search: '', cat: 'All',
+  };
+
+  QUESTIONS = [
+    { q: 'What does `typeof null` evaluate to?', opts: ['"null"', '"object"', '"undefined"', '"string"'], key: 1, note: 'A long-standing quirk: null is reported as "object".' },
+    { q: 'Which statement about `const` is true?', opts: ['The variable binding cannot be reassigned', 'The value becomes deeply immutable', 'It is hoisted and initialised to undefined', 'It always creates a global binding'], key: 0, note: 'const freezes the binding, not the value.' },
+    { q: 'What is a closure?', opts: ['A function bundled with its lexical scope', 'A method attached to an object', 'A block-scoped variable', 'An immediately invoked function expression'], key: 0, note: 'Scope is captured where the function is written.' },
+    { q: 'Which of these is NOT a primitive type?', opts: ['symbol', 'bigint', 'array', 'boolean'], key: 2, note: 'Arrays are objects — typeof [] === "object".' },
+    { q: 'What does `Promise.all` do when one promise rejects?', opts: ['Waits for the rest, then resolves', 'Rejects immediately with that reason', 'Resolves with partial results', 'Retries the rejected promise'], key: 1, note: 'Use Promise.allSettled to collect every outcome.' },
+  ];
+
+  MODULES = [
+    { title: 'Foundations of the web', lessons: [ { t: 'How the web works', dur: '12m' }, { t: 'HTML that means something', dur: '18m' }, { t: 'CSS layout systems', dur: '24m' } ] },
+    { title: 'JavaScript essentials', lessons: [ { t: 'Values, types & coercion', dur: '16m' }, { t: 'Functions & scope', dur: '22m' }, { t: 'Closures in practice', dur: '19m' }, { t: 'The DOM & events', dur: '21m' }, { t: 'Async, promises & fetch', dur: '28m' } ] },
+    { title: 'Backend with Laravel', lessons: [ { t: 'Routing & controllers', dur: '26m' }, { t: 'Eloquent & the database', dur: '31m' }, { t: 'Auth & middleware', dur: '24m' }, { t: 'Building a REST API', dur: '33m' } ] },
+    { title: 'Shipping & beyond', locked: 'Unlocks after Module 3', lessons: [ { t: 'Testing your app', dur: '27m' }, { t: 'Deployment basics', dur: '22m' }, { t: 'Capstone project brief', dur: '15m' } ] },
+  ];
+
+  CATALOG = [
+    { id: 'sd', title: 'System Design Fundamentals', cat: 'BACKEND', desc: 'Scale from one server to distributed systems — load balancing, caching, queues and the trade-offs behind them.', instructor: 'Dr. Kavita Rao', lessons: 42, price: '₹11,999', tint: 'var(--teal-50)' },
+    { id: 'do', title: 'DevOps & Cloud Foundations', cat: 'DEVOPS', desc: 'CI/CD pipelines, containers and infrastructure as code — deploy with confidence, not superstition.', instructor: 'Sameer Kulkarni', lessons: 38, price: '₹9,499', tint: 'var(--marigold)' },
+    { id: 're', title: 'React & Modern Frontend', cat: 'FRONTEND', desc: 'Components, state and data flow. Build interfaces you can reason about under pressure.', instructor: 'Meera Pillai', lessons: 44, price: '₹8,999', tint: 'var(--bluestar)' },
+    { id: 'py', title: 'Python for Backend Engineering', cat: 'BACKEND', desc: 'From clean scripts to production APIs — typing, testing and the standard library that matters.', instructor: 'Arjun Mehta', lessons: 40, price: '₹7,499', tint: 'var(--neutral-100)' },
+    { id: 'tq', title: 'Testing & Code Quality', cat: 'PRACTICE', desc: 'Unit, integration and end-to-end. Write tests that catch bugs instead of decorating pull requests.', instructor: 'Nikhil Bose', lessons: 26, price: '₹5,999', tint: 'var(--teal-50)' },
+    { id: 'ip', title: 'Interview Preparation: DSA & Systems', cat: 'CAREER', desc: 'Patterns over memorisation — arrays to graphs, plus the system design round, question by question.', instructor: 'Priya Nair', lessons: 32, price: '₹6,999', tint: 'var(--marigold)' },
+  ];
+
+  MY_COURSES = [
+    { title: 'Full-Stack Web Development', instructor: 'Arjun Mehta', lessons: 15, tint: 'var(--teal-50)' },
+    { title: 'Data Structures & Algorithms in Practice', instructor: 'Priya Nair', lessons: 36, done: 12, pct: 33, last: '3 days ago', tint: 'var(--marigold)' },
+    { title: 'SQL & Database Design', instructor: 'Rohan Iyer', lessons: 24, done: 21, pct: 88, last: 'Last week', tint: 'var(--bluestar)' },
+  ];
+
+  COMPLETED = [
+    { title: 'Module 1 quiz — Foundations', course: 'Full-Stack Web Development', date: 'Aug 4', score: '90%', pass: true },
+    { title: 'Arrays & strings test', course: 'DS & Algorithms in Practice', date: 'Jul 29', score: '76%', pass: true },
+    { title: 'Big-O basics checkpoint', course: 'DS & Algorithms in Practice', date: 'Jul 21', score: '64%', pass: false },
+    { title: 'Normalisation quiz', course: 'SQL & Database Design', date: 'Jul 14', score: '88%', pass: true },
+    { title: 'SELECT fundamentals', course: 'SQL & Database Design', date: 'Jul 6', score: '95%', pass: true },
+  ];
+
+  thumb(tint) {
+    return { position: 'absolute', inset: 0, background: `linear-gradient(315deg, var(--teal-600) 0 8%, transparent 8.4%), linear-gradient(315deg, var(--red-600) 0 11%, transparent 11.4%), ${tint}` };
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  renderVals() {
+    const S = this.state;
+    const screen = S.screen || this.props.startScreen || 'dashboard';
+    const set = (p) => this.setState(p);
+    const go = (scr) => (e) => { if (e && e.preventDefault) e.preventDefault(); set({ screen: scr }); };
+    const pill = { fontSize: '11.5px', fontWeight: 700, borderRadius: '999px', padding: '3px 10px' };
+    const passStyle = { ...pill, color: 'var(--teal-700)', background: 'var(--teal-50)' };
+    const failStyle = { ...pill, color: 'var(--red-600)', background: 'var(--red-50)' };
+    const barFill = (pct) => ({ width: pct + '%', height: '100%', background: 'var(--teal-600)', borderRadius: '999px' });
+
+    // curriculum
+    const doneCount = Object.keys(S.done).length;
+    const total = 15;
+    const coursePct = Math.round((doneCount / total) * 100);
+    let curTitle = '', curCrumb = '';
+    const modules = this.MODULES.map((m, mi) => ({
+      num: '0' + (mi + 1), title: m.title, lockedNote: m.locked || false,
+      count: m.lessons.filter((_, li) => S.done[mi + '-' + li]).length + '/' + m.lessons.length,
+      lessons: m.lessons.map((l, li) => {
+        const id = mi + '-' + li;
+        const isDone = !!S.done[id], isCur = id === S.curId, isLocked = !!m.locked;
+        if (isCur) { curTitle = l.t; curCrumb = 'MODULE ' + (mi + 1) + ' · ' + m.title.toUpperCase() + ' · ' + l.dur.replace('m', ' MIN'); }
+        return {
+          id, t: l.t, dur: l.dur, isDone: isDone && !isCur, isCur, isLocked, isOpen: !isDone && !isCur && !isLocked,
+          rowStyle: { display: 'flex', alignItems: 'center', gap: '11px', padding: '10px 16px', cursor: isLocked ? 'not-allowed' : 'pointer', background: isCur ? 'var(--teal-50)' : 'transparent', opacity: isLocked ? 0.55 : 1, borderLeft: isCur ? '3px solid var(--teal-600)' : '3px solid transparent' },
+          tStyle: { flex: 1, fontSize: '13.5px', lineHeight: 1.35, color: isCur ? 'var(--teal-800)' : 'var(--text-body)', fontWeight: isCur ? 600 : 400 },
+        };
+      }),
+    }));
+
+    // my courses (first course progress live)
+    const myCourses = this.MY_COURSES.map((c, i) => {
+      const pct = i === 0 ? coursePct : c.pct;
+      const done = i === 0 ? doneCount : c.done;
+      const last = i === 0 ? 'Today' : c.last;
+      return { ...c, pct, done, last, initial: c.title[0], thumbStyle: this.thumb(c.tint), barStyle: barFill(pct), btnVariant: pct >= 100 ? 'secondary' : 'primary', btnLabel: pct >= 100 ? 'Review course' : 'Continue learning' };
+    });
+
+    // catalogue
+    const chips = ['All', 'Frontend', 'Backend', 'DevOps', 'Practice', 'Career'].map((name) => ({
+      name,
+      style: { fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '999px', padding: '8px 15px', border: name === S.cat ? '1px solid var(--teal-600)' : '1px solid var(--border)', background: name === S.cat ? 'var(--teal-50)' : 'var(--surface-card)', color: name === S.cat ? 'var(--teal-700)' : 'var(--text-muted)' },
+    }));
+    const catalog = this.CATALOG
+      .filter((c) => S.cat === 'All' || c.cat === S.cat.toUpperCase())
+      .filter((c) => !S.search || c.title.toLowerCase().includes(S.search.toLowerCase()))
+      .map((c) => ({ ...c, initial: c.title[0], thumbStyle: this.thumb(c.tint) }));
+
+    // quiz
+    const Q = this.QUESTIONS, qi = S.qIndex, ans = S.answers;
+    const answered = Object.keys(ans).length;
+    const qOpts = Q[qi].opts.map((t, i) => {
+      const on = ans[qi] === i;
+      return {
+        t, i,
+        style: { display: 'flex', alignItems: 'center', gap: '13px', padding: '14px 18px', borderRadius: '12px', cursor: 'pointer', fontSize: '15px', color: 'var(--text-body)', border: on ? '1.5px solid var(--teal-600)' : '1px solid var(--border)', background: on ? 'var(--teal-50)' : 'var(--surface-card)', transition: 'border-color 150ms var(--ease-standard), background 150ms var(--ease-standard)' },
+        dotStyle: { width: '18px', height: '18px', borderRadius: '999px', flex: 'none', border: on ? '5.5px solid var(--teal-600)' : '1.5px solid var(--neutral-300)', background: '#fff', boxSizing: 'border-box' },
+      };
+    });
+    const qDots = Q.map((_, i) => ({
+      i,
+      style: { width: '9px', height: '9px', borderRadius: '999px', cursor: 'pointer', display: 'inline-block', background: i === qi ? 'var(--teal-600)' : ans[i] != null ? 'var(--teal-300)' : 'var(--neutral-200)' },
+    }));
+    const mm = Math.floor(S.quizSecs / 60), ss = S.quizSecs % 60;
+
+    // result
+    const nCorrect = Q.reduce((n, q, i) => n + (ans[i] === q.key ? 1 : 0), 0);
+    const scorePct = Math.round((nCorrect / Q.length) * 100);
+    const passed = scorePct >= 70;
+    const review = Q.map((q, i) => ({
+      q: q.q.replace(/`/g, ''), ok: ans[i] === q.key, bad: ans[i] !== q.key,
+      note: ans[i] === q.key ? 'Correct — ' + q.note : (ans[i] == null ? 'Not answered. ' : 'Your answer: ' + q.opts[ans[i]].replace(/`/g, '') + '. ') + 'Correct: ' + q.opts[q.key].replace(/`/g, '') + '.',
+      marks: (ans[i] === q.key ? '2/2' : '0/2'),
+    }));
+
+    const activity = [3, 5, 2, 6, 4, 7, 5, 3, 6, 8, 4, 6].map((n, i) => ({
+      n, label: 'W' + (i + 1),
+      style: { width: '100%', borderRadius: '5px 5px 2px 2px', height: (n / 8) * 100 + '%', background: i === 11 ? 'var(--teal-600)' : 'var(--teal-200)' },
+    }));
+
+    return {
+      // nav
+      nav: (e) => set({ screen: e.currentTarget.dataset.screen }),
+      isDash: screen === 'dashboard', isMy: screen === 'mycourses', isBrowse: screen === 'browse',
+      isDetail: screen === 'coursedetail', isCheckout: screen === 'checkout', isSuccess: screen === 'success',
+      isPlayer: screen === 'player', isQuizzes: screen === 'quizzes', isQuizzesNav: screen === 'quizzes' || screen === 'quiz' || screen === 'quizresult',
+      isQuiz: screen === 'quiz', isResult: screen === 'quizresult', isProgress: screen === 'progress', isProfile: screen === 'profile',
+      goDash: go('dashboard'), goMyCourses: go('mycourses'), goBrowse: go('browse'), goQuizzes: go('quizzes'), goProgress: go('progress'),
+      toPlayer: go('player'), openSD: go('coursedetail'),
+      openCourse: (e) => set({ screen: 'coursedetail' }),
+      buy: go('checkout'),
+      pay: () => { set({ paying: true }); setTimeout(() => set({ paying: false, screen: 'success' }), 1400); },
+      paying: S.paying,
+
+      // dashboard
+      thumbFS: this.thumb('var(--teal-50)'), thumbSD: this.thumb('var(--teal-50)'),
+      recentResults: this.COMPLETED.slice(0, 3).map((r) => ({ ...r, badge: r.pass ? 'Pass' : 'Fail', badgeStyle: r.pass ? passStyle : failStyle })),
+      myCourses, chips, catalog,
+      pickChip: (e) => set({ cat: e.currentTarget.dataset.cat }),
+      onSearch: (e) => set({ search: e.target.value }),
+
+      // course detail
+      learnPoints: [
+        'Design for horizontal scale from day one',
+        'Choose between SQL and NoSQL with evidence',
+        'Apply caching without introducing staleness bugs',
+        'Decouple services with queues and events',
+        'Reason about consistency, availability and partitions',
+        'Walk a system design interview end to end',
+      ],
+      previewModules: [
+        { num: '01', title: 'Thinking in systems', meta: '5 lessons · 1h 50m', lessons: [
+          { t: 'What breaks at scale?', dur: '14m', free: true, locked: false, style: { flex: 1, color: 'var(--text-body)' } },
+          { t: 'Latency, throughput & the numbers to memorise', dur: '22m', free: true, locked: false, style: { flex: 1, color: 'var(--text-body)' } },
+          { t: 'Vertical vs horizontal scaling', dur: '18m', free: false, locked: true, style: { flex: 1, color: 'var(--text-muted)' } },
+        ] },
+        { num: '02', title: 'Load balancing & caching', meta: '8 lessons · 3h 05m', lessons: [] },
+        { num: '03', title: 'Databases at scale', meta: '9 lessons · 3h 40m', lessons: [] },
+        { num: '04', title: 'Queues, events & async work', meta: '7 lessons · 2h 45m', lessons: [] },
+        { num: '05', title: 'Designing real systems', meta: '8 lessons · 4h 10m', lessons: [] },
+        { num: '06', title: 'The interview round', meta: '5 lessons · 2h 30m', lessons: [] },
+      ],
+
+      // player
+      modules, coursePct, courseBar: barFill(coursePct), curTitle, curCrumb,
+      markLabel: S.done[S.curId] ? 'Completed ✓' : 'Mark complete',
+      pickLesson: (e) => { const id = e.currentTarget.dataset.id; const mi = +id.split('-')[0]; if (this.MODULES[mi].locked) return; set({ curId: id, tab: 'overview' }); },
+      markComplete: () => { if (S.done[S.curId]) return; const done = { ...S.done, [S.curId]: 1 }; set({ done, toast: 'Lesson marked complete — nice work.' }); clearTimeout(this._toastT); this._toastT = setTimeout(() => this.setState({ toast: null }), 2600); },
+      prevLesson: () => this._step(-1), nextLesson: () => this._step(1),
+      setTab: (e) => set({ tab: e.currentTarget.dataset.tab }),
+      tabOverview: S.tab === 'overview', tabNotes: S.tab === 'notes', tabResources: S.tab === 'resources',
+      tabStyleOverview: this._tabStyle(S.tab === 'overview'), tabStyleNotes: this._tabStyle(S.tab === 'notes'), tabStyleResources: this._tabStyle(S.tab === 'resources'),
+
+      // quizzes
+      completedQuizzes: this.COMPLETED.map((q) => ({ ...q, badge: q.pass ? 'Pass' : 'Fail', badgeStyle: q.pass ? passStyle : failStyle })),
+      startQuiz: (e) => { if (e && e.preventDefault) e.preventDefault(); set({ screen: 'quiz', qIndex: 0, answers: {}, quizSecs: 900 }); clearInterval(this._t); this._t = setInterval(() => this.setState((s) => s.quizSecs > 0 ? { quizSecs: s.quizSecs - 1 } : {}), 1000); },
+
+      // quiz
+      showTimer: this.props.showQuizTimer !== false,
+      timeStr: mm + ':' + String(ss).padStart(2, '0'),
+      qNum: qi + 1, qTotal: Q.length, qText: Q[qi].q.replace(/`(.*?)`/g, '$1'), qOpts, qDots,
+      quizBar: { ...barFill(((qi + 1) / Q.length) * 100), transition: 'width 300ms var(--ease-standard)' },
+      answeredNote: answered + ' of ' + Q.length + ' answered',
+      notLastQ: qi < Q.length - 1, isLastQ: qi === Q.length - 1,
+      pickOpt: (e) => set({ answers: { ...ans, [qi]: +e.currentTarget.dataset.opt } }),
+      jumpQ: (e) => set({ qIndex: +e.currentTarget.dataset.q }),
+      prevQ: () => set({ qIndex: Math.max(0, qi - 1) }),
+      nextQ: () => set({ qIndex: Math.min(Q.length - 1, qi + 1) }),
+      askSubmit: () => set({ showConfirm: true }),
+      cancelSubmit: () => set({ showConfirm: false }),
+      confirmSubmit: () => { clearInterval(this._t); set({ showConfirm: false, screen: 'quizresult' }); },
+      showConfirm: S.showConfirm,
+      confirmNote: answered < Q.length ? 'You have answered ' + answered + ' of ' + Q.length + ' questions — unanswered questions score zero.' : 'You have answered all ' + Q.length + ' questions.',
+
+      // result
+      scorePct, nCorrect, nWrong: Q.length - nCorrect, review,
+      timeTaken: (14 - mm) + 'm ' + (59 - ss) + 's',
+      ringColor: passed ? 'var(--teal-600)' : 'var(--red-500)',
+      ringDash: (scorePct / 100) * 364 + ' 364',
+      resultBadge: passed ? 'PASSED' : 'NOT PASSED', resultBadgeStyle: { ...(passed ? passStyle : failStyle), fontSize: '12px', padding: '5px 14px' },
+      resultHeadline: passed ? 'Well reasoned, Ananya.' : 'Worth another attempt.',
+
+      // progress
+      activity,
+
+      // misc
+      toast: S.toast,
+      saveProfile: () => { set({ toast: 'Profile saved.' }); clearTimeout(this._toastT); this._toastT = setTimeout(() => this.setState({ toast: null }), 2400); },
+    };
+  }
+
+  _tabStyle(on) {
+    return { fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px 12px', color: on ? 'var(--teal-700)' : 'var(--text-muted)', borderBottom: on ? '2px solid var(--teal-600)' : '2px solid transparent', marginBottom: '-1px' };
+  }
+  _step(dir) {
+    const flat = [];
+    this.MODULES.forEach((m, mi) => m.lessons.forEach((l, li) => { if (!m.locked) flat.push(mi + '-' + li); }));
+    const i = flat.indexOf(this.state.curId);
+    const next = flat[i + dir];
+    if (next) this.setState({ curId: next, tab: 'overview' });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/effects.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/semantic.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/base.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/styles.css">
+<script src="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--surface-page); }
+  a { color: var(--teal-600); }
+  a:hover { color: var(--teal-700); }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+<div data-screen-label="Authentication and states" style="min-height:100vh; display:flex; flex-direction:column; background:var(--surface-page); font-family:var(--font-sans); color:var(--text-body); font-size:15px; line-height:1.5;">
+
+  <!-- Prototype switcher (review aid, not product UI) -->
+  <div style="display:flex; align-items:center; gap:6px; padding:10px 16px; background:var(--neutral-900); flex-wrap:wrap;">
+    <span style="font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.16em; color:rgba(255,255,255,0.5); margin-right:8px;">AUTH SCREENS</span>
+    <sc-for list="{{ switcher }}" as="s" hint-placeholder-count="10">
+      <button data-screen="{{ s.id }}" onClick="{{ nav }}" style="{{ s.style }}">{{ s.label }}</button>
+    </sc-for>
+  </div>
+
+  <!-- ============ AUTH LAYOUT (split) ============ -->
+  <sc-if value="{{ isAuthLayout }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1; display:grid; grid-template-columns:1fr 1.15fr; min-height:0;">
+      <!-- Brand panel -->
+      <div style="background:var(--teal-900); color:#fff; display:flex; flex-direction:column; justify-content:space-between; padding:44px 48px; position:relative; overflow:hidden;">
+        <div style="position:absolute; right:0; bottom:0; width:220px; height:220px; background:linear-gradient(315deg, var(--teal-600) 0 26%, transparent 26.5%), linear-gradient(315deg, var(--red-600) 0 34%, transparent 34.5%);"></div>
+        <div style="font-family:var(--font-serif); font-size:28px; font-weight:600; letter-spacing:-0.015em; line-height:1;">Maieutic</div>
+        <div style="max-width:44ch; position:relative;">
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:rgba(255,255,255,0.55); margin-bottom:16px;">THE SOCRATIC METHOD</div>
+          <div style="font-family:var(--font-serif); font-size:42px; font-weight:600; letter-spacing:-0.015em; line-height:1.18; text-wrap:balance;">Answers fade. The questions stay.</div>
+          <p style="margin:18px 0 0; font-size:15.5px; color:rgba(255,255,255,0.72); line-height:1.6;">Software engineering bootcamps built on inquiry, not information dumps.</p>
+        </div>
+        <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.1em; color:rgba(255,255,255,0.45);">MAIEUTIC EDUTECH · LMS</div>
+      </div>
+      <!-- Form panel -->
+      <div style="display:flex; align-items:center; justify-content:center; padding:48px 40px;">
+        <div style="width:400px; animation:fade-in 300ms var(--ease-out);">
+
+          <!-- LOGIN -->
+          <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Sign in</h1>
+            <p style="margin:0 0 26px; color:var(--text-muted); font-size:14.5px;">Welcome back — pick up where you left off.</p>
+            <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; gap:10px; align-items:flex-start; background:var(--red-50); border:1px solid var(--red-100); border-radius:10px; padding:12px 14px; margin-bottom:18px; font-size:13.5px; color:var(--red-600);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+                <span>That email and password don't match. Try again, or reset your password.</span>
+              </div>
+            </sc-if>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Email" placeholder="you@example.com" default-value="ananya.sharma@gmail.com"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Password" type="password" default-value="wrong-password"></x-import>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin:14px 0 22px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text-body); cursor:pointer;">
+                <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Checkbox" hint-size="18px,18px" default-checked="{{ true }}"></x-import>
+                Keep me signed in
+              </label>
+              <a href="#" data-screen="forgot" onClick="{{ nav }}" style="font-size:13.5px; font-weight:600; text-decoration:none;">Forgot password?</a>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,44px" block="{{ true }}" on-click="{{ tryLogin }}">Sign in</x-import>
+            <p style="margin:20px 0 0; text-align:center; font-size:13.5px; color:var(--text-muted);">New here? Course access is created when you enrol — <a href="#" style="font-weight:600;">browse courses</a>.</p>
+          </sc-if>
+
+          <!-- FORGOT -->
+          <sc-if value="{{ isForgot }}" hint-placeholder-val="{{ false }}">
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Reset your password</h1>
+            <p style="margin:0 0 26px; color:var(--text-muted); font-size:14.5px;">Enter your email and we'll send a reset link. It stays valid for 30 minutes.</p>
+            <sc-if value="{{ forgotSent }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; gap:10px; align-items:flex-start; background:var(--teal-50); border:1px solid var(--teal-200); border-radius:10px; padding:12px 14px; margin-bottom:18px; font-size:13.5px; color:var(--teal-800);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-top:2px;"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span>Link sent to ananya.sharma@gmail.com. Check spam if it hasn't arrived in a minute.</span>
+              </div>
+            </sc-if>
+            <div style="margin-bottom:22px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Email" default-value="ananya.sharma@gmail.com"></x-import>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,44px" block="{{ true }}" on-click="{{ sendReset }}">Send reset link</x-import>
+            <p style="margin:20px 0 0; text-align:center;"><a href="#" data-screen="login" onClick="{{ nav }}" style="font-size:13.5px; font-weight:600; text-decoration:none;">← Back to sign in</a></p>
+          </sc-if>
+
+          <!-- RESET -->
+          <sc-if value="{{ isReset }}" hint-placeholder-val="{{ false }}">
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Choose a new password</h1>
+            <p style="margin:0 0 26px; color:var(--text-muted); font-size:14.5px;">For ananya.sharma@gmail.com.</p>
+            <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:8px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="New password" type="password" default-value="correct-horse-battery"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Confirm new password" type="password" default-value="correct-horse-battery"></x-import>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin:6px 0 22px;">
+              <div style="flex:1; height:4px; border-radius:999px; background:var(--teal-600);"></div>
+              <div style="flex:1; height:4px; border-radius:999px; background:var(--teal-600);"></div>
+              <div style="flex:1; height:4px; border-radius:999px; background:var(--teal-600);"></div>
+              <div style="flex:1; height:4px; border-radius:999px; background:var(--neutral-200);"></div>
+              <span style="font-size:12px; color:var(--teal-700); font-weight:600; margin-left:4px;">Strong</span>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,44px" block="{{ true }}" data-screen="login" on-click="{{ nav }}">Set password &amp; sign in</x-import>
+          </sc-if>
+
+          <!-- ACTIVATE / FIRST-TIME PASSWORD -->
+          <sc-if value="{{ isActivate }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">WELCOME TO MAIEUTIC</div>
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Activate your account</h1>
+            <p style="margin:0 0 26px; color:var(--text-muted); font-size:14.5px;">Your purchase of <strong style="color:var(--text-heading);">System Design Fundamentals</strong> is confirmed. Set a password to start learning.</p>
+            <div style="background:var(--neutral-50); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:20px; font-size:13.5px;">
+              <span style="color:var(--text-muted);">Signing in as</span> <strong style="color:var(--text-heading);">ananya.sharma@gmail.com</strong>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:22px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Create password" type="password" placeholder="At least 10 characters" hint="Use a phrase — length beats symbols."></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Confirm password" type="password"></x-import>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="100%,44px" block="{{ true }}" data-screen="login" on-click="{{ nav }}">Activate &amp; start learning</x-import>
+          </sc-if>
+
+          <!-- VERIFY EMAIL -->
+          <sc-if value="{{ isVerify }}" hint-placeholder-val="{{ false }}">
+            <div style="width:60px; height:60px; border-radius:999px; background:var(--teal-50); border:1.5px solid var(--teal-200); display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+            </div>
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Check your inbox</h1>
+            <p style="margin:0 0 22px; color:var(--text-muted); font-size:14.5px; line-height:1.6;">We sent a verification link to <strong style="color:var(--text-heading);">ananya.sharma@gmail.com</strong>. Click it to confirm your address — the link expires in 24 hours.</p>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="secondary" on-click="{{ resend }}">Resend email</x-import>
+            <sc-if value="{{ resent }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:14px 0 0; font-size:13px; color:var(--teal-700); font-weight:600;">Sent again — give it a minute.</p>
+            </sc-if>
+            <p style="margin:22px 0 0; font-size:13px; color:var(--text-muted);">Wrong address? <a href="#" style="font-weight:600;">Change email</a></p>
+          </sc-if>
+
+          <!-- CHANGE PASSWORD -->
+          <sc-if value="{{ isChange }}" hint-placeholder-val="{{ false }}">
+            <h1 style="font-family:var(--font-serif); font-size:31px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px;">Change password</h1>
+            <p style="margin:0 0 26px; color:var(--text-muted); font-size:14.5px;">You'll stay signed in on this device; other sessions are signed out.</p>
+            <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:22px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Current password" type="password"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="New password" type="password"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Confirm new password" type="password"></x-import>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" data-screen="login" on-click="{{ nav }}">Update password</x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost" data-screen="login" on-click="{{ nav }}">Cancel</x-import>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ FULL-PAGE STATES ============ -->
+  <sc-if value="{{ isStatePage }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:60px 40px; position:relative; overflow:hidden;">
+      <div style="position:absolute; right:0; bottom:0; width:180px; height:180px; background:linear-gradient(315deg, var(--teal-600) 0 24%, transparent 24.5%), linear-gradient(315deg, var(--red-600) 0 32%, transparent 32.5%); opacity:0.9;"></div>
+      <div style="max-width:520px; text-align:center; animation:fade-in 300ms var(--ease-out);">
+
+        <sc-if value="{{ isSuspended }}" hint-placeholder-val="{{ false }}">
+          <div style="width:64px; height:64px; border-radius:999px; background:var(--red-50); border:1.5px solid var(--red-100); display:flex; align-items:center; justify-content:center; margin:0 auto 22px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--red-600)" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path></svg>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:12px;">ACCOUNT SUSPENDED</div>
+          <h1 style="font-family:var(--font-serif); font-size:36px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 12px;">Your account is on hold</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:15.5px; line-height:1.65;">Access was suspended by an administrator on 2 August 2026. Your courses and progress are safe — nothing has been deleted. If you believe this is a mistake, contact us.</p>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px">Contact support</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost" data-screen="login" on-click="{{ nav }}">Back to sign in</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is404 }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:var(--font-serif); font-size:110px; font-weight:600; letter-spacing:-0.03em; color:var(--teal-600); line-height:1; margin-bottom:4px;">404</div>
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:14px;">PAGE NOT FOUND</div>
+          <h1 style="font-family:var(--font-serif); font-size:30px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 12px;">A good question, but no answer here.</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:15.5px; line-height:1.65;">The page may have moved, or the link was mistyped. Your courses are exactly where you left them.</p>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px">Go to dashboard</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost">Browse courses</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is403 }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:var(--font-serif); font-size:110px; font-weight:600; letter-spacing:-0.03em; color:var(--teal-600); line-height:1; margin-bottom:4px;">403</div>
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:14px;">ACCESS DENIED</div>
+          <h1 style="font-family:var(--font-serif); font-size:30px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 12px;">This content isn't yours yet.</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:15.5px; line-height:1.65;">Lessons unlock after you enrol in the course. If you've just paid, give it a few seconds and refresh.</p>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px">View course details</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost">My courses</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is500 }}" hint-placeholder-val="{{ false }}">
+          <div style="font-family:var(--font-serif); font-size:110px; font-weight:600; letter-spacing:-0.03em; color:var(--red-600); line-height:1; margin-bottom:4px;">500</div>
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:14px;">SOMETHING BROKE — ON OUR SIDE</div>
+          <h1 style="font-family:var(--font-serif); font-size:30px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 12px;">We're looking into it.</h1>
+          <p style="margin:0 0 28px; color:var(--text-muted); font-size:15.5px; line-height:1.65;">Your progress is saved. Try again in a moment — if it keeps happening, tell us and include the reference below.</p>
+          <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted); background:var(--neutral-100); border-radius:8px; padding:8px 14px; display:inline-block; margin-bottom:28px;">ref: 500-9f2c-20260813-1142</div>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px">Try again</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost">Contact support</x-import>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;startScreen&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;login&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;login&quot;, &quot;forgot&quot;, &quot;reset&quot;, &quot;activate&quot;, &quot;verify&quot;, &quot;change&quot;, &quot;suspended&quot;, &quot;e404&quot;, &quot;e403&quot;, &quot;e500&quot;], &quot;section&quot;: &quot;Prototype&quot; }
+}">
+class Component extends DCLogic {
+  state = { screen: null, loginError: false, forgotSent: false, resent: false };
+
+  SCREENS = [
+    ['login', 'Login'], ['forgot', 'Forgot'], ['reset', 'Reset'], ['activate', 'Activation'],
+    ['verify', 'Verify email'], ['change', 'Change password'], ['suspended', 'Suspended'],
+    ['e404', '404'], ['e403', '403'], ['e500', '500'],
+  ];
+
+  renderVals() {
+    const S = this.state;
+    const screen = S.screen || this.props.startScreen || 'login';
+    const set = (p) => this.setState(p);
+    const authScreens = ['login', 'forgot', 'reset', 'activate', 'verify', 'change'];
+    return {
+      nav: (e) => { if (e.preventDefault) e.preventDefault(); set({ screen: e.currentTarget.dataset.screen, loginError: false, forgotSent: false, resent: false }); },
+      switcher: this.SCREENS.map(([id, label]) => ({
+        id, label,
+        style: { fontFamily: 'var(--font-mono)', fontSize: '11px', cursor: 'pointer', borderRadius: '6px', padding: '5px 10px', border: 'none', background: id === screen ? 'rgba(255,255,255,0.18)' : 'transparent', color: id === screen ? '#fff' : 'rgba(255,255,255,0.6)' },
+      })),
+      isAuthLayout: authScreens.includes(screen),
+      isStatePage: !authScreens.includes(screen),
+      isLogin: screen === 'login', isForgot: screen === 'forgot', isReset: screen === 'reset',
+      isActivate: screen === 'activate', isVerify: screen === 'verify', isChange: screen === 'change',
+      isSuspended: screen === 'suspended', is404: screen === 'e404', is403: screen === 'e403', is500: screen === 'e500',
+      loginError: S.loginError, forgotSent: S.forgotSent, resent: S.resent,
+      tryLogin: () => set({ loginError: true }),
+      sendReset: () => set({ forgotSent: true }),
+      resend: () => set({ resent: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

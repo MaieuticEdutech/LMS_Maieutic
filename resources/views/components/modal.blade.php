@@ -43,10 +43,12 @@
     aria-modal="true"
     @if ($title) aria-labelledby="{{ $name }}-title" @endif
 >
+    {{-- Ink scrim, not black: a neutral-black overlay over warm paper reads
+         cold. Low opacity per the brand's "transparency used sparingly". --}}
     <div
         x-show="open"
         x-transition.opacity
-        class="fixed inset-0 bg-zinc-900/50"
+        class="fixed inset-0 bg-neutral-900/40 backdrop-blur-[2px]"
         x-on:click="open = false"
         aria-hidden="true"
     ></div>
@@ -59,22 +61,22 @@
             x-transition
             x-trap.noscroll="open"
             {{ $attributes->class([
-                'relative w-full rounded-card bg-white shadow-xl',
+                'relative w-full rounded-card border border-neutral-200 bg-white shadow-lg',
                 $widths[$maxWidth] ?? $widths['md'],
             ]) }}
         >
             @if ($title)
-                <div class="border-b border-zinc-200 px-4 py-3 sm:px-6">
-                    <h2 id="{{ $name }}-title" class="text-sm font-semibold text-zinc-900">{{ $title }}</h2>
+                <div class="border-b border-neutral-200 px-5 py-4 sm:px-6">
+                    <h2 id="{{ $name }}-title" class="text-lg">{{ $title }}</h2>
                 </div>
             @endif
 
-            <div class="px-4 py-4 sm:px-6">
+            <div class="px-5 py-5 text-sm text-neutral-800 sm:px-6">
                 {{ $slot }}
             </div>
 
             @isset($footer)
-                <div class="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3 sm:px-6">
+                <div class="flex justify-end gap-2 rounded-b-card border-t border-neutral-200 bg-neutral-50 px-5 py-4 sm:px-6">
                     {{ $footer }}
                 </div>
             @endisset

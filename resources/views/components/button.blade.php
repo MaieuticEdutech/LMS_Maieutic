@@ -14,25 +14,39 @@
 
     Rendering a button never implies permission. The route behind it is
     authorised server-side regardless (Development Rule 20).
+
+    STYLING (docs/UI-GUIDE.md §8): teal is the only call-to-action colour, so
+    there is exactly one primary button per screen. Hover darkens one step,
+    press darkens one further — never a colour flip, never a scale bounce.
 --}}
 
 @php
     $variants = [
-        'primary' => 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600',
-        'secondary' => 'bg-white text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50',
-        'danger' => 'bg-danger-600 text-white hover:bg-danger-700',
-        'ghost' => 'text-zinc-700 hover:bg-zinc-100',
+        // The single CTA. One per screen.
+        'primary' => 'bg-teal-600 text-white shadow-xs hover:bg-teal-700 active:bg-teal-800',
+
+        // Hairline border, not a filled grey block — hierarchy comes from
+        // borders in this system.
+        'secondary' => 'bg-white text-neutral-800 ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 hover:ring-neutral-300 active:bg-neutral-100',
+
+        'danger' => 'bg-red-600 text-white shadow-xs hover:bg-red-700 active:bg-red-800',
+
+        'ghost' => 'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200',
     ];
 
+    // Fixed heights rather than vertical padding: buttons sitting beside
+    // inputs must align exactly, and padding-derived heights drift as soon as
+    // font-size or line-height changes.
     $sizes = [
-        'sm' => 'px-2.5 py-1.5 text-xs gap-1',
-        'md' => 'px-3 py-2 text-sm gap-1.5',
-        'lg' => 'px-4 py-2.5 text-sm gap-2',
+        'sm' => 'h-8 px-3 text-xs gap-1.5',
+        'md' => 'h-10 px-4 text-sm gap-2',
+        'lg' => 'h-11 px-5 text-sm gap-2',
     ];
 
     $classes = implode(' ', [
         'inline-flex items-center justify-center rounded-control font-medium',
-        'transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'transition-colors duration-150 ease-out',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-current',
         $variants[$variant] ?? $variants['primary'],
         $sizes[$size] ?? $sizes['md'],
     ]);

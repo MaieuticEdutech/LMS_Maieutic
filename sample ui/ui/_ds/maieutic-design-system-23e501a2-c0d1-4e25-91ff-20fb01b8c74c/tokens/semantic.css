@@ -1,0 +1,50 @@
+/* ============================================================
+   SEMANTIC aliases — reference these in components, not raw scales.
+   Brand rule (guideline): headlines lean Training Day Teal; body is
+   ink on paper. Teal is the primary CTA color; red is a rare accent.
+   ============================================================ */
+:root {
+  /* surfaces */
+  --surface-page:    var(--neutral-50);
+  --surface-card:    var(--neutral-0);
+  --surface-sunken:  var(--neutral-100);
+  --surface-muted:   var(--neutral-100);
+  --surface-inverse: var(--teal-900);
+  --surface-brand:   var(--teal-600);
+  --surface-accent-soft: var(--marigold);
+
+  /* text */
+  --text-heading: var(--neutral-900);
+  --text-brand:   var(--teal-600);   /* brand-forward headlines / eyebrows */
+  --text-body:    var(--neutral-800);
+  --text-muted:   var(--neutral-500);
+  --text-subtle:  var(--neutral-400);
+  --text-inverse: var(--neutral-0);
+  --text-on-brand: var(--neutral-0);
+  --text-accent:  var(--red-600);
+
+  /* borders */
+  --border:        var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --border-brand:  var(--teal-600);
+  --border-inverse: rgba(255,255,255,0.16);
+
+  /* brand / interactive */
+  --brand:        var(--teal-600);
+  --brand-hover:  var(--teal-700);
+  --brand-active: var(--teal-800);
+  --brand-ink:    var(--teal-900);
+  --brand-soft:   var(--teal-50);
+  --accent:       var(--red-600);
+  --accent-hover: var(--red-700);
+  --accent-soft:  var(--red-50);
+
+  /* status */
+  --success: var(--honeydew);
+  --warning: var(--melon);
+  --danger:  var(--red-600);
+  --info:    var(--teal-600);
+
+  /* focus ring */
+  --ring: var(--shadow-focus);
+}

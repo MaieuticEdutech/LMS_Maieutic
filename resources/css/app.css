@@ -5,61 +5,259 @@
 @source '../../app/Livewire/**/*.php';
 
 /*
-| Design tokens
+| Design tokens — the Maieutic brand system
 |--------------------------------------------------------------------------
-| Tailwind 4 is configured CSS-first. These tokens are the single source of
-| truth for colour, radius and typography across all four audiences (public,
-| student, instructor, admin).
+| Tailwind 4 is configured CSS-first, so this block is the single source of
+| truth for colour, type, radius and motion across all four audiences.
+|
+| Derived from the brand design system in `sample ui/_ds/`. Full rules,
+| including which token to reach for in which situation, are in
+| `docs/UI-GUIDE.md` — read that before styling anything.
 |
 | planning.md §6.3: views reuse the shared component library and avoid
-| arbitrary values. If a value is needed twice, it belongs here as a token —
-| not inline in a view.
+| arbitrary values. A value needed twice belongs here as a token, never
+| inline in a view.
 */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /*
+    | TYPOGRAPHY
+    |
+    | The signature of this brand is the contrast between a large serif
+    | headline and a small, wide-tracked mono eyebrow. A screen with no type
+    | contrast reads as off-brand however correct its colours are.
+    */
+    --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    /* Brand — used for primary actions and active navigation. */
-    --color-brand-50: oklch(0.97 0.014 254);
-    --color-brand-100: oklch(0.94 0.03 254);
-    --color-brand-200: oklch(0.88 0.06 254);
-    --color-brand-300: oklch(0.81 0.1 254);
-    --color-brand-400: oklch(0.71 0.15 254);
-    --color-brand-500: oklch(0.62 0.19 254);
-    --color-brand-600: oklch(0.54 0.2 254);
-    --color-brand-700: oklch(0.46 0.17 254);
-    --color-brand-800: oklch(0.39 0.14 254);
-    --color-brand-900: oklch(0.33 0.11 254);
+    /*
+    | TEAL — Training Day Teal, the primary brand.
+    |
+    | This is the ONLY call-to-action colour in the system. If a screen has
+    | two teal buttons competing, one of them is secondary.
+    */
+    --color-teal-50: #eaf2f1;
+    --color-teal-100: #cde3e1;
+    --color-teal-200: #a5ccc9;
+    --color-teal-300: #6fada8;
+    --color-teal-400: #3c8e88;
+    --color-teal-500: #167871;
+    --color-teal-600: #00615c;
+    --color-teal-700: #024e4a;
+    --color-teal-800: #043b38;
+    --color-teal-900: #052826;
 
-    /* Semantic status colours. Meaning is fixed; usage must stay consistent. */
-    --color-success-50: oklch(0.96 0.03 155);
-    --color-success-600: oklch(0.55 0.15 155);
-    --color-success-700: oklch(0.47 0.13 155);
+    /*
+    | RED SEA — a rare accent, and the destructive colour.
+    |
+    | Not a second brand colour. It appears in the logo and in danger states,
+    | and otherwise stays out of the way.
+    */
+    --color-red-50: #fbeae9;
+    --color-red-100: #f5cbc9;
+    --color-red-200: #e79a96;
+    --color-red-300: #d46861;
+    --color-red-400: #b93a32;
+    --color-red-500: #a31009;
+    --color-red-600: #800d07;
+    --color-red-700: #630a05;
+    --color-red-800: #470704;
 
-    --color-warning-50: oklch(0.97 0.04 85);
-    --color-warning-600: oklch(0.65 0.15 85);
-    --color-warning-700: oklch(0.55 0.13 85);
+    /*
+    | NEUTRALS — warm, paper to ink. Deliberately not grey.
+    |
+    | The off-white gives a printed-page feel rather than a clinical one, and
+    | it is a large part of why the system reads as editorial. Reaching for
+    | Tailwind's default zinc/slate here undoes that.
+    */
+    --color-neutral-0: #ffffff;
+    --color-neutral-50: #faf9f6;
+    --color-neutral-100: #f2f1ec;
+    --color-neutral-200: #e5e3dc;
+    --color-neutral-300: #d2cfc6;
+    --color-neutral-400: #b0aca1;
+    --color-neutral-500: #8a867b;
+    --color-neutral-600: #66625a;
+    --color-neutral-700: #4a473f;
+    --color-neutral-800: #2e2c27;
+    --color-neutral-900: #1a1815;
 
-    --color-danger-50: oklch(0.96 0.03 25);
-    --color-danger-600: oklch(0.55 0.2 25);
-    --color-danger-700: oklch(0.47 0.18 25);
+    /*
+    | ACCENTS — two or three per composition, at most.
+    |
+    | Status meaning is fixed: honeydew is success, melon is warning, red is
+    | danger. Never repurposed decoratively — a red badge must mean something
+    | is wrong.
+    */
+    --color-melon: #f2aa84;
+    --color-lemon: #e8d94e;
+    --color-honeydew: #008680;
+    --color-marigold: #fef1de;
+    --color-rose: #f8847e;
 
-    --radius-card: 0.75rem;
-    --radius-control: 0.5rem;
+    /*
+    | RADIUS — moderate and consistent. Never pill-everything, never
+    | sharp-everything.
+    */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-control: 10px;
+    --radius-card: 16px;
+    --radius-xl: 24px;
+
+    /*
+    | SHADOWS — minimal and warm-tinted (rgba of ink, never black).
+    |
+    | Hierarchy in this system comes from hairline borders and spacing. A
+    | resting card has no shadow; elevation is for hover and overlays only.
+    */
+    --shadow-xs: 0 1px 2px rgba(26, 24, 21, 0.05);
+    --shadow-sm: 0 1px 3px rgba(26, 24, 21, 0.06), 0 1px 2px rgba(26, 24, 21, 0.04);
+    --shadow-md: 0 6px 20px -6px rgba(26, 24, 21, 0.1);
+    --shadow-lg: 0 16px 48px -12px rgba(26, 24, 21, 0.14);
+
+    /*
+    | MOTION — quiet and precise. No bounces, no springs.
+    |
+    | The only entrance animation in the system: a plain opacity fade. Movement
+    | is limited to 2–8px translations where a design genuinely needs it.
+    | `animate-fade-in` is disabled automatically under prefers-reduced-motion
+    | by the base layer below.
+    */
+    --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --animate-fade-in: fade-in 300ms var(--ease-out) both;
+
+    /* LAYOUT */
+    --spacing-sidebar: 248px;
+    --container-content: 1240px;
+
+    /*
+    | ── COMPATIBILITY ALIASES ───────────────────────────────────────────
+    |
+    | Phase 2 shipped a placeholder palette named brand/danger/success/
+    | warning, and 26 views use those names today. Repointing the names here
+    | rather than editing 26 files means every existing screen picks up the
+    | real brand with no edit at all — including work in flight on other
+    | branches, which would otherwise conflict.
+    |
+    | These are semantic names, so repointing them is correct rather than a
+    | trick: `bg-brand-600` should always mean "the brand colour", and the
+    | brand colour is now teal.
+    */
+    --color-brand-50: var(--color-teal-50);
+    --color-brand-100: var(--color-teal-100);
+    --color-brand-200: var(--color-teal-200);
+    --color-brand-300: var(--color-teal-300);
+    --color-brand-400: var(--color-teal-400);
+    --color-brand-500: var(--color-teal-500);
+    --color-brand-600: var(--color-teal-600);
+    --color-brand-700: var(--color-teal-700);
+    --color-brand-800: var(--color-teal-800);
+    --color-brand-900: var(--color-teal-900);
+
+    --color-danger-50: var(--color-red-50);
+    --color-danger-500: var(--color-red-500);
+    --color-danger-600: var(--color-red-600);
+    --color-danger-700: var(--color-red-700);
+
+    --color-success-50: #e6f4f2;
+    --color-success-500: #00a89f;
+    --color-success-600: var(--color-honeydew);
+    --color-success-700: #006b66;
+
+    --color-warning-50: var(--color-marigold);
+    --color-warning-500: #f4b995;
+    --color-warning-600: #d97c47;
+    --color-warning-700: #a85c33;
+
+    /*
+    | MIGRATION SHIM — remove once every view uses neutral-*.
+    |
+    | Tailwind's stock zinc is a COOL grey. Against warm paper it reads
+    | faintly blue, which is exactly the clinical feel the brand avoids. Rather
+    | than leave half the product cool and half warm during the migration,
+    | zinc is repointed at the warm scale so untouched views stay coherent.
+    |
+    | This is a shim, not a token. Do not write new `zinc-*` classes — use
+    | `neutral-*`. Delete this block when the last zinc reference is gone.
+    */
+    --color-zinc-50: var(--color-neutral-50);
+    --color-zinc-100: var(--color-neutral-100);
+    --color-zinc-200: var(--color-neutral-200);
+    --color-zinc-300: var(--color-neutral-300);
+    --color-zinc-400: var(--color-neutral-400);
+    --color-zinc-500: var(--color-neutral-500);
+    --color-zinc-600: var(--color-neutral-600);
+    --color-zinc-700: var(--color-neutral-700);
+    --color-zinc-800: var(--color-neutral-800);
+    --color-zinc-900: var(--color-neutral-900);
 }
 
 /*
 | Base layer
 |--------------------------------------------------------------------------
-| NFR-UX-03 / WCAG 2.1 AA: focus must always be visible. Tailwind's reset
-| removes the default outline, so a visible focus ring is restored here for
-| every interactive element rather than relying on each component to
-| remember it.
 */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 @layer base {
+    /*
+    | Headings are serif by default so no view has to remember. `text-wrap:
+    | balance` stops the ragged last-word line that makes a display headline
+    | look accidental.
+    */
+    h1,
+    h2,
+    h3 {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        color: var(--color-neutral-900);
+        text-wrap: balance;
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        line-height: 1.15;
+        color: var(--color-neutral-900);
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    ::selection {
+        background: var(--color-teal-100);
+        color: var(--color-teal-900);
+    }
+
+    /*
+    | NFR-UX-03 / WCAG 2.1 AA: focus must always be visible. Tailwind's reset
+    | removes the default outline, so the ring is restored here once rather
+    | than relying on every component to remember it.
+    */
     :focus-visible {
-        outline: 2px solid var(--color-brand-600);
+        outline: 2px solid var(--color-teal-600);
         outline-offset: 2px;
+        border-radius: var(--radius-sm);
     }
 
     /* Respect users who have asked for reduced motion. */
@@ -73,4 +271,36 @@
             scroll-behavior: auto !important;
         }
     }
+}
+
+/*
+| Utilities
+|--------------------------------------------------------------------------
+*/
+
+/*
+| The eyebrow: small, uppercase, mono, widely tracked. Half of the brand's
+| type signature — it is what the serif headline is set against. Used often
+| enough to be a utility rather than six classes repeated everywhere.
+*/
+@utility eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+
+/*
+| The "M" angle motif — the triangular geometry of the Maieutic mark, as a
+| single diagonal at the corner of a dark panel.
+|
+| Used SPARINGLY: one per screen, never repeated, never a background texture.
+| This is the only gradient the system permits.
+*/
+@utility m-motif {
+    background-image:
+        linear-gradient(315deg, var(--color-teal-600) 0 26%, transparent 26.5%),
+        linear-gradient(315deg, var(--color-red-600) 0 34%, transparent 34.5%);
 }

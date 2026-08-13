@@ -23,5 +23,5 @@
 @endsection
 
 @section('footer')
-    <a href="{{ route('login') }}" class="font-medium text-brand-600 hover:text-brand-700">Back to sign in</a>
+    <a href="{{ route('login') }}" class="font-medium text-teal-600 underline-offset-[0.18em] transition-colors hover:text-teal-700 hover:underline">Back to sign in</a>
 @endsection
