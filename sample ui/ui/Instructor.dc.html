@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/effects.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/semantic.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/tokens/base.css">
+<link rel="stylesheet" href="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/styles.css">
+<script src="_ds/maieutic-design-system-23e501a2-c0d1-4e25-91ff-20fb01b8c74c/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--surface-page); }
+  a { color: var(--teal-600); }
+  a:hover { color: var(--teal-700); }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+<div data-screen-label="Instructor workspace" style="display:flex; min-height:100vh; background:var(--surface-page); font-family:var(--font-sans); color:var(--text-body); font-size:14.5px; line-height:1.5;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px; flex:none; background:var(--surface-card); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="padding:22px 20px 18px; border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--font-serif); font-size:26px; font-weight:600; letter-spacing:-0.015em; color:var(--teal-600); line-height:1;">Maieutic</div>
+      <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.16em; color:var(--text-muted); margin-top:6px;">INSTRUCTOR&nbsp;STUDIO</div>
+    </div>
+    <nav style="padding:14px 12px; display:flex; flex-direction:column; gap:2px; flex:1;">
+      <div data-screen="dashboard" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+          Dashboard
+        </div>
+      </div>
+      <div data-screen="courses" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isCourses }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          My Courses
+        </div>
+      </div>
+      <div data-screen="assessments" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ navAssess }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg>
+          Assessments
+        </div>
+      </div>
+      <div data-screen="progress" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ navProgress }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 18"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+          Student Progress
+        </div>
+      </div>
+      <div data-screen="results" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><rect x="7" y="11" width="3" height="6" rx="0.5"></rect><rect x="12" y="7" width="3" height="10" rx="0.5"></rect><rect x="17" y="13" width="3" height="4" rx="0.5"></rect></svg>
+          Results
+        </div>
+      </div>
+      <div data-screen="profile" onClick="{{ nav }}" style="position:relative; cursor:pointer;">
+        <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; background:var(--teal-50); border-radius:8px;"></div></sc-if>
+        <div style="position:relative; display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; font-weight:500; color:var(--text-heading);" style-hover="background:var(--surface-sunken);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Profile
+        </div>
+      </div>
+    </nav>
+    <div style="padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+      <div style="width:34px; height:34px; border-radius:999px; background:var(--marigold); color:var(--neutral-700); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex:none;">AM</div>
+      <div style="min-width:0;">
+        <div style="font-weight:600; font-size:13.5px; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Arjun Mehta</div>
+        <div style="font-size:12px; color:var(--text-muted);">Instructor</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column;">
+    <header style="height:60px; flex:none; background:rgba(250,249,246,0.85); backdrop-filter:blur(8px); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; padding:0 32px; position:sticky; top:0; z-index:20;">
+      <div style="font-size:13px; color:var(--text-muted);">{{ crumb }}</div>
+      <div style="flex:1;"></div>
+      <div style="position:relative; width:36px; height:36px; border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-heading); cursor:pointer; background:var(--surface-card);" style-hover="background:var(--surface-sunken);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:999px; background:var(--red-600); border:1.5px solid #fff;"></span>
+      </div>
+      <div style="width:34px; height:34px; border-radius:999px; background:var(--marigold); color:var(--neutral-700); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; cursor:pointer;">AM</div>
+    </header>
+
+    <div style="flex:1; padding:34px 40px 64px; max-width:1180px; width:100%; box-sizing:border-box; margin:0 auto;">
+
+      <!-- ============ DASHBOARD ============ -->
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <section data-screen-label="Instructor dashboard">
+          <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--teal-600); margin-bottom:10px;">TEACHING OVERVIEW</div>
+          <h1 style="font-family:var(--font-serif); font-size:36px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 6px; line-height:1.15;">Good morning, Arjun.</h1>
+          <p style="margin:0 0 26px; color:var(--text-muted); font-size:16px;">23 students finished a lesson yesterday — Module 2 quiz results are in.</p>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:18px 20px;">
+                <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.14em; color:var(--text-muted); margin-bottom:8px;">{{ k.label }}</div>
+                <div style="font-family:var(--font-serif); font-size:29px; font-weight:600; color:var(--text-heading); line-height:1;">{{ k.value }}</div>
+                <div style="font-size:12.5px; margin-top:8px; color:var(--text-muted);">{{ k.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid; grid-template-columns:1.35fr 1fr; gap:16px;">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <!-- Course performance -->
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;">
+                  <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Course performance</h2>
+                  <a href="#" onClick="{{ goCourses }}" style="font-size:13px; font-weight:600; text-decoration:none;">My courses →</a>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:15px;">
+                  <sc-for list="{{ myCourses }}" as="c" hint-placeholder-count="4">
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px;">
+                        <span style="font-weight:600; color:var(--text-heading);">{{ c.title }}</span>
+                        <span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">{{ c.students }} students · {{ c.pct }}% completion</span>
+                      </div>
+                      <div style="height:6px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ c.barStyle }}"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <!-- Weekly engagement -->
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+                  <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Student activity</h2>
+                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">ACTIVE STUDENTS / DAY · 14 DAYS</span>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:7px; height:110px;">
+                  <sc-for list="{{ activity }}" as="d" hint-placeholder-count="14">
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end;">
+                      <div style="{{ d.style }}"></div>
+                      <span style="font-family:var(--font-mono); font-size:8.5px; color:var(--text-subtle);">{{ d.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <!-- Recent activity -->
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 24px;">
+              <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0 0 14px; color:var(--text-heading);">Recent activity</h2>
+              <div style="display:flex; flex-direction:column;">
+                <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+                  <div style="display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--neutral-100); align-items:flex-start;">
+                    <div style="width:28px; height:28px; border-radius:999px; background:var(--teal-50); color:var(--teal-700); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:10.5px; flex:none;">{{ f.init }}</div>
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:13px; color:var(--text-body); line-height:1.45;"><strong style="color:var(--text-heading);">{{ f.who }}</strong> {{ f.what }}</div>
+                      <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">{{ f.when }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ MY COURSES ============ -->
+      <sc-if value="{{ isCourses }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Instructor courses">
+          <div style="margin-bottom:24px;">
+            <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">My courses</h1>
+            <p style="margin:0; color:var(--text-muted);">4 assigned courses · 812 students · course settings are managed by the platform admin</p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:18px;">
+            <sc-for list="{{ myCourses }}" as="c" hint-placeholder-count="4">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; transition:box-shadow 200ms var(--ease-standard);" style-hover="box-shadow:var(--shadow-md); border-color:var(--border-strong);">
+                <div style="height:118px; position:relative; overflow:hidden;">
+                  <div style="{{ c.thumbStyle }}"></div>
+                  <span style="position:absolute; left:16px; bottom:12px; font-family:var(--font-serif); font-size:36px; color:var(--teal-700); opacity:0.5; line-height:1;">{{ c.initial }}</span>
+                  <span style="{{ c.badgeStyle }}">{{ c.status }}</span>
+                </div>
+                <div style="padding:16px 20px 18px; display:flex; flex-direction:column; gap:12px; flex:1;">
+                  <div style="font-family:var(--font-serif); font-weight:600; font-size:19px; color:var(--text-heading); letter-spacing:-0.01em;">{{ c.title }}</div>
+                  <div style="display:flex; gap:22px; font-size:13px; color:var(--text-muted);">
+                    <span><strong style="color:var(--text-heading); font-weight:600;">{{ c.students }}</strong> students</span>
+                    <span><strong style="color:var(--text-heading); font-weight:600;">{{ c.lessons }}</strong> lessons</span>
+                    <span><strong style="color:var(--text-heading); font-weight:600;">{{ c.avgScore }}</strong> avg score</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:1; height:6px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ c.barStyle }}"></div></div>
+                    <span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">{{ c.pct }}% completion</span>
+                  </div>
+                  <div style="display:flex; gap:10px; margin-top:auto;">
+                    <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" on-click="{{ goProgress }}">View course</x-import>
+                    <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="ghost" on-click="{{ goResults }}">Results</x-import>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ ASSESSMENTS ============ -->
+      <sc-if value="{{ isAssess }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Assessments">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px;">
+            <div>
+              <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">Assessments</h1>
+              <p style="margin:0; color:var(--text-muted);">6 quizzes · 2 tests · across 4 courses</p>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ goAssessNew }}">Create assessment</x-import>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+            <div style="display:grid; grid-template-columns:2.4fr 1.8fr 0.8fr 0.9fr 0.9fr 0.9fr 1.2fr; gap:12px; padding:10px 20px; background:var(--neutral-50); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em; color:var(--text-muted);">
+              <span>ASSESSMENT</span><span>COURSE</span><span>TYPE</span><span>QUESTIONS</span><span>ATTEMPTS</span><span>STATUS</span><span style="text-align:right;">ACTIONS</span>
+            </div>
+            <sc-for list="{{ assessments }}" as="a" hint-placeholder-count="6">
+              <div style="display:grid; grid-template-columns:2.4fr 1.8fr 0.8fr 0.9fr 0.9fr 0.9fr 1.2fr; gap:12px; padding:13px 20px; border-bottom:1px solid var(--neutral-100); font-size:13.5px; align-items:center;" style-hover="background:var(--neutral-50);">
+                <span style="font-weight:600; color:var(--text-heading);">{{ a.title }}</span>
+                <span style="color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ a.course }}</span>
+                <span style="color:var(--text-muted);">{{ a.type }}</span>
+                <span>{{ a.questions }}</span>
+                <span>{{ a.attempts }}</span>
+                <span><span style="{{ a.badgeStyle }}">{{ a.status }}</span></span>
+                <div style="display:flex; gap:6px; justify-content:flex-end;">
+                  <button onClick="{{ goAssessNew }}" style="height:28px; padding:0 12px; font-family:var(--font-sans); font-size:12px; font-weight:600; color:var(--teal-700); background:var(--teal-50); border:none; border-radius:7px; cursor:pointer;" style-hover="background:var(--teal-100);">Edit</button>
+                  <button data-name="{{ a.title }}" data-act="{{ a.pubAct }}" onClick="{{ askAction }}" style="height:28px; padding:0 12px; font-family:var(--font-sans); font-size:12px; font-weight:600; color:var(--text-muted); background:none; border:1px solid var(--border); border-radius:7px; cursor:pointer;" style-hover="border-color:var(--border-strong); color:var(--text-heading);">{{ a.pubLabel }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ ASSESSMENT BUILDER ============ -->
+      <sc-if value="{{ isAssessNew }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Assessment builder" style="max-width:860px;">
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:26px;">
+            <a href="#" onClick="{{ goAssess }}" style="display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; text-decoration:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+              Assessments
+            </a>
+            <span style="color:var(--text-subtle);">/</span>
+            <h1 style="font-family:var(--font-serif); font-size:24px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0; flex:1;">Question builder</h1>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary" on-click="{{ saveDraftA }}">Save draft</x-import>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" data-name="Module 3 checkpoint" data-act="publish" on-click="{{ askAction }}">Publish</x-import>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:24px 28px; margin-bottom:18px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:14px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Assessment title" default-value="Module 3 checkpoint — Backend with Laravel"></x-import>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-size:14px; font-weight:500; color:var(--text-heading);">Course</label>
+                <select style="font-family:var(--font-sans); font-size:14px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border-strong); border-radius:12px; height:44px; padding:0 12px;">
+                  <option>Full-Stack Web Development</option><option>Python for Backend Engineering</option><option>Intro to Programming (Java)</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:14px; font-weight:500; color:var(--text-heading);">Instructions</label>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Textarea" hint-size="100%,80px" rows="{{ 2 }}" default-value="Answer every question. 2 marks each, no negative marking. 20 minutes, one attempt."></x-import>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Time limit (min)" default-value="20"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Pass mark (%)" default-value="70"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Attempts allowed" default-value="1"></x-import>
+            </div>
+          </div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px;">
+            <h2 style="font-family:var(--font-serif); font-size:19px; font-weight:600; margin:0; color:var(--text-heading);">Questions</h2>
+            <span style="font-size:12.5px; color:var(--text-muted);">{{ qbMeta }}</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ qbQuestions }}" as="q" hint-placeholder-count="3">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:14px; padding:16px 20px;">
+                <div style="display:flex; align-items:flex-start; gap:12px;">
+                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); background:var(--neutral-100); border-radius:6px; padding:4px 8px; flex:none; margin-top:2px;">Q{{ q.num }}</span>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-weight:600; font-size:14.5px; color:var(--text-heading); line-height:1.4;">{{ q.q }}</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; margin-top:10px;">
+                      <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                        <div data-qi="{{ q.qi }}" data-oi="{{ o.oi }}" onClick="{{ setCorrect }}" style="display:flex; align-items:center; gap:9px; font-size:13px; cursor:pointer; padding:5px 8px; border-radius:7px;" style-hover="background:var(--neutral-50);">
+                          <span style="{{ o.dotStyle }}"></span>
+                          <span style="{{ o.tStyle }}">{{ o.t }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted); margin-top:8px;">Click an option to mark it correct · {{ q.marks }} marks</div>
+                  </div>
+                  <div style="display:flex; gap:6px; flex:none;">
+                    <button data-qi="{{ q.qi }}" data-dir="-1" onClick="{{ moveQ }}" title="Move up" style="width:26px; height:26px; display:flex; align-items:center; justify-content:center; background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); cursor:pointer;" style-hover="color:var(--teal-700);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg></button>
+                    <button data-qi="{{ q.qi }}" data-dir="1" onClick="{{ moveQ }}" title="Move down" style="width:26px; height:26px; display:flex; align-items:center; justify-content:center; background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); cursor:pointer;" style-hover="color:var(--teal-700);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+                    <button data-qi="{{ q.qi }}" data-name="{{ q.q }}" data-act="delQuestion" onClick="{{ askAction }}" title="Delete question" style="width:26px; height:26px; display:flex; align-items:center; justify-content:center; background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); cursor:pointer;" style-hover="color:var(--red-600); border-color:var(--red-200);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+            <button onClick="{{ addQuestion }}" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; font-family:var(--font-sans); font-size:13.5px; font-weight:600; color:var(--teal-700); background:none; border:1.5px dashed var(--border-strong); border-radius:14px; cursor:pointer;" style-hover="border-color:var(--teal-400); background:var(--teal-50);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              Add question
+            </button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ STUDENT PROGRESS ============ -->
+      <sc-if value="{{ isProgress }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Student progress">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px;">
+            <div>
+              <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">Student progress</h1>
+              <p style="margin:0; color:var(--text-muted);">812 students across your courses · 64% average completion</p>
+            </div>
+            <select onChange="{{ onCourseFilter }}" style="font-family:var(--font-sans); font-size:13.5px; color:var(--text-heading); background:var(--surface-card); border:1px solid var(--border); border-radius:8px; height:38px; padding:0 12px;">
+              <option>All courses</option><option>Full-Stack Web Development</option><option>Python for Backend Engineering</option><option>Intro to Programming (Java)</option>
+            </select>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+            <div style="display:grid; grid-template-columns:1.7fr 2fr 1.7fr 1fr 0.9fr 1.1fr; gap:12px; padding:10px 20px; background:var(--neutral-50); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em; color:var(--text-muted);">
+              <span>STUDENT</span><span>COURSE</span><span>PROGRESS</span><span>LAST ACTIVE</span><span>AVG SCORE</span><span>STATUS</span>
+            </div>
+            <sc-for list="{{ progressRows }}" as="p" hint-placeholder-count="8">
+              <div data-id="{{ p.id }}" onClick="{{ openStudent }}" style="display:grid; grid-template-columns:1.7fr 2fr 1.7fr 1fr 0.9fr 1.1fr; gap:12px; padding:12px 20px; border-bottom:1px solid var(--neutral-100); font-size:13.5px; align-items:center; cursor:pointer;" style-hover="background:var(--neutral-50);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:30px; height:30px; border-radius:999px; background:var(--teal-50); color:var(--teal-700); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:11px; flex:none;">{{ p.init }}</div>
+                  <span style="font-weight:600; color:var(--text-heading);">{{ p.name }}</span>
+                </div>
+                <span style="color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.course }}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="flex:1; height:5px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ p.barStyle }}"></div></div>
+                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); width:32px;">{{ p.pct }}%</span>
+                </div>
+                <span style="color:var(--text-muted);">{{ p.lastActive }}</span>
+                <span style="font-family:var(--font-mono); font-weight:700; color:var(--text-heading);">{{ p.avg }}</span>
+                <span><span style="{{ p.badgeStyle }}">{{ p.status }}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ STUDENT DETAIL ============ -->
+      <sc-if value="{{ isStudentDetail }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Student detail">
+          <a href="#" onClick="{{ goProgress }}" style="display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; text-decoration:none; margin-bottom:18px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            Student progress
+          </a>
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+            <div style="width:54px; height:54px; border-radius:999px; background:var(--teal-600); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:18px;">{{ sdInit }}</div>
+            <div>
+              <h1 style="font-family:var(--font-serif); font-size:27px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0;">{{ sdName }}</h1>
+              <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">{{ sdCourse }} · last active {{ sdLast }}</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:300px 1fr; gap:18px; align-items:start;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; flex-direction:column; align-items:center; gap:12px;">
+              <div style="position:relative; width:130px; height:130px;">
+                <svg width="130" height="130" viewBox="0 0 130 130">
+                  <circle cx="65" cy="65" r="56" fill="none" stroke="var(--neutral-100)" stroke-width="10"></circle>
+                  <circle cx="65" cy="65" r="56" fill="none" stroke="var(--teal-600)" stroke-width="10" stroke-linecap="round" stroke-dasharray="{{ sdRing }}" transform="rotate(-90 65 65)"></circle>
+                </svg>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <span style="font-family:var(--font-serif); font-size:32px; font-weight:600; color:var(--text-heading); line-height:1;">{{ sdPct }}%</span>
+                  <span style="font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.14em; color:var(--text-muted); margin-top:4px;">OVERALL</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:22px; text-align:center;">
+                <div><div style="font-family:var(--font-serif); font-size:21px; font-weight:600; color:var(--text-heading);">{{ sdDone }}</div><div style="font-size:11.5px; color:var(--text-muted);">Completed</div></div>
+                <div><div style="font-family:var(--font-serif); font-size:21px; font-weight:600; color:var(--text-heading);">{{ sdLeft }}</div><div style="font-size:11.5px; color:var(--text-muted);">Remaining</div></div>
+                <div><div style="font-family:var(--font-serif); font-size:21px; font-weight:600; color:var(--text-heading);">{{ sdAvg }}</div><div style="font-size:11.5px; color:var(--text-muted);">Avg score</div></div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:18px;">
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 24px;">
+                <h2 style="font-family:var(--font-serif); font-size:18px; font-weight:600; margin:0 0 14px; color:var(--text-heading);">Module progress</h2>
+                <div style="display:flex; flex-direction:column; gap:13px;">
+                  <sc-for list="{{ sdModules }}" as="m" hint-placeholder-count="4">
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;">
+                        <span style="font-weight:600; color:var(--text-heading);">{{ m.title }}</span>
+                        <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);">{{ m.meta }}</span>
+                      </div>
+                      <div style="height:5px; background:var(--neutral-100); border-radius:999px; overflow:hidden;"><div style="{{ m.barStyle }}"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+                <div style="padding:14px 22px; border-bottom:1px solid var(--border); font-weight:600; color:var(--text-heading);">Quiz &amp; test scores</div>
+                <sc-for list="{{ sdScores }}" as="s" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:12px; padding:11px 22px; border-bottom:1px solid var(--neutral-100); font-size:13px;">
+                    <span style="flex:1; font-weight:600; color:var(--text-heading);">{{ s.title }}</span>
+                    <span style="color:var(--text-muted);">{{ s.date }}</span>
+                    <span style="font-family:var(--font-mono); font-weight:700; color:var(--text-heading); width:44px; text-align:right;">{{ s.score }}</span>
+                    <span style="{{ s.badgeStyle }}">{{ s.badge }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ RESULTS ============ -->
+      <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Results">
+          <div style="margin-bottom:22px;">
+            <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 4px;">Results</h1>
+            <p style="margin:0; color:var(--text-muted);">Published assessments · 1,418 attempts recorded</p>
+          </div>
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:18px; align-items:start;">
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; overflow:hidden;">
+              <div style="display:grid; grid-template-columns:2.2fr 0.9fr 0.9fr 0.9fr 0.9fr; gap:12px; padding:10px 20px; background:var(--neutral-50); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em; color:var(--text-muted);">
+                <span>ASSESSMENT</span><span>ATTEMPTS</span><span>AVG SCORE</span><span>PASS RATE</span><span></span>
+              </div>
+              <sc-for list="{{ resultRows }}" as="r" hint-placeholder-count="6">
+                <div data-i="{{ r.i }}" onClick="{{ pickResult }}" style="{{ r.rowStyle }}" style-hover="background:var(--neutral-50);">
+                  <div><div style="font-weight:600; color:var(--text-heading); font-size:13.5px;">{{ r.title }}</div><div style="font-size:11.5px; color:var(--text-muted);">{{ r.course }}</div></div>
+                  <span>{{ r.attempts }}</span>
+                  <span style="font-family:var(--font-mono); font-weight:700; color:var(--text-heading);">{{ r.avg }}</span>
+                  <span style="font-family:var(--font-mono); color:var(--text-muted);">{{ r.passRate }}</span>
+                  <span style="font-size:12.5px; font-weight:600; color:var(--teal-700); text-align:right;">View →</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:20px 24px;">
+              <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.16em; color:var(--text-muted); margin-bottom:5px;">SCORE DISTRIBUTION</div>
+              <h2 style="font-family:var(--font-serif); font-size:18px; font-weight:600; margin:0 0 4px; color:var(--text-heading);">{{ distTitle }}</h2>
+              <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:18px;">{{ distMeta }}</div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ dist }}" as="d" hint-placeholder-count="5">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); width:56px; flex:none;">{{ d.range }}</span>
+                    <div style="flex:1; height:16px; background:var(--neutral-100); border-radius:5px; overflow:hidden;"><div style="{{ d.barStyle }}"></div></div>
+                    <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-heading); width:30px; text-align:right;">{{ d.n }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-top:18px; padding-top:16px; border-top:1px solid var(--border); font-size:13px;">
+                <span style="color:var(--text-muted);">Median <strong style="color:var(--text-heading);">{{ distMedian }}</strong></span>
+                <span style="color:var(--text-muted);">Pass mark <strong style="color:var(--text-heading);">70%</strong></span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ============ PROFILE ============ -->
+      <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+        <section data-screen-label="Instructor profile" style="max-width:720px;">
+          <h1 style="font-family:var(--font-serif); font-size:32px; font-weight:600; letter-spacing:-0.015em; color:var(--text-heading); margin:0 0 26px;">Profile</h1>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:26px 30px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:18px; margin-bottom:24px;">
+              <div style="width:64px; height:64px; border-radius:999px; background:var(--marigold); color:var(--neutral-700); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:22px;">AM</div>
+              <div>
+                <div style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading);">Arjun Mehta</div>
+                <div style="font-size:13px; color:var(--text-muted);">Instructor since June 2024 · 4 courses · 812 students</div>
+              </div>
+              <div style="margin-left:auto;"><x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary">Change photo</x-import></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Full name" default-value="Arjun Mehta"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Email" default-value="arjun.mehta@maieutic.in"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Headline" default-value="Full-stack engineer · ex-Razorpay"></x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Input" hint-size="100%,70px" label="Phone" default-value="+91 99871 20455"></x-import>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:18px;">
+              <label style="font-size:14px; font-weight:500; color:var(--text-heading);">Bio (shown on course pages)</label>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Textarea" hint-size="100%,96px" rows="{{ 3 }}" default-value="I teach the web the way I learned it — by breaking things and asking why. Eight years across payments infrastructure and developer tools."></x-import>
+            </div>
+            <div style="margin-top:22px; display:flex; gap:10px;">
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" on-click="{{ saveProfile }}">Save changes</x-import>
+              <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost">Cancel</x-import>
+            </div>
+          </div>
+          <div style="background:var(--surface-card); border:1px solid var(--border); border-radius:16px; padding:24px 30px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-weight:600; font-size:15.5px; color:var(--text-heading);">Password</div>
+              <div style="font-size:13px; color:var(--text-muted);">Last changed 2 months ago</div>
+            </div>
+            <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,36px" size="sm" variant="secondary">Change password</x-import>
+          </div>
+        </section>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ============ CONFIRM DIALOG ============ -->
+  <sc-if value="{{ confirm }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(26,24,21,0.4); z-index:120; display:flex; align-items:center; justify-content:center; animation:fade-in 200ms var(--ease-out);">
+      <div style="width:440px; background:var(--surface-card); border-radius:16px; box-shadow:var(--shadow-lg); padding:28px 30px;">
+        <h2 style="font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--text-heading); margin:0 0 8px;">{{ confirmTitle }}</h2>
+        <p style="margin:0 0 22px; font-size:14.5px; color:var(--text-muted); line-height:1.55;">{{ confirmBody }}</p>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="ghost" on-click="{{ cancelConfirm }}">Cancel</x-import>
+          <x-import component-from-global-scope="MaieuticDesignSystem_23e501.Button" hint-size="auto,44px" variant="{{ confirmVariant }}" on-click="{{ doConfirm }}">{{ confirmVerb }}</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOAST ============ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:28px; left:50%; transform:translateX(-50%); z-index:130; background:var(--teal-900); color:#fff; border-radius:12px; padding:13px 20px; display:flex; align-items:center; gap:11px; box-shadow:var(--shadow-lg); animation:toast-in 300ms var(--ease-out); font-size:14px; font-weight:500;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--hosta)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+      {{ toast }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;startScreen&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;dashboard&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;dashboard&quot;, &quot;courses&quot;, &quot;assessments&quot;, &quot;assessNew&quot;, &quot;progress&quot;, &quot;studentDetail&quot;, &quot;results&quot;, &quot;profile&quot;], &quot;section&quot;: &quot;Prototype&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    screen: null, confirm: null, toast: null, courseFilter: 'All courses', sdId: 1, distI: 0,
+    qb: [
+      { q: 'Which HTTP verb should update part of a resource?', opts: ['GET', 'PATCH', 'PUT', 'DELETE'], key: 1, marks: 2 },
+      { q: 'Where does Laravel register route middleware?', opts: ['config/app.php', 'bootstrap/app.php', 'routes/web.php', '.env'], key: 1, marks: 2 },
+      { q: 'What does Eloquent\'s with() prevent?', opts: ['SQL injection', 'The N+1 query problem', 'Mass assignment', 'Race conditions'], key: 1, marks: 2 },
+    ],
+  };
+
+  COURSES = [
+    { title: 'Full-Stack Web Development', students: 486, lessons: 15, pct: 71, avgScore: '78%', status: 'Published', tint: 'var(--teal-50)' },
+    { title: 'Python for Backend Engineering', students: 208, lessons: 40, pct: 63, avgScore: '74%', status: 'Published', tint: 'var(--marigold)' },
+    { title: 'Intro to Programming (Java)', students: 118, lessons: 28, pct: 82, avgScore: '81%', status: 'Archived', tint: 'var(--neutral-100)' },
+    { title: 'API Design Masterclass', students: 0, lessons: 18, pct: 0, avgScore: '—', status: 'Draft', tint: 'var(--bluestar)' },
+  ];
+  ASSESS = [
+    { title: 'Module 1 quiz — Foundations', course: 'Full-Stack Web Development', type: 'Quiz', questions: 5, attempts: 431, status: 'Published' },
+    { title: 'Module 2 quiz — JavaScript essentials', course: 'Full-Stack Web Development', type: 'Quiz', questions: 5, attempts: 402, status: 'Published' },
+    { title: 'Module 3 checkpoint — Laravel', course: 'Full-Stack Web Development', type: 'Test', questions: 12, attempts: 0, status: 'Draft' },
+    { title: 'Typing & data model quiz', course: 'Python for Backend Engineering', type: 'Quiz', questions: 6, attempts: 186, status: 'Published' },
+    { title: 'Final proficiency test', course: 'Python for Backend Engineering', type: 'Test', questions: 20, attempts: 94, status: 'Published' },
+    { title: 'OOP fundamentals quiz', course: 'Intro to Programming (Java)', type: 'Quiz', questions: 8, attempts: 305, status: 'Published' },
+  ];
+  PROGRESS = [
+    { id: 1, name: 'Ananya Sharma', course: 'Full-Stack Web Development', pct: 60, lastActive: 'Today', avg: '81%', status: 'On track' },
+    { id: 2, name: 'Karthik Iyer', course: 'Full-Stack Web Development', pct: 22, lastActive: 'Yesterday', avg: '72%', status: 'On track' },
+    { id: 3, name: 'Sneha Kulkarni', course: 'Python for Backend Engineering', pct: 84, lastActive: 'Today', avg: '88%', status: 'Ahead' },
+    { id: 4, name: 'Rohit Verma', course: 'Full-Stack Web Development', pct: 31, lastActive: '12 days ago', avg: '64%', status: 'At risk' },
+    { id: 5, name: 'Farah Khan', course: 'Python for Backend Engineering', pct: 47, lastActive: '2 days ago', avg: '76%', status: 'On track' },
+    { id: 6, name: 'Divya Raghavan', course: 'Intro to Programming (Java)', pct: 96, lastActive: 'Today', avg: '91%', status: 'Ahead' },
+    { id: 7, name: 'Vikram Singh', course: 'Full-Stack Web Development', pct: 8, lastActive: '19 days ago', avg: '—', status: 'At risk' },
+    { id: 8, name: 'Aditya Menon', course: 'Python for Backend Engineering', pct: 55, lastActive: '4 days ago', avg: '69%', status: 'On track' },
+  ];
+  RESULTS = [
+    { title: 'Module 1 quiz — Foundations', course: 'Full-Stack Web Development', attempts: 431, avg: '82%', passRate: '91%', median: '84%', dist: [6, 22, 68, 158, 177] },
+    { title: 'Module 2 quiz — JavaScript essentials', course: 'Full-Stack Web Development', attempts: 402, avg: '74%', passRate: '78%', median: '76%', dist: [14, 42, 98, 146, 102] },
+    { title: 'Typing & data model quiz', course: 'Python for Backend Engineering', attempts: 186, avg: '77%', passRate: '84%', median: '78%', dist: [5, 18, 44, 72, 47] },
+    { title: 'Final proficiency test', course: 'Python for Backend Engineering', attempts: 94, avg: '71%', passRate: '73%', median: '72%', dist: [6, 12, 26, 33, 17] },
+    { title: 'OOP fundamentals quiz', course: 'Intro to Programming (Java)', attempts: 305, avg: '80%', passRate: '88%', median: '81%', dist: [8, 24, 61, 118, 94] },
+  ];
+
+  thumb(tint) { return { position: 'absolute', inset: 0, background: `linear-gradient(315deg, var(--teal-600) 0 8%, transparent 8.4%), linear-gradient(315deg, var(--red-600) 0 11%, transparent 11.4%), ${tint}` }; }
+  bar(pct) { return { width: pct + '%', height: '100%', background: 'var(--teal-600)', borderRadius: '999px' }; }
+  badge(status) {
+    const pill = { fontSize: '11px', fontWeight: 700, borderRadius: '999px', padding: '3px 10px', whiteSpace: 'nowrap' };
+    const map = {
+      Published: { color: 'var(--teal-700)', background: 'var(--teal-50)' }, 'On track': { color: 'var(--teal-700)', background: 'var(--teal-50)' },
+      Ahead: { color: 'var(--teal-800)', background: 'var(--teal-100)' }, Pass: { color: 'var(--teal-700)', background: 'var(--teal-50)' },
+      'At risk': { color: 'var(--red-600)', background: 'var(--red-50)' }, Fail: { color: 'var(--red-600)', background: 'var(--red-50)' },
+      Draft: { color: 'var(--neutral-700)', background: 'var(--marigold)' }, Archived: { color: 'var(--neutral-600)', background: 'var(--neutral-100)' },
+    };
+    return { ...pill, ...(map[status] || map.Draft) };
+  }
+  initials(n) { return n.split(' ').map((w) => w[0]).slice(0, 2).join(''); }
+  toastMsg(msg) { this.setState({ toast: msg }); clearTimeout(this._toastT); this._toastT = setTimeout(() => this.setState({ toast: null }), 2600); }
+
+  renderVals() {
+    const S = this.state;
+    const screen = S.screen || this.props.startScreen || 'dashboard';
+    const set = (p) => this.setState(p);
+    const go = (scr) => (e) => { if (e && e.preventDefault) e.preventDefault(); set({ screen: scr }); };
+    const crumbs = { dashboard: 'Dashboard', courses: 'My Courses', assessments: 'Assessments', assessNew: 'Assessments / Question builder', progress: 'Student Progress', studentDetail: 'Student Progress / Detail', results: 'Results', profile: 'Profile' };
+
+    const myCourses = this.COURSES.map((c) => ({
+      ...c, initial: c.title[0], thumbStyle: this.thumb(c.tint), barStyle: this.bar(c.pct),
+      badgeStyle: { ...this.badge(c.status), position: 'absolute', top: '10px', right: '10px' },
+    }));
+
+    const activity = [34, 41, 38, 52, 47, 22, 18, 44, 56, 49, 61, 38, 27, 58].map((n, i) => ({
+      label: ['M', 'T', 'W', 'T', 'F', 'S', 'S', 'M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+      style: { width: '100%', borderRadius: '4px 4px 2px 2px', height: (n / 61) * 100 + '%', background: i === 13 ? 'var(--teal-600)' : 'var(--teal-200)' },
+    }));
+
+    const sd = this.PROGRESS.find((p) => p.id === S.sdId) || this.PROGRESS[0];
+    const sdPct = sd.pct;
+
+    const R = this.RESULTS[S.distI] || this.RESULTS[0];
+    const maxD = Math.max(...R.dist);
+
+    return {
+      nav: (e) => set({ screen: e.currentTarget.dataset.screen }),
+      crumb: crumbs[screen] || 'Dashboard',
+      isDash: screen === 'dashboard', isCourses: screen === 'courses',
+      isAssess: screen === 'assessments', isAssessNew: screen === 'assessNew', navAssess: ['assessments', 'assessNew'].includes(screen),
+      isProgress: screen === 'progress', isStudentDetail: screen === 'studentDetail', navProgress: ['progress', 'studentDetail'].includes(screen),
+      isResults: screen === 'results', isProfile: screen === 'profile',
+      goCourses: go('courses'), goAssess: go('assessments'), goAssessNew: go('assessNew'), goProgress: go('progress'), goResults: go('results'),
+
+      kpis: [
+        { label: 'ASSIGNED COURSES', value: '4', note: '3 published · 1 draft' },
+        { label: 'TOTAL STUDENTS', value: '812', note: '+38 this month' },
+        { label: 'AVG COMPLETION', value: '64%', note: 'across published courses' },
+        { label: 'AVG ASSESSMENT SCORE', value: '78%', note: '1,418 attempts' },
+      ],
+      myCourses, activity,
+      feed: [
+        { who: 'Sneha Kulkarni', what: 'scored 92% on the Typing & data model quiz.', when: '26 minutes ago', init: 'SK' },
+        { who: 'Ananya Sharma', what: 'completed “Closures in practice”.', when: '1 hour ago', init: 'AS' },
+        { who: '23 students', what: 'finished Module 2 this week — results are ready to review.', when: '3 hours ago', init: '23' },
+        { who: 'Rohit Verma', what: 'has been inactive for 12 days.', when: 'Yesterday', init: 'RV' },
+        { who: 'Karthik Iyer', what: 'asked a question on “Eloquent & the database”.', when: 'Yesterday', init: 'KI' },
+        { who: 'Divya Raghavan', what: 'passed the OOP fundamentals quiz — 91%.', when: '2 days ago', init: 'DR' },
+      ],
+
+      assessments: this.ASSESS.map((a) => ({ ...a, badgeStyle: this.badge(a.status), pubAct: a.status === 'Published' ? 'unpublish' : 'publish', pubLabel: a.status === 'Published' ? 'Unpublish' : 'Publish' })),
+      saveDraftA: () => this.toastMsg('Draft saved.'),
+
+      qbQuestions: S.qb.map((q, qi) => ({
+        qi, num: qi + 1, q: q.q, marks: q.marks,
+        opts: q.opts.map((t, oi) => ({
+          oi, t,
+          dotStyle: { width: '15px', height: '15px', borderRadius: '999px', flex: 'none', boxSizing: 'border-box', border: q.key === oi ? '4.5px solid var(--teal-600)' : '1.5px solid var(--neutral-300)', background: '#fff' },
+          tStyle: { color: q.key === oi ? 'var(--teal-800)' : 'var(--text-body)', fontWeight: q.key === oi ? 600 : 400 },
+        })),
+      })),
+      qbMeta: S.qb.length + ' questions · ' + S.qb.reduce((n, q) => n + q.marks, 0) + ' marks total',
+      setCorrect: (e) => { const qi = +e.currentTarget.dataset.qi, oi = +e.currentTarget.dataset.oi; set({ qb: S.qb.map((q, i) => i === qi ? { ...q, key: oi } : q) }); },
+      moveQ: (e) => { const qi = +e.currentTarget.dataset.qi, dir = +e.currentTarget.dataset.dir, to = qi + dir; if (to < 0 || to >= S.qb.length) return; const qb = [...S.qb]; [qb[qi], qb[to]] = [qb[to], qb[qi]]; set({ qb }); },
+      addQuestion: () => set({ qb: [...S.qb, { q: 'New question — click to edit', opts: ['Option A', 'Option B', 'Option C', 'Option D'], key: 0, marks: 2 }] }),
+
+      progressRows: this.PROGRESS
+        .filter((p) => S.courseFilter === 'All courses' || p.course === S.courseFilter)
+        .map((p) => ({ ...p, init: this.initials(p.name), barStyle: this.bar(p.pct), badgeStyle: this.badge(p.status) })),
+      onCourseFilter: (e) => set({ courseFilter: e.target.value }),
+      openStudent: (e) => set({ screen: 'studentDetail', sdId: +e.currentTarget.dataset.id || 1 }),
+
+      sdName: sd.name, sdInit: this.initials(sd.name), sdCourse: sd.course, sdLast: sd.lastActive.toLowerCase(), sdPct,
+      sdRing: (sdPct / 100) * 352 + ' 352',
+      sdDone: Math.round((sdPct / 100) * 15), sdLeft: 15 - Math.round((sdPct / 100) * 15), sdAvg: sd.avg,
+      sdModules: [
+        { title: 'Foundations of the web', meta: '3/3 · 100%', barStyle: this.bar(100) },
+        { title: 'JavaScript essentials', meta: '4/5 · 80%', barStyle: this.bar(80) },
+        { title: 'Backend with Laravel', meta: '2/4 · 50%', barStyle: this.bar(50) },
+        { title: 'Shipping & beyond', meta: '0/3 · locked', barStyle: this.bar(0) },
+      ],
+      sdScores: [
+        { title: 'Module 1 quiz — Foundations', date: 'Aug 4', score: '90%', badge: 'Pass', badgeStyle: this.badge('Pass') },
+        { title: 'HTML & CSS checkpoint', date: 'Jul 22', score: '85%', badge: 'Pass', badgeStyle: this.badge('Pass') },
+        { title: 'Scope & types drill', date: 'Jul 30', score: '68%', badge: 'Fail', badgeStyle: this.badge('Fail') },
+        { title: 'Scope & types drill (retake)', date: 'Aug 1', score: '80%', badge: 'Pass', badgeStyle: this.badge('Pass') },
+      ],
+
+      resultRows: this.RESULTS.map((r, i) => ({
+        ...r, i,
+        rowStyle: { display: 'grid', gridTemplateColumns: '2.2fr 0.9fr 0.9fr 0.9fr 0.9fr', gap: '12px', padding: '13px 20px', borderBottom: '1px solid var(--neutral-100)', fontSize: '13.5px', alignItems: 'center', cursor: 'pointer', background: i === S.distI ? 'var(--teal-50)' : 'transparent' },
+      })),
+      pickResult: (e) => set({ distI: +e.currentTarget.dataset.i }),
+      distTitle: R.title, distMeta: R.course + ' · ' + R.attempts + ' attempts · avg ' + R.avg, distMedian: R.median,
+      dist: R.dist.map((n, i) => ({
+        n, range: ['0–20%', '21–40%', '41–60%', '61–80%', '81–100%'][i],
+        barStyle: { width: Math.max(3, (n / maxD) * 100) + '%', height: '100%', background: i >= 3 ? 'var(--teal-600)' : i === 2 ? 'var(--teal-300)' : 'var(--red-200)', borderRadius: '5px' },
+      })),
+
+      saveProfile: () => this.toastMsg('Profile saved.'),
+
+      confirm: !!S.confirm,
+      confirmTitle: S.confirm ? S.confirm.title : '', confirmBody: S.confirm ? S.confirm.body : '',
+      confirmVerb: S.confirm ? S.confirm.verb : 'Confirm', confirmVariant: S.confirm && S.confirm.danger ? 'accent' : 'primary',
+      askAction: (e) => {
+        const d = e.currentTarget.dataset; const n = d.name || 'this item';
+        const map = {
+          publish: { title: 'Publish "' + n + '"?', body: 'Enrolled students will see it immediately in their course.', verb: 'Publish', danger: false, done: 'Assessment published.' },
+          unpublish: { title: 'Unpublish "' + n + '"?', body: 'Students can no longer start new attempts. Existing results are kept.', verb: 'Unpublish', danger: true, done: 'Assessment unpublished.' },
+          delQuestion: { title: 'Delete this question?', body: '"' + n + '" is removed from the assessment.', verb: 'Delete question', danger: true, done: 'Question deleted.', extra: { qi: +d.qi } },
+        };
+        set({ confirm: map[d.act] || map.publish });
+      },
+      cancelConfirm: () => set({ confirm: null }),
+      doConfirm: () => { const c = S.confirm; if (!c) return; const patch = { confirm: null }; if (c.extra) patch.qb = S.qb.filter((_, i) => i !== c.extra.qi); set(patch); this.toastMsg(c.done); },
+      toast: S.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

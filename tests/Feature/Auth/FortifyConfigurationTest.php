@@ -50,10 +50,20 @@ it('registers no route for a disabled feature', function (string $method, string
 | Every Fortify screen must render an LMS view, never framework markup (C-06).
 | Checking for a marker string from our own layout proves the binding is live.
 */
-it('renders LMS views for every fortify screen', function (string $uri, string $marker): void {
-    $this->get($uri)->assertOk()->assertSee($marker, false);
+it('renders LMS views for every fortify screen', function (string $uri, string $heading): void {
+    $this->get($uri)
+        ->assertOk()
+        // The layout hook is what actually proves C-06: framework markup
+        // would never carry it. Asserted first because it is the claim this
+        // test exists to make.
+        ->assertSee('data-lms-layout="auth"', false)
+        // The heading proves the RIGHT screen rendered — that /login is not
+        // quietly serving the register view. Copy, so it moves when the
+        // wording is deliberately changed; that is a fair trade for catching
+        // a mis-wired route.
+        ->assertSee($heading, false);
 })->with([
-    'login' => ['/login', 'Sign in to your account'],
+    'login' => ['/login', 'Sign in'],
     'register' => ['/register', 'Create your account'],
     'forgot password' => ['/forgot-password', 'Reset your password'],
     'reset password' => ['/reset-password/some-token', 'Choose a new password'],

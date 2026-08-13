@@ -1,0 +1,40 @@
+/* ============================================================
+   BASE — light element defaults + editorial helpers.
+   Kept minimal so components stay self-contained.
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Links — defined even where none exist yet, so editor-added links
+   never fall back to browser blue. */
+a { color: var(--brand); text-decoration: none; transition: color var(--dur-fast) var(--ease-standard); }
+a:hover { color: var(--brand-hover); text-decoration: underline; text-underline-offset: 0.18em; }
+
+/* Serif display headings by default */
+h1, h2, h3 { font-family: var(--font-serif); color: var(--text-heading); font-weight: var(--fw-semibold); line-height: var(--lh-heading); letter-spacing: var(--ls-tight); margin: 0; text-wrap: balance; }
+h4, h5, h6 { font-family: var(--font-sans); color: var(--text-heading); font-weight: var(--fw-semibold); line-height: var(--lh-snug); margin: 0; }
+p { margin: 0; text-wrap: pretty; }
+
+/* Eyebrow / kicker — mono, uppercase, tracked */
+.mai-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-brand);
+}
+
+::selection { background: var(--teal-100); color: var(--teal-900); }
+
+:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-sm); }

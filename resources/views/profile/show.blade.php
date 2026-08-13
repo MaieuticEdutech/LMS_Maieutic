@@ -7,8 +7,8 @@
 
     <div class="mx-auto max-w-2xl space-y-6">
         <div>
-            <h1 class="text-xl font-semibold text-zinc-900">Your profile</h1>
-            <p class="mt-1 text-sm text-zinc-500">Manage your account details and password.</p>
+            <h1 class="text-xl font-semibold text-neutral-900">Your profile</h1>
+            <p class="mt-1 text-sm text-neutral-500">Manage your account details and password.</p>
         </div>
 
         @if (session('status') === 'password-updated')
@@ -20,19 +20,19 @@
         <x-card title="Account" description="Your role and status are managed by an administrator.">
             <dl class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
                 <div>
-                    <dt class="text-zinc-500">Name</dt>
-                    <dd class="mt-0.5 font-medium text-zinc-900">{{ $user->name }}</dd>
+                    <dt class="text-neutral-500">Name</dt>
+                    <dd class="mt-0.5 font-medium text-neutral-900">{{ $user->name }}</dd>
                 </div>
                 <div>
-                    <dt class="text-zinc-500">Email</dt>
-                    <dd class="mt-0.5 font-medium text-zinc-900">{{ $user->email }}</dd>
+                    <dt class="text-neutral-500">Email</dt>
+                    <dd class="mt-0.5 font-medium text-neutral-900">{{ $user->email }}</dd>
                 </div>
                 <div>
-                    <dt class="text-zinc-500">Role</dt>
+                    <dt class="text-neutral-500">Role</dt>
                     <dd class="mt-0.5"><x-badge variant="brand">{{ $user->role->label() }}</x-badge></dd>
                 </div>
                 <div>
-                    <dt class="text-zinc-500">Status</dt>
+                    <dt class="text-neutral-500">Status</dt>
                     <dd class="mt-0.5">
                         <x-badge :variant="$user->status->badgeVariant()">{{ $user->status->label() }}</x-badge>
                     </dd>

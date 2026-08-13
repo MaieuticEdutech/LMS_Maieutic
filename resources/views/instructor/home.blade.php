@@ -7,7 +7,7 @@
          scoped strictly to assigned courses. --}}
     <div class="max-w-2xl space-y-6">
         <x-card title="Signed in as Instructor">
-            <p class="text-sm text-zinc-600">
+            <p class="text-sm text-neutral-600">
                 This area is reachable only by an active <span class="font-medium">instructor</span> account.
                 From Phase 10 it will show only the courses you are assigned to — and never any
                 financial data.

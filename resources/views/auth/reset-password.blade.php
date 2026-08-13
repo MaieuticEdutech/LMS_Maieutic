@@ -2,6 +2,7 @@
 
 @section('title', 'Choose a new password')
 @section('heading', 'Choose a new password')
+@section('subheading', 'Pick something you have not used here before.')
 
 @section('content')
     <form method="POST" action="{{ route('password.update') }}" class="space-y-5">

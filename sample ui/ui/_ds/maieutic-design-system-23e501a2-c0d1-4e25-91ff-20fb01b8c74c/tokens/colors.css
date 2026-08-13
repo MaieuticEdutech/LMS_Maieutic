@@ -1,0 +1,57 @@
+/* ============================================================
+   COLOR — base palette (from Maieutic brand guideline, July 2025)
+   Primary: Training Day Teal #00615c · Red Sea #800d07
+   Scales extended harmonically for a premium editorial system.
+   ============================================================ */
+:root {
+  /* — Teal (primary brand) — */
+  --teal-50:  #eaf2f1;
+  --teal-100: #cde3e1;
+  --teal-200: #a5ccc9;
+  --teal-300: #6fada8;
+  --teal-400: #3c8e88;
+  --teal-500: #167871;
+  --teal-600: #00615c; /* Training Day Teal — base */
+  --teal-700: #024e4a;
+  --teal-800: #043b38;
+  --teal-900: #052826;
+
+  /* — Red (Red Sea / Cherry — sparing accent) — */
+  --red-50:  #fbeae9;
+  --red-100: #f5cbc9;
+  --red-200: #e79a96;
+  --red-300: #d46861;
+  --red-400: #b93a32;
+  --red-500: #a31009; /* Cherry (secondary) */
+  --red-600: #800d07; /* Red Sea — base */
+  --red-700: #630a05;
+  --red-800: #470704;
+
+  /* — Warm neutrals (paper → ink) — */
+  --neutral-0:   #ffffff;
+  --neutral-50:  #faf9f6; /* paper */
+  --neutral-100: #f2f1ec;
+  --neutral-200: #e5e3dc;
+  --neutral-300: #d2cfc6;
+  --neutral-400: #b0aca1;
+  --neutral-500: #8a867b;
+  --neutral-600: #66625a;
+  --neutral-700: #4a473f;
+  --neutral-800: #2e2c27;
+  --neutral-900: #1a1815; /* ink */
+
+  /* — Secondary palette (accents / overlays, used sparingly) — */
+  --melon:     #f2aa84;
+  --lemon:     #e8d94e;
+  --honeydew:  #008680;
+  --blueberry: #69fff7;
+  --grape:     #5d09a3;
+
+  /* — Tertiary palette (soft tints, backgrounds) — */
+  --rose:      #f8847e;
+  --marigold:  #fef1de;
+  --dandelion: #fef79a;
+  --hosta:     #15d9a1;
+  --bluestar:  #c1fafb;
+  --lavender:  #c17ef8;
+}

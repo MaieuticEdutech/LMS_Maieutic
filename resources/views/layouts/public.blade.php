@@ -24,15 +24,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="flex min-h-full flex-col bg-white text-zinc-900 antialiased">
+<body class="flex min-h-full flex-col bg-white text-neutral-900 antialiased">
     <a href="#main"
-       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white">
+       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
         Skip to content
     </a>
 
-    <header class="border-b border-zinc-200">
+    <header class="border-b border-neutral-200">
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <a href="{{ route('home') }}" class="text-lg font-semibold text-zinc-900">
+            <a href="{{ route('home') }}" class="text-lg font-semibold text-neutral-900">
                 {{ config('app.name') }}
             </a>
             {{-- Phase 5 adds catalogue navigation; Phase 2 adds auth links. --}}
@@ -44,8 +44,8 @@
         {{ $slot ?? '' }}
     </main>
 
-    <footer class="border-t border-zinc-200">
-        <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-zinc-500 sm:px-6 lg:px-8">
+    <footer class="border-t border-neutral-200">
+        <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-neutral-500 sm:px-6 lg:px-8">
             &copy; {{ now()->year }} {{ config('app.name') }}
         </div>
     </footer>

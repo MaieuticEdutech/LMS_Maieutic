@@ -24,13 +24,13 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="flex min-h-full flex-col bg-zinc-50 text-zinc-900 antialiased">
+<body class="flex min-h-full flex-col bg-neutral-50 text-neutral-900 antialiased">
     <a href="#main"
-       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white">
+       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
         Skip to content
     </a>
 
-    <header class="border-b border-zinc-200 bg-white">
+    <header class="border-b border-neutral-200 bg-white">
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <a href="{{ url('/') }}" class="text-lg font-semibold">{{ config('app.name') }}</a>
             {{-- Phase 7 adds: Dashboard, My Courses, Profile, Logout. --}}

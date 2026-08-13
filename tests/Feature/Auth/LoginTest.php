@@ -29,7 +29,10 @@ beforeEach(function (): void {
 });
 
 it('shows the login page', function (): void {
-    $this->get('/login')->assertOk()->assertSee('Sign in to your account');
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('data-lms-layout="auth"', false)
+        ->assertSee('Sign in');
 });
 
 it('logs in an active user and records the login', function (): void {

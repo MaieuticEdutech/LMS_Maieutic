@@ -1,0 +1,48 @@
+/* ============================================================
+   TYPOGRAPHY tokens
+   Serif display (Newsreader) is the hero. Grotesque (Hanken) for
+   UI + body. Mono (JetBrains) for eyebrows, labels, metadata.
+   ============================================================ */
+:root {
+  /* families */
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans:  'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* weights */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* type scale (px) */
+  --fs-eyebrow: 12px;
+  --fs-caption: 13px;
+  --fs-sm:   14px;
+  --fs-base: 16px;
+  --fs-lg:   18px;
+  --fs-xl:   20px;
+  --fs-2xl:  24px;
+  --fs-3xl:  30px;
+  --fs-4xl:  38px;
+  --fs-5xl:  48px;
+  --fs-6xl:  64px;
+  --fs-7xl:  80px;
+  --fs-8xl:  104px;
+
+  /* line heights */
+  --lh-tight: 1.05;
+  --lh-snug:  1.15;
+  --lh-heading: 1.2;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  /* letter spacing */
+  --ls-tighter: -0.03em;
+  --ls-tight: -0.015em;
+  --ls-normal: 0;
+  --ls-wide: 0.04em;
+  --ls-eyebrow: 0.16em; /* uppercase mono labels */
+}

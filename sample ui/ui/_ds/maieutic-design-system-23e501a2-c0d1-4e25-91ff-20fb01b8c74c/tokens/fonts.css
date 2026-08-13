@@ -1,0 +1,9 @@
+/* Maieutic webfonts — SUBSTITUTED from Google Fonts.
+   The brand guideline specifies Lucida Sans / Mangal (Option 1) and Posterama /
+   Franklin Gothic (Option 2). None are web-licensed or freely available, and none
+   fit the premium-editorial direction. Substitutions below — see readme.md.
+     • Newsreader  → editorial serif display (headlines, pull quotes)
+     • Hanken Grotesk → clean grotesque for UI + body
+     • JetBrains Mono → technical eyebrows, labels, metadata
+   ACTION: replace with the licensed brand fonts if/when available. */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');

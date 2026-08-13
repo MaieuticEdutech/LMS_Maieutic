@@ -7,8 +7,8 @@
          courses in progress, continue learning, recent results. --}}
     <div class="mx-auto max-w-2xl space-y-6">
         <div>
-            <h1 class="text-xl font-semibold text-zinc-900">Dashboard</h1>
-            <p class="mt-1 text-sm text-zinc-500">Signed in as a student.</p>
+            <h1 class="text-xl font-semibold text-neutral-900">Dashboard</h1>
+            <p class="mt-1 text-sm text-neutral-500">Signed in as a student.</p>
         </div>
 
         <x-alert variant="info" title="Your account is not course access">
