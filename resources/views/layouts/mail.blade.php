@@ -37,13 +37,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $subject ?? $organisation }}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#18181b;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:24px 0;">
+<body style="margin:0; padding:0; background-color:#faf9f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#1a1815;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf9f6; padding:24px 0;">
         <tr>
             <td align="center">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#ffffff; border-radius:12px; overflow:hidden;">
                     <tr>
-                        <td style="padding:24px 32px; border-bottom:1px solid #e4e4e7;">
+                        <td style="padding:24px 32px; border-bottom:1px solid #e5e3dc;">
                             {{--
                                 A configured logo is used when present, and the
                                 organisation name when it is not. logoUrl() returns
@@ -64,11 +64,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:20px 32px; border-top:1px solid #e4e4e7; font-size:12px; color:#71717a;">
+                        <td style="padding:20px 32px; border-top:1px solid #e5e3dc; font-size:12px; color:#8a867b;">
                             {{ $branding->emailFooter() }}
                             <br>
                             Need help? Contact us at
-                            <a href="mailto:{{ $branding->supportEmail() }}" style="color:#71717a;">{{ $branding->supportEmail() }}</a>.
+                            <a href="mailto:{{ $branding->supportEmail() }}" style="color:#8a867b;">{{ $branding->supportEmail() }}</a>.
                             <br>
                             This is an automated message — please do not reply to it.
                         </td>
