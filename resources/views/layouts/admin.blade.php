@@ -11,10 +11,11 @@
     $breadcrumbs — optional list of ['label' => string, 'url' => string|null],
     rendered via <x-breadcrumbs>. Pages that don't pass one simply show none.
 
-    NAV ITEMS ARE ADDED ONE PHASE-4 CHECKPOINT AT A TIME, deliberately never
-    all at once: a nav link to a route that doesn't exist yet is a broken
-    link waiting to happen. Add the entry in the same checkpoint that
-    registers its route.
+    Brand pass (docs/UI-GUIDE.md §7 "Admin — dark sidebar", §16 Step 3):
+    248px sticky teal-900 sidebar on large screens, collapsing to an
+    off-canvas drawer below 1024px. Nav content lives in
+    layouts/partials/admin-nav.blade.php so the desktop aside and the mobile
+    drawer render identically from one source.
 --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -28,54 +29,74 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-full bg-zinc-100 text-zinc-900 antialiased">
+<body class="min-h-full bg-neutral-50 text-neutral-800 antialiased" x-data="{ drawerOpen: false }">
     <a href="#main"
-       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white">
+       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
         Skip to content
     </a>
 
     <div class="flex min-h-full">
-        <aside class="hidden w-64 shrink-0 border-r border-zinc-200 bg-white lg:block">
-            <div class="px-4 py-4">
-                <span class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Administration</span>
-            </div>
-            <nav class="space-y-1 px-2 pb-4" aria-label="Admin navigation">
-                @php
-                    $navItems = [
-                        ['route' => 'admin.dashboard', 'label' => 'Dashboard'],
-                        ['route' => 'admin.students.index', 'label' => 'Students'],
-                        ['route' => 'admin.instructors.index', 'label' => 'Instructors'],
-                        ['route' => 'admin.courses.index', 'label' => 'Courses'],
-                        ['route' => 'admin.settings.index', 'label' => 'Settings'],
-                        ['route' => 'admin.audit-log.index', 'label' => 'Audit Log'],
-                    ];
-                @endphp
-
-                @foreach ($navItems as $item)
-                    @continue(! Route::has($item['route']))
-                    @php $active = request()->routeIs($item['route'].'*'); @endphp
-                    <a href="{{ route($item['route']) }}"
-                       @if ($active) aria-current="page" @endif
-                       class="block rounded-control px-3 py-2 text-sm font-medium {{ $active ? 'bg-brand-50 text-brand-700' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' }}">
-                        {{ $item['label'] }}
-                    </a>
-                @endforeach
-            </nav>
+        {{-- Desktop sidebar — sticky, always visible at lg+. --}}
+        <aside class="sticky top-0 hidden h-screen w-sidebar shrink-0 flex-col bg-teal-900 lg:flex">
+            @include('layouts.partials.admin-nav')
         </aside>
 
+        {{-- Mobile drawer — off-canvas below 1024px. Same nav content. --}}
+        <div
+            x-show="drawerOpen"
+            x-cloak
+            class="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Admin navigation"
+        >
+            <div
+                x-show="drawerOpen"
+                x-transition.opacity
+                class="fixed inset-0 bg-neutral-900/40"
+                x-on:click="drawerOpen = false"
+                aria-hidden="true"
+            ></div>
+
+            <div
+                x-show="drawerOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="-translate-x-full"
+                x-transition:enter-end="translate-x-0"
+                x-transition:leave="transition ease-standard duration-150"
+                x-transition:leave-start="translate-x-0"
+                x-transition:leave-end="-translate-x-full"
+                x-trap.noscroll="drawerOpen"
+                x-on:keydown.escape.window="drawerOpen = false"
+                tabindex="-1"
+                class="relative flex h-full w-sidebar flex-col bg-teal-900"
+            >
+                @include('layouts.partials.admin-nav')
+            </div>
+        </div>
+
         <div class="flex min-w-0 flex-1 flex-col">
-            <header class="border-b border-zinc-200 bg-white">
-                <div class="flex items-center justify-between px-4 py-3 sm:px-6">
-                    <div>
+            <header class="border-b border-neutral-200 bg-neutral-0">
+                <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
+                    <button
+                        type="button"
+                        x-on:click="drawerOpen = true"
+                        class="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-neutral-600 hover:bg-neutral-100 lg:hidden"
+                        aria-label="Open navigation"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+                    </button>
+
+                    <div class="min-w-0 flex-1">
                         <x-breadcrumbs :items="$breadcrumbs ?? []" />
-                        <h1 class="text-base font-semibold">@yield('heading', 'Administration')</h1>
+                        <h1 class="truncate text-base font-semibold text-neutral-900">@yield('heading', 'Administration')</h1>
                     </div>
 
                     @auth
                         <div class="flex items-center gap-3">
-                            <div class="text-right text-sm">
-                                <p class="font-medium leading-tight">{{ auth()->user()->name }}</p>
-                                <p class="leading-tight text-zinc-500">{{ auth()->user()->role->label() }}</p>
+                            <div class="hidden text-right text-sm sm:block">
+                                <p class="font-medium leading-tight text-neutral-900">{{ auth()->user()->name }}</p>
+                                <p class="leading-tight text-neutral-500">{{ auth()->user()->role->label() }}</p>
                             </div>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
