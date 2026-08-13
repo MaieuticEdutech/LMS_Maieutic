@@ -154,7 +154,7 @@ it('allows a quiz lesson once its assessment is published', function (): void {
         'type' => LessonType::Quiz,
     ]);
 
-    \App\Models\Assessment::factory()->create([
+    App\Models\Assessment::factory()->create([
         'assessable_type' => Lesson::class,
         'assessable_id' => $lesson->id,
         'is_published' => true,
