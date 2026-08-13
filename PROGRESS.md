@@ -844,3 +844,213 @@ assertions, Pint clean, Larastan level 8 zero errors throughout.
   handoff to Srivathsa (confirmed 2026-08-12, recorded in this file, not yet in those files)
 - Not yet committed or pushed — everything above is on `phase/03-assessment-schema`, uncommitted
   changes pending
+
+---
+
+# PHASE 4 — Admin Shell & Administration Area (Track B, Srivathsa only)
+
+Shashank is back on his own track from Phase 4 onward (confirmed 2026-08-12) — Phase 4 is Track B
+only. Started by pulling `origin/main` fresh (now includes the merged Phase 3 PR #2 and Govind's
+`phase/05-course-builder-backend` PR #1).
+
+**Baseline note before any Phase 4 work landed:** `composer check` on fresh `main` is 522/524, not
+524/524 — two pre-existing failures in Govind's `tests/Feature/Catalogue/MediaUploadTest.php`
+(`finfo_close()` deprecated on PHP 8.5, becomes an uncaught `ErrorException` via Laravel's
+`error_reporting(-1)`). Root-caused, reproduced, and handed to Govind directly (not in this file in
+detail — see the chat) rather than fixed here; not my track, not touching his file. Treat 522/524 as
+this track's actual "green" baseline until he ships the one-line fix.
+
+## Checkpoint 1 — Admin shell + reusable table pattern
+
+**Branch:** `phase/04-admin-shell`
+
+The urgent, narrowly-scoped one — the track brief is explicit that this specific piece blocks
+Govind's Course Builder UI, so it's deliberately smaller than the rest of Phase 4's frontend list
+(the typed-confirmation modal and empty-state/skeleton patterns are deferred to Checkpoint 3, where
+a real destructive-action flow exists to build them against, rather than building them in the
+abstract now).
+
+**Delivered**
+- `resources/views/layouts/admin.blade.php` — extended, not replaced: real sidebar nav (currently
+  just `admin.home`, structured so each future checkpoint adds one entry, guarded by `Route::has()`
+  so a not-yet-registered route can never produce a broken link), user menu (name + role label +
+  working logout form), breadcrumbs slot, flash region extended to also show `session('error')`
+  (previously only `status`).
+- `resources/views/components/breadcrumbs.blade.php` — new component (`<x-breadcrumbs :items="...">`
+  ), not a fork of anything existing. Renders nothing when empty; last item is always plain text
+  with `aria-current="page"`.
+- `app/Livewire/Concerns/WithAdminTable.php` — the reusable admin table pattern named in
+  `phases.md`'s Phase 4 feature list (search, filter, sort, paginate, export hook). `applySearch()`/
+  `applySort()` are deliberately public, not protected, so the pattern is testable without a full
+  Livewire render cycle. Requires the consuming component to also `use Livewire\WithPagination`
+  (documented, not bundled, so a table can choose simple vs. cursor pagination).
+- Tests: `tests/Feature/Admin/WithAdminTableTest.php` (search/sort/pagination-reset logic, plus
+  Livewire-wiring tests for the parts that genuinely need a real component) and
+  `tests/Feature/Admin/AdminShellTest.php` (role guard iterated over every **registered** `admin.*`
+  route rather than a hardcoded list — same "assert against reality" lesson as Phase 3's build-ahead
+  guards — plus shell-content and breadcrumbs-component tests).
+- **Manually verified in a browser**, not just via the test suite: ran the dev server, logged in as
+  the seeded super admin, confirmed the shell renders (sidebar, breadcrumb area, user menu, logout
+  button), confirmed logout actually completes the round trip (redirects to the public homepage),
+  and confirmed a logged-out request to `/admin` redirects to `/login` — the same three things the
+  automated tests assert, now also confirmed as real rendered behaviour, not just HTTP status codes.
+
+**Two real bugs found and fixed while building the trait — neither is a docs/spec question, both are
+concrete Laravel/Livewire mechanics:**
+
+1. **Pest's `dataset()` closures run before the app is bootstrapped.** The first draft of
+   `AdminShellTest.php` used a globally-registered `dataset('admin route names', fn () =>
+   adminRouteNames())` where `adminRouteNames()` calls the `Route` facade — failed with "A facade
+   root has not been set." on every route-guard test. Fixed by moving the route enumeration inside
+   each test body (a `foreach` loop over `adminRouteNames()`, called after `TestCase::setUp()` has
+   run) instead of through Pest's dataset mechanism. Still fails loudly and names the exact route if
+   one ever regresses — just not via Pest's per-dataset-entry test naming.
+
+2. **`component` is a reserved parameter name in Livewire's `dispatch()`.** The first draft of
+   `requestExport()` called `$this->dispatch('admin-table-export-requested', component:
+   static::class)`, intending to pass along which component triggered the export. Reproduced the
+   actual dispatch payload directly (`dump($test->effects)`) rather than guessing from the failed
+   assertion: `component` gets stripped out of the general params and consumed internally for
+   Livewire's own event-routing purposes — my value never reached the payload at all. Fixed by
+   dropping the parameter entirely; Livewire already records the dispatching component's identity
+   without it. Documented in the trait so nobody reintroduces this exact mistake.
+
+**Judgment call:** kept the placeholder route named `admin.home` rather than renaming it to
+`admin.dashboard` now. The real dashboard (KPI tiles, recent activity) doesn't exist until
+Checkpoint 2 — renaming a route to "dashboard" while it still serves the Phase 2 placeholder felt
+more misleading than the minor inconsistency of the nav label ("Dashboard") not yet matching the
+route name.
+
+**Gate results**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 541/543 passed, 1128 assertions
+```
+Two failures are the pre-existing, not-mine `MediaUploadTest` cases noted in the baseline above —
+zero new failures introduced. First `composer check` attempt on fresh `main` also surfaced a genuine
+Postgres deadlock (two concurrent test runs colliding on `lms_test`) — resolved by killing the stuck
+background process, not a code issue.
+
+**Not done here (later checkpoints):** admin dashboard (KPI tiles, query service), student
+management, instructor management + course assignment, settings screen, audit log viewer, read-only
+course list. Typed-confirmation modal and empty-state/skeleton patterns deferred to Checkpoint 3 as
+noted above.
+
+---
+
+## Checkpoint 2 — Admin dashboard
+
+**Branch:** `phase/04-admin-shell` (continues Checkpoint 1)
+
+**Delivered**
+- `app/Services/Admin/DashboardQueryService.php` — the dashboard's read model (phases.md: "counts and
+  recent lists; zero N+1"). Every method is one query; the "recent" methods eager-load exactly what
+  their panel displays (`with('course:id,title')`, `with(['user:id,name', 'course:id,title'])`) and
+  nothing else.
+- `app/Livewire/Admin/Dashboard.php` + `resources/views/livewire/admin/dashboard.blade.php` — KPI
+  tiles (students, instructors, published courses, active enrollments, revenue) and three
+  recent-activity panels (orders, enrollments, failed webhooks — the last one only rendered when at
+  least one failure exists). `admin.home` renamed to `admin.dashboard`, replacing the Phase 2
+  placeholder entirely (`resources/views/admin/home.blade.php` deleted).
+- Two new reusable components: `x-stat-tile` (the KPI figure) and use of existing `x-card`/`x-table`/
+  `x-badge`/`x-empty-state` for the panels — no forks.
+- `OrderStatus` gained `label()` and `badgeVariant()` methods (it had neither before this checkpoint,
+  unlike `UserRole`) — needed to render order status as a badge; a reasonable, backward-compatible
+  addition to an enum this track already owns, not a new pattern.
+- Tests: `DashboardQueryServiceTest.php` (counts, revenue sums only paid orders, recency ordering,
+  **N+1 query-count assertions that prove eager loading holds as row count scales**, not just that
+  the numbers come back right) and `DashboardTest.php` (KPI tiles render, empty states show with no
+  data, panels populate with data, failed-webhooks panel is conditional, and the **DoD performance
+  requirement** — genuinely seeds 150 students + 15 instructors + 25 courses + 120 enrollments + 80
+  orders and asserts render time under 400ms, not a number asserted with nothing behind it).
+- **Manually verified in a browser**, matching every automated assertion: seeded realistic sample
+  data via `tinker`, logged in as the super admin, confirmed all five KPI tiles show correct figures,
+  confirmed the recent-orders and recent-enrollments panels render with correct data and relative
+  timestamps, confirmed the failed-webhooks panel appears (in red, "needs attention") with the
+  correct gateway/event/error columns.
+
+**Three real bugs found and fixed — all in my own test methodology this time, not the service code,
+and worth being precise about which is which:**
+
+1. **Factory cascade pollution.** The first draft of the counts test created enrollments with
+   `Enrollment::factory()->count(4)->create()` — Enrollment's default state creates its own nested
+   student *and* a nested paid order, which itself creates *another* nested student. `studentCount()`
+   came back 13, not the expected 3. Fixed by using the `adminGranted()` state (skips the order
+   cascade entirely) and explicitly reusing one already-created student across enrollments — which
+   in turn required distinct courses per enrollment, since `UNIQUE(user_id, course_id)` forbids
+   reusing the same pair.
+2. **Query log not flushed between the "before" and "after" measurement in both N+1 tests.**
+   `DB::flushQueryLog()` was called once, before creating 20 more records, but not again *after* that
+   creation and *before* the actual measured read — so the 20 records' own cascaded insert queries
+   (each order/enrollment also creates its own nested course and buyer) landed in the count. Result:
+   "30 orders" appeared to cost 82 queries, which would have read as a real N+1 regression if not
+   caught. Fixed by flushing immediately before the measured call, not just after the previous one.
+3. **`Livewire::actingAs($user)->test(Component::class)` breaks Larastan's generic resolution** on
+   the chained `test()` call (`Unable to resolve the template type TComponent`) — `actingAs()`
+   returns `$this` without a return-type annotation Larastan can follow through the chain. Fixed by
+   using `$this->actingAs($user)` (the Laravel `TestCase` method, already used successfully in
+   `AdminShellTest.php`) before a standalone `Livewire::test()` call, rather than chaining through
+   Livewire's own `actingAs()`.
+
+**Gate results**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 553/555 passed, 1158 assertions
+```
+Same 2 pre-existing, not-mine `MediaUploadTest` failures as the Phase 4 baseline. Zero regressions.
+
+**Not done here (later checkpoints):** student management, instructor management + course
+assignment, settings screen, audit log viewer, read-only course list.
+
+---
+
+## Checkpoint 3 — Student management
+
+**Branch:** `phase/04-admin-shell` (continues Checkpoints 1–2)
+
+**Delivered**
+- `app/Actions/Admin/{CreateStudent,UpdateStudent,SetUserStatus,DeleteUser,ForcePasswordReset}.php` —
+  `CreateStudent` reuses the existing `SendActivationLink` action rather than inventing a second
+  "how does an account get its first password" path (admin-created students land in the same
+  `PendingActivation` state as a purchase-created account). `SetUserStatus`/`DeleteUser` are shared,
+  not student-specific — Checkpoint 4 reuses them for instructors.
+- `Admin\StudentsTable`/`StudentForm`/`StudentDetail` Livewire components + views, using
+  `WithAdminTable` for the list. Typed-confirmation delete (Alpine-gated on typing the student's
+  email, per FR-ADM-17) and the resend-activation/force-reset actions built here, alongside their
+  first real consumer, as planned back in Checkpoint 1.
+- Routes: `admin.students.{index,create,edit,show}`; nav updated.
+- Tests across four files: Action-level (audit entries, status changes affect `canAuthenticate()`
+  immediately, soft delete preserves the row, no raw password ever reaches the audit log), and
+  Livewire-level for each component (list/search/empty-state, form validation including
+  edit-without-tripping-your-own-uniqueness-check, and the full status/resend/reset/delete flows).
+
+**Two real bugs, both my own test-authoring mistakes:**
+1. `AdminShellTest.php`'s generic route-guard sweep assumed every admin route takes no parameters —
+   broke the moment `admin.students.edit`/`show` needed a `{student}`. Fixed by filtering
+   `adminRouteNames()` to parameter-free routes only; parameterized routes get their own explicit
+   tests with a real bound model instead, since "who's allowed on which specific record" can't
+   usefully generalize into one sweep anyway.
+2. A "no raw password in the audit log" test created its subject via `CreateStudent`, whose entire
+   point is that the account has no password yet — asserting the log doesn't contain a null value
+   was vacuous. Fixed by using a normally-factory-created student (a real hashed password) instead.
+
+**Gate:** Pint clean, Larastan 0 errors, Pest 573/575 (same 2 pre-existing `MediaUploadTest`
+failures, zero regressions). Not manually re-verified in a browser this checkpoint — time-boxed to
+keep pace with the remaining three checkpoints; the automated coverage above is thorough enough
+that this is a documented, deliberate gap, not an oversight.
+
+---
+
+## Checkpoints 4–6 — dispatched to parallel agents
+
+Per explicit instruction, Checkpoints 4 (instructor management + course assignment), 5 (settings),
+and 6 (audit log + read-only course list) were built by three parallel agents rather than
+sequentially. Each agent was told NOT to touch `routes/admin.php` or the nav array in
+`layouts/admin.blade.php` (shared files every checkpoint needs — parallel edits would conflict) and
+NOT to run `composer check`/the test suite (concurrent Pest runs against `lms_test` already caused a
+real Postgres deadlock earlier this session) — both reserved for centralized integration afterward.
+See the entries below for what each agent actually delivered and what integration required.
