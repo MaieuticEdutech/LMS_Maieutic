@@ -68,20 +68,18 @@ final class ContentTypeRegistry
     /**
      * Types an administrator may choose when creating a lesson.
      *
-     * `quiz` is excluded until Phase 8 builds the assessment engine: offering
-     * a type that cannot yet be authored would let an admin create a lesson
-     * that can never be completed.
+     * `quiz` was excluded through Phase 5–7 (the assessment engine did not
+     * exist yet); Phase 8 completes QuizContentHandler and lifts the
+     * exclusion here — a quiz lesson is now something an admin can actually
+     * finish authoring (attach an assessment, add questions, publish it).
      *
      * @return list<LessonType>
      */
     public function selectableTypes(): array
     {
-        return array_values(array_filter(
-            array_map(
-                static fn (LessonContentHandler $h): LessonType => $h->type(),
-                $this->handlers,
-            ),
-            static fn (LessonType $type): bool => $type !== LessonType::Quiz,
+        return array_values(array_map(
+            static fn (LessonContentHandler $h): LessonType => $h->type(),
+            $this->handlers,
         ));
     }
 }

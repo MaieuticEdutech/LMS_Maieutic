@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Admin\Assessments\AssessmentBuilder;
+use App\Livewire\Admin\Assessments\AssessmentsTable;
 use App\Livewire\Admin\AuditLogTable;
 use App\Livewire\Admin\Courses\CourseBuilder;
 use App\Livewire\Admin\Courses\CoursesTable;
@@ -96,4 +98,14 @@ Route::prefix('admin')
          */
         Route::get('/enrollments', EnrollmentsTable::class)->name('enrollments.index');
         Route::get('/enrollments/create', GrantEnrollmentForm::class)->name('enrollments.create');
+
+        /*
+         * Phase 8 — assessments. No standalone "create" route: an
+         * assessment is always created from its attach point (a quiz
+         * lesson's editor, a course's final-test section) via a one-line
+         * action that redirects straight here to continue building —
+         * same shape as CourseBuilder's own create flow.
+         */
+        Route::get('/assessments', AssessmentsTable::class)->name('assessments.index');
+        Route::get('/assessments/{assessment}', AssessmentBuilder::class)->name('assessments.builder');
     });

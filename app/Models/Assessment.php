@@ -131,4 +131,24 @@ class Assessment extends Model
     {
         $query->where('is_published', true);
     }
+
+    /**
+     * The course this assessment protects, resolved through the polymorphic
+     * `assessable` chain (Lesson → Module → Course, or Module → Course, or
+     * Course itself) — the same "resolve then ask access" pattern
+     * MediaFile::resolveCourse() already uses. Deny-safe: an unresolvable
+     * attach point returns null, which callers must treat as no access
+     * (never as "no restriction").
+     */
+    public function resolveCourse(): ?Course
+    {
+        $assessable = $this->assessable;
+
+        return match (true) {
+            $assessable instanceof Course => $assessable,
+            $assessable instanceof Module => $assessable->course,
+            $assessable instanceof Lesson => $assessable->course(),
+            default => null,
+        };
+    }
 }

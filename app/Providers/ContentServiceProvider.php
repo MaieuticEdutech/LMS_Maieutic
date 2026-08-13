@@ -37,15 +37,9 @@ class ContentServiceProvider extends ServiceProvider implements DeferrableProvid
             $registry->register(new PresentationContentHandler);
             $registry->register(new ResourceContentHandler);
             $registry->register(new TextContentHandler);
-
-            /*
-             * Registered but NOT selectable until Phase 8 builds the
-             * assessment engine. It is registered rather than omitted because
-             * the registry throws on an unregistered type, and `quiz` is a
-             * legal value the database will accept — a missing handler would
-             * turn any encounter with a quiz lesson into a hard failure.
-             * See QuizContentHandler.
-             */
+            // Phase 8 completed QuizContentHandler — a quiz lesson now
+            // authors like every other type, backed by an attached
+            // Assessment. See that class.
             $registry->register(new QuizContentHandler);
 
             return $registry;

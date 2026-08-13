@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Actions\Assessment\CreateAssessment;
 use App\Actions\Catalog\UpdateLesson;
+use App\Enums\AssessmentType;
+use App\Models\Assessment;
 use App\Models\Lesson;
 use App\Models\User;
 use App\Services\Content\ContentTypeRegistry;
@@ -67,6 +70,44 @@ final class LessonEditor extends Component
         $this->dispatch('lesson-list-changed');
         $this->dispatch('close-modal', 'lesson-editor-'.$this->lesson->id);
         session()->flash('status', "Lesson \"{$this->lesson->title}\" saved.");
+    }
+
+    /**
+     * The quiz lesson's attached assessment, if one exists yet — resolved
+     * the same way QuizContentHandler does, kept in this class rather than
+     * asked of the handler since it is presentation-only (which button to
+     * show), not part of the content-type contract.
+     */
+    public function assessment(): ?Assessment
+    {
+        return Assessment::query()
+            ->where('assessable_type', Lesson::class)
+            ->where('assessable_id', $this->lesson->id)
+            ->first();
+    }
+
+    /**
+     * Creates a minimal draft assessment for this lesson and redirects into
+     * the Assessment Builder — same "create is a one-line action, then
+     * continue building" shape as CourseBuilder's own create flow.
+     */
+    public function createAssessment(CreateAssessment $create): mixed
+    {
+        $course = $this->lesson->module?->course;
+        abort_unless($course !== null, 404);
+        $this->authorize('manageContent', $course);
+        $this->authorize('create', Assessment::class);
+
+        $actor = auth()->user();
+        abort_unless($actor instanceof User, 403);
+
+        $assessment = $create->handle($this->lesson, [
+            'type' => AssessmentType::Quiz,
+            'title' => $this->lesson->title,
+            'passing_percentage' => 70,
+        ], $actor);
+
+        return redirect()->route('admin.assessments.builder', $assessment);
     }
 
     public function render(): View

@@ -6,31 +6,20 @@ namespace App\Services\Content\Handlers;
 
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
+use App\Models\Assessment;
 use App\Models\Lesson;
 use App\Services\Content\Contracts\LessonContentHandler;
 
 /**
- * Quiz lessons — DELIBERATELY INCOMPLETE UNTIL PHASE 8.
+ * Quiz lessons — COMPLETED IN PHASE 8.
  *
- * ═════════════════════════════════════════════════════════════════════════
- * `phases.md` Phase 5 states plainly: handlers for video, document,
- * presentation, resource and text, with the **quiz handler stubbed until
- * Phase 8**.
- *
- * It is registered rather than omitted for one reason: ContentTypeRegistry
- * throws when asked for an unregistered type, and `LessonType::Quiz` is a
- * legal enum value the database will accept. A missing handler would turn any
- * encounter with a quiz lesson into a hard failure. Registering a handler
- * that refuses gracefully is the safer shape.
- *
- * It is excluded from `selectableTypes()`, so an administrator cannot create
- * one yet — offering a type that cannot be authored would let them build a
- * lesson no student could ever complete.
- *
- * PHASE 8 (Srivathsa, Track B) completes this. The assessment tables belong
- * to his slice and do not exist yet; this class deliberately does not
- * reference them.
- * ═════════════════════════════════════════════════════════════════════════
+ * A quiz lesson carries no content of its own: its "content" is the
+ * {@see Assessment} attached to it via the same polymorphic `assessable`
+ * relation Module and Course final tests use (architecture.md §10.1). This
+ * handler never reaches for `assessments`/`questions` tables directly — it
+ * asks `Assessment::query()` the same way `Assessment::resolveCourse()` asks
+ * the reverse question, keeping the assessment engine's own tables the
+ * single place that schema is known.
  */
 final class QuizContentHandler implements LessonContentHandler
 {
@@ -46,7 +35,7 @@ final class QuizContentHandler implements LessonContentHandler
 
     public function description(): string
     {
-        return 'An assessment attached to this lesson. Available from Phase 8.';
+        return 'An assessment attached to this lesson — questions, marks, time limit and grading.';
     }
 
     /**
@@ -80,20 +69,28 @@ final class QuizContentHandler implements LessonContentHandler
     }
 
     /**
-     * Always blocks publication in V1.
-     *
-     * FAIL-SAFE DIRECTION: a quiz lesson has no assessment behind it until
-     * Phase 8, so publishing one would put a dead lesson in front of a paying
-     * student. Blocking is visible and fixable; allowing it would be silent.
+     * Blocks publication until the lesson has an assessment attached, and
+     * that assessment is itself published (which already requires at least
+     * one question and non-zero total marks — AssessmentPublishValidator).
+     * A quiz lesson published with no working assessment behind it would
+     * give a paying student an empty page, same reasoning as every other
+     * content type's media requirement.
      *
      * @return list<string>
      */
     public function publishBlockers(Lesson $lesson): array
     {
-        return [sprintf(
-            'Lesson "%s" is a quiz. Quizzes are built in Phase 8 and cannot be published yet.',
-            $lesson->title,
-        )];
+        $assessment = $this->assessmentFor($lesson);
+
+        if ($assessment === null) {
+            return [sprintf('Lesson "%s" is a quiz with no assessment attached yet.', $lesson->title)];
+        }
+
+        if (! $assessment->is_published) {
+            return [sprintf('Lesson "%s"\'s assessment is not published.', $lesson->title)];
+        }
+
+        return [];
     }
 
     /**
@@ -103,5 +100,13 @@ final class QuizContentHandler implements LessonContentHandler
     public function buildMeta(array $input): array
     {
         return [];
+    }
+
+    private function assessmentFor(Lesson $lesson): ?Assessment
+    {
+        return Assessment::query()
+            ->where('assessable_type', Lesson::class)
+            ->where('assessable_id', $lesson->getKey())
+            ->first();
     }
 }

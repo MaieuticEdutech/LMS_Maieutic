@@ -14,7 +14,6 @@ use App\Services\Content\CourseCounterService;
 use App\Services\Content\HtmlSanitizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 /**
  * Add a lesson to a module (FR-CNT-02, FR-CNT-06).
@@ -52,12 +51,6 @@ final class CreateLesson
         // Fails loudly if the type has no handler — a wiring bug should
         // surface here, not as a blank page in the player.
         $handler = $this->registry->for($type);
-
-        if ($type === LessonType::Quiz) {
-            throw new InvalidArgumentException(
-                'Quiz lessons cannot be created yet. The assessment engine arrives in Phase 8.',
-            );
-        }
 
         $lesson = DB::transaction(function () use ($module, $attributes, $type, $handler): Lesson {
             $lesson = new Lesson;
