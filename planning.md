@@ -808,8 +808,8 @@ deliberately rather than discover it.
 | Track | Owner | Phases | Why it can run independently |
 |---|---|---|---|
 | **A — Domain core & money** | **Govind** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress → **12 Payments** | The critical path, and it is genuinely serial: the player needs the access gate, which needs content to protect. Owns both single-owner components (§21.3). |
-| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Everything a user looks at. Owns `app/Livewire/**` and `resources/views/**`, so it barely touches Track A's files at all. |
-| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever and can start at any time. |
+| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → **5 UI** → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Owns the shared UI layer — the component library and the four shells — plus the admin catalogue and public-facing screens. See §21.2.5. |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → **6 UI** → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever. Picks up Phase 6's enrolment screens, which sit in their own subdirectory (§21.2.5). |
 
 **Phase 14 (Security Hardening) is done by all three together.** It is an adversarial review of the
 finished system, and three independent perspectives genuinely catch more than one — it is the one
@@ -834,12 +834,56 @@ collide:
 
 | Owner | Owns these directories outright |
 |---|---|
-| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing}`, `app/Services/{Content,Media,Enrollment,Billing,Progress}`, `routes/media.php`, `routes/webhooks.php` |
-| **Srivathsa** | `app/Livewire/**`, `resources/views/**`, `app/Actions/Assessment`, `app/Services/Assessment` |
+| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing,Student}`, `app/Services/{Content,Media,Enrollment,Billing,Progress,Student}`, `routes/media.php`, `routes/webhooks.php` |
+| **Srivathsa** | `app/Actions/Assessment`, `app/Services/Assessment`, **and the shared UI layer — see §21.2.5** |
 | **Shashank** | `app/Jobs/**`, `app/Mail/**`, `app/Notifications/**`, `app/Services/Reporting`, `.github/**`, `database/seeders` |
 
 Three people, three near-disjoint sets of files. Route files are append-only within their groups,
 so simultaneous additions merge cleanly.
+
+### 21.2.5 UI ownership — amended 2026-08-13
+
+**This section supersedes the earlier grant of `app/Livewire/**` and `resources/views/**` to Track B
+outright.** That grant was correct while one person built every screen. It stopped being correct the
+moment three phases needed UI at once: it made Srivathsa the sole author of everything anyone can
+see, and left Track A's backend finished but invisible.
+
+The full rules live in **`docs/UI-GUIDE.md` §3**, which is the document to read before writing a
+screen. This is the ownership summary.
+
+#### The shared layer — single-owner, permanently
+
+| Layer | Owner | Files |
+|---|---|---|
+| Design foundation — tokens, fonts, base layer | **Govind** (delivered, PR #7) | `resources/css/app.css`, `vite.config.js` |
+| Shared component library | **Srivathsa** | `resources/views/components/**` |
+| Layouts and shells | **Srivathsa** | `resources/views/layouts/**` |
+
+The component library stays single-owner and that is not a formality. Rule 3 of `CLAUDE.md` calls a
+second button component a defect; three people free to add primitives is exactly how a second one
+appears. Need a variant? Add a prop, and ask Srivathsa.
+
+#### Feature screens — owned by subdirectory
+
+| Screens | Livewire | Views | Owner |
+|---|---|---|---|
+| Course Builder, course form, lesson editor, media uploader | `Admin/Courses/**` | `livewire/admin/courses/**`, `admin/lessons/editors/**` | **Srivathsa** |
+| Public catalogue, course detail | `Catalogue/**` | `livewire/catalogue/**` | **Srivathsa** |
+| Admin enrolments — table, grant, revoke | `Admin/Enrollments/**` | `livewire/admin/enrollments/**` | **Shashank** |
+| Assessment, instructor | `Assessment/**`, `Instructor/**` | matching | **Srivathsa** |
+| Reporting | `Reporting/**` | `livewire/reporting/**` | **Shashank** |
+| Student dashboard, My Courses, player | `Student/**` | `livewire/student/**`, `student/lessons/players/**` | **Govind** |
+
+**Subdirectory ownership is what makes this safe, and it is proven rather than hoped.** Twelve pull
+requests merged across four tracks in a single day with no file touched by two people. The rule is
+simply: stay inside your own subdirectory, and treat anything above it as someone else's.
+
+#### The one place this splits a pair
+
+`ContentTypeRegistry` declares two views per content type. **Srivathsa builds the six editors**
+(`admin/lessons/editors/*`), **Govind builds the six players** (`student/lessons/players/*`).
+Different directories, no collision — but the registry is the contract between them, so neither may
+change a declared view name without telling the other.
 
 ### 21.2.3 Work rounds — who does what, when
 
@@ -922,6 +966,9 @@ else are raised with the owner rather than merged directly.
 | `composer.json` / `package.json` | Track C | A new dependency needs a recorded Rule 6 justification regardless of who wants it |
 | `config/lms.php` | Track C | Add keys, never repurpose existing ones |
 | `resources/views/components/` | Track B | The shared component library. Extend, don't fork — a second button component is a defect |
+| `resources/views/layouts/` | Track B | The four shells. A screen lives inside a shell; it does not bring its own |
+| `resources/css/app.css` | Track A | Design tokens. Adding one is a conversation — an ad-hoc token is an arbitrary value with extra steps |
+| `app/Livewire/**`, `resources/views/livewire/**` | **Per subdirectory — §21.2.5** | No longer owned wholesale by one track. Stay inside your own subdirectory |
 | `planning.md`, `phases.md` | Whoever closes the phase | Update in the same PR as the code, per Rule 10 |
 | `requirements.md`, `architecture.md` | Team decision | Changes here affect all tracks; agree before editing |
 
