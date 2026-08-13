@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Student\CoursePlayer;
+use App\Livewire\Student\Dashboard;
+use App\Livewire\Student\MyCourses;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,9 +34,27 @@ use Illuminate\Support\Facades\Route;
 Route::name('student.')
     ->middleware(['auth', 'active', 'role:student'])
     ->group(static function (): void {
-        // Phase 2: role home placeholder only. Phase 7 replaces this with the
-        // real dashboard, My Courses and the course player.
-        Route::view('/dashboard', 'student.home')->name('home');
+        Route::get('/dashboard', Dashboard::class)->name('home');
+        Route::get('/my-courses', MyCourses::class)->name('courses.index');
+
+        /*
+        | THE PLAYER — the only route that exposes lesson content.
+        |
+        | `role:student` above is NOT the access control. It establishes who
+        | this area is for; CoursePlayer::mount() then authorises
+        | `access` on the course, which resolves through
+        | EnrollmentAccessService — the single definition (rule S-8).
+        |
+        | The lesson segment is optional. Without it the player resumes where
+        | the student left off; with it, it opens that specific lesson. A
+        | lesson that is not part of the published curriculum 404s rather
+        | than 403s: it is not hidden from this student, it is not in the
+        | course.
+        |
+        | Bound by slug (courses) and id (lessons) per each model's
+        | getRouteKeyName.
+        */
+        Route::get('/learn/{course}/{lesson?}', CoursePlayer::class)->name('courses.play');
     });
 
 /*
