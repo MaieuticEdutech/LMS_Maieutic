@@ -14,6 +14,9 @@
         ['route' => 'admin.students.index', 'label' => 'Students', 'icon' => 'students'],
         ['route' => 'admin.instructors.index', 'label' => 'Instructors', 'icon' => 'instructors'],
         ['route' => 'admin.courses.index', 'label' => 'Courses', 'icon' => 'courses'],
+        // Phase 6 (Track C). Guarded by the Route::has() check below, as
+        // every entry here is.
+        ['route' => 'admin.enrollments.index', 'label' => 'Enrolments', 'icon' => 'enrollments'],
         ['route' => 'admin.settings.index', 'label' => 'Settings', 'icon' => 'settings'],
         ['route' => 'admin.audit-log.index', 'label' => 'Audit log', 'icon' => 'audit'],
     ];
@@ -26,6 +29,7 @@
         'students' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>',
         'instructors' => '<path d="M2 3h20"></path><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"></path><path d="m7 21 5-5 5 5"></path>',
         'courses' => '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
+        'enrollments' => '<rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path>',
         'settings' => '<line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line>',
         'audit' => '<path d="M9 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M9 3v0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v0"></path><path d="M9 12h6"></path><path d="M9 16h6"></path>',
     ];

@@ -26,4 +26,13 @@ enum EnrollmentSource: string
     {
         return array_map(static fn (self $source): string => $source->value, self::cases());
     }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Purchase => 'Purchase',
+            self::AdminGrant => 'Admin grant',
+            self::Import => 'Import',
+        };
+    }
 }

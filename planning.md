@@ -29,17 +29,20 @@ Build a professional, secure, maintainable Learning Management System that lets 
 
 | Item | Value |
 |---|---|
-| **Current phase** | **Round 1. Phase 3 COMPLETE (gate G1 cleared); Phase 5 backend COMPLETE. Phase 5 frontend and Phase 4 with Track B** (2026-08-12) |
+| **Current phase** | **Round 2. Phases 1-6 and 11 COMPLETE on the backend, all merged to `main`. Only UI outstanding, and it is assigned** (2026-08-13) |
 | **Phase 0 status** | 🟢 Signed off by the customer, 2026-08-12. |
 | **Phase 1 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
 | **Phase 2 status** | 🟢 Complete. Approved by the customer, 2026-08-12. |
 | **Phase 3 status** | 🟢 **Complete, 2026-08-12.** Gate **G1 CLEARED** — all 28 tables on `main`, `migrate:fresh` green. Track A merged in PR #1's base; Tracks B and C merged together in **PR #2** (`8848bba`). See the pairing note in §21.7. |
-| **Phase 5 status** | 🟡 **Backend complete** (PR #1, `b8643f3`) — actions, content-type registry, media pipeline, publish validator, counters, sanitiser. **Frontend outstanding** with Track B: Builder screens, public catalogue and course detail. |
-| Code written | Foundation, identity, catalogue, full domain schema, Phase 5 backend. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **28 tables**: 7 framework + 4 identity + 6 catalogue/media + 11 commerce/assessment/progress. |
+| **Phase 4 status** | 🟢 **Complete, 2026-08-13** (PR #5). Admin shell, dashboard, student and instructor management, instructor-to-course assignment, settings, audit viewer. |
+| **Phase 5 status** | 🟡 **Backend complete** (PR #1; FR-CRS-06 closed in PR #10). **UI outstanding — Srivathsa**: Course Builder screens, public catalogue, course detail. |
+| **Phase 6 status** | 🟡 **Backend complete, 2026-08-13** (PR #9). `GrantEnrollment` as sole writer, `EnrollmentAccessService` completed, protected media delivery with HTTP Range, scheduled expiry. **UI outstanding — Shashank**: enrolments table, grant form, revoke modal. |
+| **Phase 11 status** | 🟡 **Infrastructure complete** (PR #6) — queues, mail layout on `BrandingService`, `EmailLogger`, scheduler. 4 of 10 mailables built; the other 6 have no trigger until Phases 8, 9 and 12. Correctly NOT marked done. |
+| Code written | Foundation, identity, catalogue, full domain schema, Phase 5 backend, Phase 4 admin area, Phase 6 enrollment engine and protected delivery, Phase 11 queue and mail infrastructure, brand design system. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **28 tables**: 7 framework + 4 identity + 6 catalogue/media + 11 commerce/assessment/progress. |
 | Repository | Branch `main`, **fully pushed** to github.com/MaieuticEdutech/LMS_Maieutic. Nothing outstanding locally. |
 | CI | 🟢 **Green.** First run failed on two workflow bugs (Vite manifest missing in the test job; `composer audit` with no `vendor/`); both fixed in `7993da5` and verified. This closes the Phase 1 outstanding item — CI is now proven, not merely authored. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
-| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **524/524**, 1,093 assertions — measured on merged `main` (`8848bba`), not on either branch alone |
+| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **760/760**, 1,633 assertions, **zero warnings** — measured on merged `main` (`7e4c844`) with all four tracks' work together |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
 | Outstanding verification items | (1) ~~CI never executed~~ — 🟢 **CLOSED**, green on `7993da5`. (2) **Vite HMR not interactively verified** — still open, does not block anything. (3) **Branch protection not enabled on `main`** — until it is, the PR rules in §21.6 are documentation rather than enforcement. |
 | Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
@@ -55,14 +58,14 @@ Update this table at the close of every phase. Nothing else in this document tra
 | 1 | Project Foundation | 🟢 Complete | 2026-08-12 | Laravel 13.25.0 / PHP 8.5.9 / PostgreSQL 17.10. Larastan level 8, Pest 16/16. Commit `5aac4cb` |
 | 2 | Identity, Authentication & RBAC | 🟢 Complete | 2026-08-12 | Fortify (ADR-013) with LMS-owned views. Status gate inside `authenticateUsing`. Pest 142/142 |
 | 3 | Core Domain Schema & Models | 🟢 Complete | 2026-08-12 | All 28 tables on `main`. **G1 cleared.** Track A `43e0134`; Tracks B+C `8848bba` (PR #2), written jointly on one machine |
-| 4 | Admin Shell & Administration Area | 🟡 In progress | — | Track B. **Blocks Phase 5's Builder screens** — merge early |
-| 5 | Course Builder & Content Management | 🟡 **Backend complete** | — | Backend merged `b8643f3` (PR #1): 17 actions, registry + 6 handlers, media pipeline, validator, counters, sanitiser. Pest 309 of the suite's 524. **Frontend with Track B.** AC-16's drag-and-drop and the public pages remain |
-| 6 | Enrollment Core & Protected Delivery | ⚪ Not started | — | High risk — access gate. No preview path |
-| 7 | Student Learning Experience | ⚪ Not started | — | |
+| 4 | Admin Shell & Administration Area | 🟢 Complete | 2026-08-13 | Track B, PR #5. Shell, dashboard, student + instructor management, assignment, settings, audit viewer |
+| 5 | Course Builder & Content Management | 🟡 **Backend complete** | — | PR #1: 17 actions, registry + 6 handlers, media pipeline, validator, counters, sanitiser. FR-CRS-06 closed PR #10. **UI: Srivathsa** — Builder screens, drag reorder (AC-16), public catalogue + detail |
+| 6 | Enrollment Core & Protected Delivery | 🟡 **Backend complete** | — | PR #9: `GrantEnrollment` sole writer (two-layer idempotency), access gate completed, media delivery with Range, expiry command. 54 tests, AC-01/02/19. **UI: Shashank** — enrolments table, grant, revoke |
+| 7 | Student Learning Experience | 🟡 **In progress** | — | Track A. Dashboard, My Courses, course player consuming Phase 6's media delivery |
 | 8 | Assessment Engine | ⚪ Not started | — | |
 | 9 | Progress Tracking | ⚪ Not started | — | |
 | 10 | Instructor Module | ⚪ Not started | — | |
-| 11 | Queues, Mail & Notifications | ⚪ Not started | — | **Unblocked** — built against Mailpit; provider deferred to Phase 16 |
+| 11 | Queues, Mail & Notifications | 🟡 **Infrastructure complete** | — | PR #6: queues, branded mail layout on `BrandingService`, `EmailLogger`, scheduler. 4/10 mailables built; 6 await Phases 8, 9, 12. Correctly not marked done |
 | 12 | Payments & Automated Enrollment | ⚪ Not started | — | High risk. PD-09 resolved; test credentials needed before start |
 | 13 | Reporting & Analytics | ⚪ Not started | — | |
 | 14 | Security Hardening & Audit | ⚪ Not started | — | |
@@ -805,8 +808,8 @@ deliberately rather than discover it.
 | Track | Owner | Phases | Why it can run independently |
 |---|---|---|---|
 | **A — Domain core & money** | **Govind** | 5 Course Builder → **6 Enrollment & Access** → 7 Student → 9 Progress → **12 Payments** | The critical path, and it is genuinely serial: the player needs the access gate, which needs content to protect. Owns both single-owner components (§21.3). |
-| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Everything a user looks at. Owns `app/Livewire/**` and `resources/views/**`, so it barely touches Track A's files at all. |
-| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever and can start at any time. |
+| **B — Surfaces & assessment** | **Srivathsa** | 4 Admin Shell → **5 UI** → 8 Assessment Engine → 10 Instructor → 15 UI/UX Polish | Owns the shared UI layer — the component library and the four shells — plus the admin catalogue and public-facing screens. See §21.2.5. |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | 11 Queues & Mail → **6 UI** → 13 Reporting → 16 Deployment → 17 Production Hardening | The least coupled track by design. Mail/queues need only `email_logs`; deployment needs no domain code whatsoever. Picks up Phase 6's enrolment screens, which sit in their own subdirectory (§21.2.5). |
 
 **Phase 14 (Security Hardening) is done by all three together.** It is an adversarial review of the
 finished system, and three independent perspectives genuinely catch more than one — it is the one
@@ -831,12 +834,56 @@ collide:
 
 | Owner | Owns these directories outright |
 |---|---|
-| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing}`, `app/Services/{Content,Media,Enrollment,Billing,Progress}`, `routes/media.php`, `routes/webhooks.php` |
-| **Srivathsa** | `app/Livewire/**`, `resources/views/**`, `app/Actions/Assessment`, `app/Services/Assessment` |
+| **Govind** | `app/Actions/{Catalog,Content,Enrollment,Billing,Student}`, `app/Services/{Content,Media,Enrollment,Billing,Progress,Student}`, `routes/media.php`, `routes/webhooks.php` |
+| **Srivathsa** | `app/Actions/Assessment`, `app/Services/Assessment`, **and the shared UI layer — see §21.2.5** |
 | **Shashank** | `app/Jobs/**`, `app/Mail/**`, `app/Notifications/**`, `app/Services/Reporting`, `.github/**`, `database/seeders` |
 
 Three people, three near-disjoint sets of files. Route files are append-only within their groups,
 so simultaneous additions merge cleanly.
+
+### 21.2.5 UI ownership — amended 2026-08-13
+
+**This section supersedes the earlier grant of `app/Livewire/**` and `resources/views/**` to Track B
+outright.** That grant was correct while one person built every screen. It stopped being correct the
+moment three phases needed UI at once: it made Srivathsa the sole author of everything anyone can
+see, and left Track A's backend finished but invisible.
+
+The full rules live in **`docs/UI-GUIDE.md` §3**, which is the document to read before writing a
+screen. This is the ownership summary.
+
+#### The shared layer — single-owner, permanently
+
+| Layer | Owner | Files |
+|---|---|---|
+| Design foundation — tokens, fonts, base layer | **Govind** (delivered, PR #7) | `resources/css/app.css`, `vite.config.js` |
+| Shared component library | **Srivathsa** | `resources/views/components/**` |
+| Layouts and shells | **Srivathsa** | `resources/views/layouts/**` |
+
+The component library stays single-owner and that is not a formality. Rule 3 of `CLAUDE.md` calls a
+second button component a defect; three people free to add primitives is exactly how a second one
+appears. Need a variant? Add a prop, and ask Srivathsa.
+
+#### Feature screens — owned by subdirectory
+
+| Screens | Livewire | Views | Owner |
+|---|---|---|---|
+| Course Builder, course form, lesson editor, media uploader | `Admin/Courses/**` | `livewire/admin/courses/**`, `admin/lessons/editors/**` | **Srivathsa** |
+| Public catalogue, course detail | `Catalogue/**` | `livewire/catalogue/**` | **Srivathsa** |
+| Admin enrolments — table, grant, revoke | `Admin/Enrollments/**` | `livewire/admin/enrollments/**` | **Shashank** |
+| Assessment, instructor | `Assessment/**`, `Instructor/**` | matching | **Srivathsa** |
+| Reporting | `Reporting/**` | `livewire/reporting/**` | **Shashank** |
+| Student dashboard, My Courses, player | `Student/**` | `livewire/student/**`, `student/lessons/players/**` | **Govind** |
+
+**Subdirectory ownership is what makes this safe, and it is proven rather than hoped.** Twelve pull
+requests merged across four tracks in a single day with no file touched by two people. The rule is
+simply: stay inside your own subdirectory, and treat anything above it as someone else's.
+
+#### The one place this splits a pair
+
+`ContentTypeRegistry` declares two views per content type. **Srivathsa builds the six editors**
+(`admin/lessons/editors/*`), **Govind builds the six players** (`student/lessons/players/*`).
+Different directories, no collision — but the registry is the contract between them, so neither may
+change a declared view name without telling the other.
 
 ### 21.2.3 Work rounds — who does what, when
 
@@ -919,6 +966,9 @@ else are raised with the owner rather than merged directly.
 | `composer.json` / `package.json` | Track C | A new dependency needs a recorded Rule 6 justification regardless of who wants it |
 | `config/lms.php` | Track C | Add keys, never repurpose existing ones |
 | `resources/views/components/` | Track B | The shared component library. Extend, don't fork — a second button component is a defect |
+| `resources/views/layouts/` | Track B | The four shells. A screen lives inside a shell; it does not bring its own |
+| `resources/css/app.css` | Track A | Design tokens. Adding one is a conversation — an ad-hoc token is an arbitrary value with extra steps |
+| `app/Livewire/**`, `resources/views/livewire/**` | **Per subdirectory — §21.2.5** | No longer owned wholesale by one track. Stay inside your own subdirectory |
 | `planning.md`, `phases.md` | Whoever closes the phase | Update in the same PR as the code, per Rule 10 |
 | `requirements.md`, `architecture.md` | Team decision | Changes here affect all tracks; agree before editing |
 
@@ -945,46 +995,51 @@ is doing *what now*.
 **Last updated: 2026-08-12.** Update this table whenever a track changes state — it is the one
 place that answers "what is everyone doing right now, and what is stopping them".
 
-**Current round: 1.** Gate **G1 CLEARED** 2026-08-12 — all 28 tables on `main`, `migrate:fresh`
-green, Pest 524/524 on the merged tree.
+**Current round: 2.** Round 1 closed 2026-08-13. Twelve pull requests merged; `main` carries phases
+1–6 and 11 with **Pest 760/760, 1,633 assertions, zero warnings**, Larastan level 8 clean.
+
+**Every backend through Phase 6 is done. Everything still outstanding in 1–6 is UI, and all of it is
+assigned.**
 
 | Track | Owner | Doing now | Status | Blocked by | Next |
 |---|---|---|---|---|---|
-| **A — Domain core & money** | **Govind** | Phase 5 backend → **Phase 6 Enrollment & Access** | 🟢 **Phase 5 backend merged** (PR #1, `b8643f3`). 309 tests | **Nothing.** `enrollments` landed in PR #2, which was the only blocker. Phase 6 may start now | 6 → 7 → 9 → 12 |
-| **B — Surfaces & assessment** | **Srivathsa** | **Phase 4 admin shell** | 🟢 Phase 3 assessment slice merged (PR #2, `8848bba`) | **Nothing.** Also now owns Phase 5's frontend — Builder screens **and** the public catalogue/detail pages (decision recorded in §21.2.3) | 4 → 5 frontend → 8 → 10 → 15 |
-| **C — Infrastructure, commerce & reporting** | **Shashank** | **Phase 11 Queues & Mail** | 🟡 Phase 3 commerce slice merged, but **written on Srivathsa's machine** — no commits under his own identity | **His own environment.** See the risk note below | 11 → 13 → 16 → 17 |
+| **A — Domain core & money** | **Govind** | **Phase 7 Student Experience** | 🟢 Phases 5 and 6 backends merged (PR #1, #9, #10). Brand design foundation merged (PR #7) | **Nothing** | 7 → 9 → 12 |
+| **B — Surfaces & assessment** | **Srivathsa** | **Phase 5 UI** — Course Builder, public catalogue, course detail | 🟢 Phase 4 merged (PR #5). Owns the component library and shells | **Nothing.** Phase 5's backend has been on `main` since PR #1 | 5 UI → 8 → 10 → 15 |
+| **C — Infrastructure, commerce & reporting** | **Shashank** | **Phase 6 UI** — enrolments table, grant form, revoke modal | 🟢 Phase 11 merged (PR #6), under his own git identity. Found the antivirus root cause behind a cross-machine test failure | **Nothing.** Phase 6's actions landed in PR #9 | 6 UI → 13 → 16 → 17 |
 
-> **⚠ Risk — one machine, two developers.** Track C's entire Phase 3 slice (`orders`, `payments`,
-> `webhook_events`, `enrollments`, `lesson_progress`, `email_logs`) was written on Srivathsa's
-> machine and merged inside PR #2 rather than as a separate Track C pull request.
->
-> The schema is correct and fully tested, so nothing needs redoing. But the track model assumes
-> **three independent working copies**, and right now there are two. Consequences if it persists:
-> two tracks run at one track's speed; Track C's authorship is invisible in git history; and the
-> P-1 rule "branch per task" cannot hold when two tracks share a branch.
->
-> **Action:** Shashank completes his own setup (`README.md`, plus his own `lms_dev` / `lms_test`
-> databases per §20.1) before Phase 11 begins. Until then, treat Round 1 as two tracks, not three.
+> **Risk update — the one-machine problem has resolved.** Track C's Phase 3 slice was written on
+> Srivathsa's machine, which left Track C's authorship invisible and the track model running on two
+> working copies rather than three. Shashank now has his own environment and his own git identity;
+> Phase 11 was authored, gated and pushed from it. Treat Round 2 as three tracks.
 
 #### What each person's next action is, concretely
 
 | Owner | Next action |
 |---|---|
-| **Govind** | **Phase 6 — Enrollment Core & Protected Delivery.** Build `GrantEnrollment` and `EnrollmentAccessService` — both single-owner (§21.3) — plus the media delivery route behind a policy check. Admin-granted enrollments only; payment attaches in Phase 12 |
-| **Srivathsa** | **Phase 4 admin shell first, and merge it early** — Phase 5's Builder screens sit inside it. Then Phase 5's frontend: Builder UI, drag-and-drop reorder (AC-16), publish checklist, and the public catalogue + course detail pages (metadata only — AC-01) |
-| **Shashank** | **Set up his own machine first** (see risk note), then **Phase 11 — Queues, Mail & Notifications**. Fully unblocked: `email_logs` is on `main` and it needs no domain code from anyone |
+| **Govind** | **Phase 7 — Student Learning Experience.** Dashboard, My Courses, and the course player that consumes Phase 6's protected delivery. Owns `app/Livewire/Student/**` |
+| **Srivathsa** | **Phase 5's UI.** Course Builder inside his own admin shell — module/lesson tree, drag reorder (AC-16), publish checklist — then the public catalogue and course detail, metadata only (AC-01). Owns `Admin/Courses/**` and `Catalogue/**`, plus the shared component library and shells |
+| **Shashank** | **Phase 6's UI.** Enrolments table, grant form, revoke modal, consuming `GrantEnrollment` and `RevokeEnrollment`. Owns `Admin/Enrollments/**`. His first UI work on this project — `docs/UI-GUIDE.md` §3 has the boundaries, §16 lists what is already built so none of it is rebuilt |
+
+> **Read `docs/UI-GUIDE.md` before writing any screen.** The brand tokens, three self-hosted fonts,
+> both logos, twelve restyled components and the auth shell are all on `main` already. The guide
+> exists so three people building UI in parallel produce one product rather than three.
 
 #### Round board
 
 | Round | Govind | Srivathsa | Shashank |
 |---|---|---|---|
 | 0 | ✅ done | ✅ done | ✅ done (on B's machine) |
-| **1 ← now** | ✅ 5 backend done → **6** | **4** Admin Shell → 5 frontend | **11** Queues & Mail |
-| 2 | 6 Enrollment & Access | 8 Assessment authoring | 16 Deployment |
-| 3 | 7 Student | 8 Attempt runner | 13 Reporting |
-| 4 | 9 Progress → 12 Payments | 10 Instructor | 17 Hardening |
+| 1 | ✅ 5 backend → ✅ 6 backend | ✅ **4** Admin Shell | ✅ **11** Queues & Mail |
+| **2 ← now** | **7** Student Experience | **5 UI** Builder + catalogue | **6 UI** Enrolments |
+| 3 | 9 Progress | 8 Assessment | 13 Reporting |
+| 4 | 12 Payments | 10 Instructor | 16 Deployment → 17 Hardening |
 | 5 | 14 Security — all three together | | |
 | 6 | | 15 UI/UX Polish | |
+
+> **Phase 6's UI unblocks Phase 11's remaining mail.** `EnrollmentGranted` and `EnrollmentRevoked`
+> exist with explicit payloads; `EnrollmentRevoked` carries `wasAutomatic` so scheduled expiry can
+> read differently from an administrator's revocation. Two of Shashank's six outstanding mailables
+> can be wired as soon as he wants them.
 
 **Per-developer Claude Code briefs** live in `docs/tracks/` and are loaded through a git-ignored
 `CLAUDE.local.md` containing one import line. Root `CLAUDE.md` holds the shared rules and the
