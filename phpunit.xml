@@ -49,6 +49,36 @@
 
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+
+        <!--
+          Mail previews are OFF for the suite, pinned here rather than left to
+          the ambient environment.
+
+          .env.example enables them (they are development tooling), and CI
+          builds its .env from .env.example — so without this the suite
+          inherits whatever the environment happens to say. MailSafetyTest
+          asserts the routes are ABSENT when disabled, and that assertion is
+          meaningless if the flag is not controlled.
+
+          Found by CI, not locally: a developer .env predating this variable
+          leaves previews off by default, so the tests passed on the machine
+          that wrote them and failed on the machine that copied .env.example.
+          The same class of bug as the withoutVite() note in tests/TestCase.php.
+
+          MailPreviewTest turns the flag back on per-test and registers the
+          routes itself, so both sides stay covered.
+
+          force="true" so this wins over a value coming from .env, which is the
+          case that actually broke CI.
+
+          LIMIT, stated honestly: a variable EXPORTED IN THE SHELL still wins,
+          because config/lms.php reads it through env() before this applies.
+          Running `LMS_MAIL_PREVIEW_ENABLED=true vendor/bin/pest` will fail
+          these three tests. Nothing does that — CI sets the value via .env,
+          not the shell — and the first test below asserts the precondition, so
+          the failure is immediate and self-explaining rather than silent.
+        -->
+        <env name="LMS_MAIL_PREVIEW_ENABLED" value="false" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

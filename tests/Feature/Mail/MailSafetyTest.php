@@ -65,11 +65,27 @@ it('names no delivery provider in application mail config (PD-07)', function ():
 | in production they would leak branding and support configuration, and hand an
 | attacker a template library for phishing students.
 */
-it('registers no mail preview route when previews are disabled', function (): void {
-    config()->set('lms.mail.preview_enabled', false);
+/*
+| These two assert the ABSENCE of the preview routes, which means the flag
+| that controls them must be pinned rather than inherited.
+|
+| phpunit.xml sets LMS_MAIL_PREVIEW_ENABLED=false for the suite. That is load
+| bearing: routes/web.php decides whether to register these routes at BOOT, so
+| config()->set() inside a test is far too late to change the outcome — it
+| would make the test look controlled while actually testing whatever the
+| environment happened to say.
+|
+| This mattered in practice. .env.example enables previews (they are
+| development tooling) and CI builds its .env from .env.example, so before the
+| flag was pinned these passed locally and failed in CI.
+*/
+it('runs the suite with previews disabled', function (): void {
+    // Guards the precondition the next two tests depend on. If this fails,
+    // they are proving nothing — so it is asserted rather than assumed.
+    expect(config()->boolean('lms.mail.preview_enabled'))->toBeFalse();
+});
 
-    // The suite runs with previews disabled (no LMS_MAIL_PREVIEW_ENABLED in
-    // phpunit.xml), so the routes must be absent.
+it('registers no mail preview route when previews are disabled', function (): void {
     expect(Route::has('dev.mail.index'))->toBeFalse()
         ->and(Route::has('dev.mail.preview'))->toBeFalse();
 });
