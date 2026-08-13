@@ -79,11 +79,31 @@ it('does not schedule commands that do not exist yet', function (): void {
      * The guard against stubbing ahead. Each of these belongs to an unbuilt
      * phase; registering one now would create a task that fails silently every
      * time the scheduler runs, which reads as "configured" while doing nothing.
+     *
+     * `enrollments:expire` was on this list until Phase 6 built the command.
+     * The entry below replaces it: the guard flips from "must not exist" to
+     * "must exist" rather than simply disappearing, so the task cannot be
+     * quietly dropped later. Each phase does the same as it lands.
      */
     $commands = collect(scheduledCommands());
 
-    foreach (['orders:reconcile', 'orders:cancel-abandoned', 'attempts:expire', 'enrollments:expire'] as $future) {
+    foreach (['orders:reconcile', 'orders:cancel-abandoned', 'attempts:expire'] as $future) {
         expect($commands->contains(fn (string $c): bool => str_contains($c, $future)))
             ->toBeFalse("[{$future}] belongs to a later phase and must not be scheduled yet.");
     }
+});
+
+it('schedules enrollment expiry now that Phase 6 has built it', function (): void {
+    /*
+     * FR-ENR-10. Worth stating plainly: this task does NOT enforce expiry.
+     * EnrollmentAccessService compares `expires_at` on every check, so access
+     * ends at the timestamp whether or not the scheduler ever runs. What this
+     * task provides is an accurate status column and the expiry notification.
+     *
+     * So this test failing means labels go stale and an email is late — not
+     * that expired students keep their access.
+     */
+    expect(collect(scheduledCommands())->contains(
+        static fn (string $c): bool => str_contains($c, 'lms:enrollments:expire'),
+    ))->toBeTrue();
 });
