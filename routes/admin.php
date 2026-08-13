@@ -2,7 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Admin\AuditLogTable;
+use App\Livewire\Admin\CoursesTable;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\InstructorDetail;
+use App\Livewire\Admin\InstructorForm;
+use App\Livewire\Admin\InstructorsTable;
+use App\Livewire\Admin\SettingsForm;
 use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
 use App\Livewire\Admin\StudentsTable;
@@ -53,4 +59,18 @@ Route::prefix('admin')
         Route::get('/students/create', StudentForm::class)->name('students.create');
         Route::get('/students/{student}/edit', StudentForm::class)->name('students.edit');
         Route::get('/students/{student}', StudentDetail::class)->name('students.show');
+
+        // Phase 4 Checkpoint 4. CourseInstructorAssignment is embedded inside
+        // InstructorDetail's view, not routed to directly.
+        Route::get('/instructors', InstructorsTable::class)->name('instructors.index');
+        Route::get('/instructors/create', InstructorForm::class)->name('instructors.create');
+        Route::get('/instructors/{instructor}/edit', InstructorForm::class)->name('instructors.edit');
+        Route::get('/instructors/{instructor}', InstructorDetail::class)->name('instructors.show');
+
+        // Phase 4 Checkpoint 5.
+        Route::get('/settings', SettingsForm::class)->name('settings.index');
+
+        // Phase 4 Checkpoint 6. Read-only — course CRUD is Phase 5.
+        Route::get('/courses', CoursesTable::class)->name('courses.index');
+        Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
     });

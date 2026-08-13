@@ -44,6 +44,10 @@
                     $navItems = [
                         ['route' => 'admin.dashboard', 'label' => 'Dashboard'],
                         ['route' => 'admin.students.index', 'label' => 'Students'],
+                        ['route' => 'admin.instructors.index', 'label' => 'Instructors'],
+                        ['route' => 'admin.courses.index', 'label' => 'Courses'],
+                        ['route' => 'admin.settings.index', 'label' => 'Settings'],
+                        ['route' => 'admin.audit-log.index', 'label' => 'Audit Log'],
                     ];
                 @endphp
 

@@ -1049,8 +1049,228 @@ that this is a documented, deliberate gap, not an oversight.
 
 Per explicit instruction, Checkpoints 4 (instructor management + course assignment), 5 (settings),
 and 6 (audit log + read-only course list) were built by three parallel agents rather than
-sequentially. Each agent was told NOT to touch `routes/admin.php` or the nav array in
-`layouts/admin.blade.php` (shared files every checkpoint needs — parallel edits would conflict) and
-NOT to run `composer check`/the test suite (concurrent Pest runs against `lms_test` already caused a
-real Postgres deadlock earlier this session) — both reserved for centralized integration afterward.
-See the entries below for what each agent actually delivered and what integration required.
+sequentially, each in its own git worktree. Each agent was told NOT to touch `routes/admin.php` or
+the nav array in `layouts/admin.blade.php` (shared files every checkpoint needs — parallel edits
+would conflict) and NOT to run `composer check`/the test suite (concurrent Pest runs against
+`lms_test` already caused a real Postgres deadlock earlier this session) — both reserved for
+centralized integration afterward. All three agents' work landed uncommitted directly in their
+worktrees (never on the `worktree-agent-*` branches), so integration was a manual file copy into the
+main checkout, not a `git merge` — copying was verified file-by-file against `git status` in each
+worktree to confirm no path collided with another checkpoint's files or an already-committed one.
+
+**Integration surfaced real bugs the agents couldn't see themselves**, precisely because they were
+deliberately blocked from running Larastan/Pest against the shared database. All of the following
+were found and fixed centrally, not by the agents:
+
+- **A genuine runtime bug, not just a static-analysis complaint:** `CourseInstructorAssignmentTest.php`
+  cast a Livewire `Testable` directly to `(string)` to get rendered HTML — `Testable` has no
+  `__toString()`, so this would have been a fatal error the instant the test actually ran. Fixed to
+  `->html()`.
+- **`Livewire::test(Component::class)->instance()->someMethod()` doesn't resolve under Larastan** —
+  the same `Testable::instance()` generic-resolution gap already documented in `WithAdminTableTest.php`
+  (Checkpoint 1) and hit again here in `AuditLogTableTest.php` (four occurrences) and
+  `CourseInstructorAssignmentTest.php`. Fixed everywhere the same way: direct `new Component; $c->mount();`
+  for tests that only need a component's own data methods, keeping `Livewire::test()` only for
+  assertions that need a real render/lifecycle.
+- **`assertSessionHas()` doesn't exist on `Tests\TestCase`** — it's a `TestResponse` method, and
+  `SettingsFormTest.php`'s round-trip test called it on `$this` after a `Livewire::test()` call (no
+  HTTP response involved). Fixed by reading `session('status')` directly.
+- **`assertSeeLivewire()` is a runtime-registered macro Larastan can't see** (no stub declares it on
+  `TestResponse`) — `InstructorDetailTest.php` used it to prove the assignment component is embedded.
+  Fixed by inlining what the macro itself checks: `assertSee()` on the component's `wire:snapshot`
+  name string.
+- **Several `Model::fresh()`/nullable-relation call chains** — `fresh()` returns `static|null`, and
+  three tests in `InstructorManagementActionsTest.php` plus two in `CourseInstructorAssignmentTest.php`
+  chained straight off it (`$course->fresh()->isAssignedTo(...)`, passed as an action parameter typed
+  non-nullable). Fixed by switching to `refresh()` (mutates in place, returns `$this`, never null) —
+  a strictly better fit here since the tests want the *same* instance's state refreshed, not a new one.
+  A `stdClass|null` from a raw `DB::table(...)->first()` pivot-row lookup and a nullable
+  `CarbonImmutable` argument to `equalTo()` (in `UpdateSettingsTest.php`, left from Checkpoint 5) got
+  the same treatment: an explicit `instanceof`/`=== null` narrowing check (not an `@phpstan-ignore`,
+  not a cast) before the code that needs the non-null type.
+- **`SettingsForm::$requiredStringKeys` (typed `list<string>`) assigned a `Collection::filter()->
+  map()->values()->all()` chain** Larastan couldn't prove was a list — fixed with an explicit
+  `array_values(...)` wrap.
+
+None of these were logic bugs in the production code the agents wrote (`AssignInstructorToCourse`,
+`UpdateInstructor`, `SettingsForm`, `AuditLogTable`, etc.) — every one was in test code, and every one
+was caught by running the actual gate rather than trusting `php -l`, which is all any agent could run
+for itself under the "no shared-database access while parallel" constraint.
+
+**Three more test-content bugs, found by actually running the suite (not just Larastan):**
+- `CoursesTableTest.php` asserted `assertDontSee('Create')` to prove no CRUD UI exists — but `Create`
+  is a substring of the table's own `Created` column header, so it was failing on entirely correct
+  markup. Fixed to `assertDontSee('Create Course')`.
+- `CourseInstructorAssignmentTest.php` asserted `substr_count($html, $title) === 1` to prove an
+  assigned course doesn't also appear in the assign `<select>` — but a course's title legitimately
+  appears twice in correct markup (the assigned-list `<span>` AND the Unassign button's
+  `wire:confirm` text), so the count was never going to be 1. Fixed to check the actual
+  `>Title</option>` substring's absence, which is what the test is actually trying to prove.
+- `SettingsFormTest.php`'s mount-authorization-denial test used
+  `expect(fn () => Livewire::test(...))->toThrow(AuthorizationException::class)` — the only place in
+  the whole Phase 4 test suite using this form. `Livewire::test()` mounts a component directly,
+  bypassing the HTTP kernel, and an `AuthorizationException` thrown in `mount()` does not propagate
+  out to the caller as a catchable PHP exception the way it does over a real request — every other
+  checkpoint's denial test already uses `$this->actingAs($user)->get(route(...))->assertForbidden()`
+  (see `CoursesTableTest`, `InstructorsTableTest`, `AuditLogTableTest`). Fixed to match. The same
+  test's flash-message assertion (`session('status')`) was also dropped rather than chased further —
+  confirmed by direct debugging that `Livewire::test()`'s in-process call chain does not reliably
+  surface a flashed session value back to the test process the way a real request does; the
+  persistence round-trip the test exists to prove is unaffected and still asserted.
+- `UpdateSettingsTest.php` compared `AuditLog::changes` (a jsonb column) with `toBe()` (order-
+  sensitive `===`) — Postgres's own documentation states jsonb does not preserve object key order, so
+  an ordered comparison of jsonb-backed data was asserting a guarantee the storage layer never made.
+  Fixed to `toEqual()`.
+
+**One known, unresolved flakiness, disclosed rather than hidden:**
+`CourseInstructorAssignmentTest`'s `'assigns and unassigns through the Livewire component...'` test
+passes reliably alone, but fails when preceded by essentially any other test in
+`tests/Feature/Admin/` that calls `Livewire::test()` — reproduced with `AuditLogTableTest.php`'s
+*first* test (both the direct-instantiation version and a plain `Livewire::test()` version) run
+immediately before it. When it fails, the rendered HTML after `->call('assign')` shows the
+pre-assignment state, even though a debug harness proved the underlying `AssignInstructorToCourse`
+write (and the DB row) completes correctly in the same request — this is a test-harness rendering/
+ordering artifact, not a broken assignment flow. Confirmed via three independent lines of evidence
+that the actual production behaviour is correct: `AssignInstructorToCourse`'s own direct Action-level
+tests in `InstructorManagementActionsTest.php` pass; `CourseInstructorAssignmentTest`'s own first test
+(driving the Action directly, not through Livewire) passes; and a throwaway debug test replicating the
+exact same `set()`→`call('assign')`→`html()` chain, run in isolation, showed the assignment correctly
+reflected in the re-rendered markup. Not resolved in this session — flagged here rather than either
+silently deleting the test or declaring the gate fully green when it isn't. Worth investigating
+whether this is a known Livewire+Pest interaction (component id collision or `wire:snapshot` state
+bleed across test methods sharing one PHP process) the next time this file is touched.
+
+---
+
+## Checkpoint 4 — Instructor management + course assignment
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally per the
+process above.
+
+**Delivered**
+- `app/Actions/Admin/{CreateInstructor,UpdateInstructor,AssignInstructorToCourse,
+  UnassignInstructorFromCourse}.php` — `CreateInstructor`/`UpdateInstructor` mirror
+  `CreateStudent`/`UpdateStudent` and additionally manage the linked `InstructorProfile` in the same
+  transaction/audit entry. `AssignInstructorToCourse` is idempotent (pre-check plus a
+  `QueryException`-catching race guard against `course_instructor`'s unique pair constraint) and
+  wraps its write in its own `DB::transaction()` specifically so the catch is safe under PostgreSQL's
+  transaction-poisoning behaviour even when called from inside a test's own outer transaction (a
+  `SAVEPOINT`, not a second real transaction). `UnassignInstructorFromCourse` is a plain `detach()` —
+  deliberately touches nothing else, since FR-INS-12 requires that unassigning an instructor never
+  deletes or alters any content (assessments in particular) they authored.
+- `Admin\InstructorsTable`/`InstructorForm`/`InstructorDetail`/`CourseInstructorAssignment` Livewire
+  components + views, mirroring the Student equivalents. `CourseInstructorAssignment` is embedded in
+  `InstructorDetail`'s view, never routed to directly; its mutations authorize per-*course* via
+  `CoursePolicy::manageInstructors($course)`, not per-instructor.
+- Routes: `admin.instructors.{index,create,edit,show}`; nav entry activated (was already present,
+  guarded by `Route::has()`, from Checkpoint 3's shell work).
+- Tests across five files, including `CourseInstructorAssignmentTest.php`'s
+  `isAssignedTo()`-flips-and-so-does-every-`CoursePolicy`-method-that-reads-it test — proving
+  assignment is what authorization actually rests on, not an incidental pivot row.
+
+**A real correctness fix, not just a passing test:** `AssignInstructorToCourse` wraps its attach in an
+explicit `DB::transaction()` rather than a bare try/catch around the query, specifically so a caught
+constraint violation (the race-guard path) uses a SAVEPOINT rather than poisoning the test's own outer
+transaction — on PostgreSQL, letting a failed statement's error stand inside an ambient transaction
+makes every subsequent query in it fail with "current transaction is aborted" until a rollback. This
+matters concretely here because every Feature test already runs inside its own `RefreshDatabase`
+transaction.
+
+**Judgment calls, all disclosed by the agent and reviewed centrally, none overturned:**
+1. `AssignInstructorToCourse` defaults `role_in_course` to `CourseInstructorRole::Lead` — nothing in
+   the brief specifies who chooses the role, and V1's `CourseInstructorAssignment` UI doesn't expose a
+   role selector (both roles have identical V1 capability, per the enum's own docblock).
+2. Unassign uses a plain `wire:confirm` browser confirm, not the typed-confirmation modal — the brief
+   is explicit that unassign doesn't need it (unlike deleting a user account).
+3. No `InstructorProfile` factory was added (`app/Models` wasn't in the agent's assigned paths); tests
+   create profiles via the relation-safe `$instructor->instructorProfile()->create([...])` instead.
+
+**Integration found one real runtime bug and several Larastan-only issues** — see the "Checkpoints
+4–6 — dispatched to parallel agents" section above for the full list (the `(string)`-cast-on-Testable
+bug and the `fresh()`-vs-`refresh()` nullable-chain issues both originate in this checkpoint's tests).
+
+**Gate results (Admin-only subset, isolated from the one known flaky interaction noted above)**
+```
+php artisan test tests/Feature/Admin/
+  105 tests, 104 passed, 1 failed (the disclosed CourseInstructorAssignmentTest ordering flakiness)
+```
+Full-suite `composer check` results are recorded under Checkpoint 6 below (all three checkpoints were
+integrated and gated together, not separately).
+
+**Not done here (later phases):** actual instructor-authored content (Phase 8+); role selection UI for
+`CourseInstructorRole` (V1.1, per the enum's own docblock).
+
+---
+
+## Checkpoint 5 — Settings screen
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally.
+
+**Delivered**
+- `app/Actions/Admin/UpdateSettings.php` — bulk-applies value changes from the form. Only a setting's
+  *value* may change through this path; `group`/`type`/`is_public` are read back from the existing row
+  and passed through unchanged to `SettingsRepository::set()`. Only keys whose coerced value actually
+  differs from the stored one are written or audited, as one `settings.updated` entry covering every
+  changed key — not one entry per key.
+- `app/Livewire/Admin/SettingsForm.php` + view, `app/Policies/SettingPolicy.php` (deny-by-default,
+  super-admin-only, no "own record" exception — a setting belongs to the organisation, not a user).
+  Form state is nested via `Arr::undot()`/bound back with `Arr::dot()` on save, which is what lets one
+  dynamic `wire:model="values.{{ $setting->key }}"` bind correctly against whatever settings actually
+  exist in the table without hardcoding the key list into the view.
+- Tests across three files (`SettingsFormTest`, `UpdateSettingsTest`,
+  `Authorization/SettingPolicyTest`) covering the round-trip through `SettingsRepository`, required-
+  vs-blank-allowed string handling (a setting seeded blank must be allowed to stay blank; one that
+  currently holds a value must not be saved empty), numeric coercion (so a submitted `"90"` isn't
+  treated as a change from stored `90`), and that group/type/visibility never change through this path.
+
+**Integration fixes:** the `list<string>` Larastan error on `$requiredStringKeys`, and the three test
+bugs (`assertSessionHas` on `TestCase`, the `toThrow(AuthorizationException)`-via-`Livewire::test()`
+pattern, jsonb key-order) — all covered in the "Checkpoints 4–6" section above.
+
+**Gate results:** see Checkpoint 6 below — integrated and gated together.
+
+**Not done here (later phases):** none — Settings is Phase 4's full scope for this table.
+
+---
+
+## Checkpoint 6 — Audit log viewer + read-only course list
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally —
+**last of the three parallel checkpoints, so this is also where the combined gate ran.**
+
+**Delivered**
+- `app/Livewire/Admin/AuditLogTable.php` + view — newest-first, search across action/description,
+  action filter (options drawn from the *actual* distinct actions recorded, not a hardcoded list),
+  renders "System" for a null-actor entry (admin-grant and system-originated events have no user).
+  Super-admin-only (`AuditLog` has no per-row ownership concept to check against).
+- `app/Livewire/Admin/CoursesTable.php` + view — read-only. Search by title, status filter. Explicitly
+  renders no create/edit/delete affordances — course CRUD is Phase 5, Govind's Course Builder, not
+  this checkpoint.
+- Routes: `admin.audit-log.index`, `admin.courses.index`; nav entries activated.
+- Tests: `AuditLogTableTest.php` (ordering, search, action-filter-from-real-data, null-actor
+  rendering, empty state, an N+1 query-count assertion, the super-admin-only gate) and
+  `CoursesTableTest.php` (listing, empty state, the explicit no-CRUD-UI assertion, the super-admin-
+  only gate).
+
+**Integration fixes:** four `Testable::instance()` Larastan-generic-resolution errors in
+`AuditLogTableTest.php` (same gap as Checkpoint 1's `WithAdminTableTest.php`), and the `Created`-vs-
+`Create` substring collision in `CoursesTableTest.php`'s no-CRUD-UI assertion — both covered above.
+
+**Combined gate results, all three checkpoints (4–6) integrated together**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 623/632 passed, 1385 assertions, 9 failed
+```
+Of the 9: **2 are the pre-existing, not-ours `MediaUploadTest` failures** (Phase 4 baseline, Govind's
+`finfo_close()`/PHP 8.5 issue, unchanged). **6 were real test-content bugs, found and fixed in this
+integration pass** (listed in full above, under "Checkpoints 4–6 — dispatched to parallel agents").
+**1 remains open and disclosed**: the `CourseInstructorAssignmentTest` ordering flakiness, also
+detailed above, confirmed NOT to indicate a production defect but not yet root-caused. Re-running
+`composer check` after all fixes above should show 8/9 accounted for (2 known-baseline, 6 fixed),
+with the 1 flaky test the only remaining red — not re-run to completion as part of this pass; this
+file was written and the branch pushed on explicit instruction to stop chasing tests and push, with
+the disclosed flaky test as the one open item for whoever reviews the PR.
+
+**Not done here (later phases):** course CRUD, Course Builder (Phase 5, Govind's).
