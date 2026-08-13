@@ -66,7 +66,18 @@
     @endforelse
 
     @if ($showForm)
-        <div x-data x-init="$dispatch('open-modal', 'module-form')">
+        {{-- $nextTick is load-bearing, not defensive.
+
+             Alpine initialises parents before children, so x-init here runs
+             BEFORE the <x-modal> nested inside binds its
+             `x-on:open-modal.window` listener. Dispatching immediately fires
+             the event into nothing and the modal never opens — which is
+             exactly what happened: the button worked, the component set
+             showForm, this markup rendered, and no dialog appeared.
+
+             Deferring to the next tick lets the whole subtree initialise
+             first, so the listener exists by the time the event is sent. --}}
+        <div x-data x-init="$nextTick(() => $dispatch('open-modal', 'module-form'))">
             <x-modal name="module-form" :title="$editing ? 'Edit module' : 'Add module'">
                 <form wire:submit="save" id="module-form" class="space-y-4">
                     <x-input wire:model="title" label="Module title" name="title" required />
