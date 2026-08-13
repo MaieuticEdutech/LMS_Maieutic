@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\ActivateAccountController;
 use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\HealthController;
+use App\Livewire\Catalogue\Index as CatalogueIndex;
+use App\Livewire\Catalogue\Show as CatalogueShow;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,6 +31,18 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', static fn () => view('welcome'))->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| Public catalogue and course detail — Phase 5 (docs/UI-GUIDE.md §3)
+|--------------------------------------------------------------------------
+|
+| Metadata only (AC-01, ADR-014) — see the ACCESS BOUNDARY note above and
+| Catalogue\Show's own docblock. No lesson body, media or assessment is
+| ever reachable from either of these two routes.
+*/
+Route::get('/courses', CatalogueIndex::class)->name('catalogue.index');
+Route::get('/courses/{course}', CatalogueShow::class)->name('catalogue.show');
 
 /*
  * Health / readiness probe.
