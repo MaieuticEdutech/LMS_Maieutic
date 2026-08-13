@@ -23,9 +23,9 @@
                     @foreach ($recentOrders as $order)
                         <tr>
                             <td class="px-3 py-2">{{ $order->buyer_name }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $order->course?->title }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $order->course?->title }}</td>
                             <td class="px-3 py-2"><x-badge :variant="$order->status->badgeVariant()">{{ $order->status->label() }}</x-badge></td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $order->created_at?->diffForHumans() }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $order->created_at?->diffForHumans() }}</td>
                         </tr>
                     @endforeach
                 </x-table>
@@ -46,8 +46,8 @@
                     @foreach ($recentEnrollments as $enrollment)
                         <tr>
                             <td class="px-3 py-2">{{ $enrollment->user?->name }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $enrollment->course?->title }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $enrollment->created_at?->diffForHumans() }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $enrollment->course?->title }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $enrollment->created_at?->diffForHumans() }}</td>
                         </tr>
                     @endforeach
                 </x-table>
@@ -59,7 +59,7 @@
         <div class="mt-6">
             <x-card>
                 <x-slot:header>
-                    <h2 class="text-sm font-semibold text-danger-700">Failed webhooks — needs attention</h2>
+                    <h2 class="text-sm font-semibold text-red-700">Failed webhooks — needs attention</h2>
                 </x-slot:header>
 
                 <x-table>
@@ -73,9 +73,9 @@
                     @foreach ($recentFailedWebhooks as $webhookEvent)
                         <tr>
                             <td class="px-3 py-2">{{ $webhookEvent->gateway }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $webhookEvent->event_type }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ str($webhookEvent->last_error ?? '')->limit(60) }}</td>
-                            <td class="px-3 py-2 text-zinc-500">{{ $webhookEvent->received_at?->diffForHumans() }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $webhookEvent->event_type }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ str($webhookEvent->last_error ?? '')->limit(60) }}</td>
+                            <td class="px-3 py-2 text-neutral-500">{{ $webhookEvent->received_at?->diffForHumans() }}</td>
                         </tr>
                     @endforeach
                 </x-table>
