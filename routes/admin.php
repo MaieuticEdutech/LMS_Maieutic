@@ -8,11 +8,13 @@ use App\Livewire\Admin\AuditLogTable;
 use App\Livewire\Admin\Courses\CourseBuilder;
 use App\Livewire\Admin\Courses\CoursesTable;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\EmailLogTable;
 use App\Livewire\Admin\Enrollments\EnrollmentsTable;
 use App\Livewire\Admin\Enrollments\GrantEnrollmentForm;
 use App\Livewire\Admin\InstructorDetail;
 use App\Livewire\Admin\InstructorForm;
 use App\Livewire\Admin\InstructorsTable;
+use App\Livewire\Admin\QueueHealth;
 use App\Livewire\Admin\SettingsForm;
 use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
@@ -113,6 +115,27 @@ Route::prefix('admin')
         /*
          * Phase 10 — Results is shared with routes/instructor.php (one
          * implementation, chrome chosen dynamically). See its docblock.
+         *
+         * Registered under the assessments block it belongs to rather than at
+         * the end of the group: the URL is a child of {assessment}, and a
+         * route that reads as unrelated to its neighbours is how a duplicate
+         * gets added later.
          */
         Route::get('/assessments/{assessment}/results', Results::class)->name('assessments.results');
+
+        /*
+         * Phase 11 — operations.
+         *
+         * Both are read-mostly views over things the system did rather than
+         * over domain records: `email_logs` is written by the mail transport
+         * events, `failed_jobs` by the queue. The one exception is retrying a
+         * failed job, which is a Livewire action for the same reason enrolment
+         * state changes are — a GET route that re-runs queued work would be
+         * both wrong and CSRF-exempt by nature.
+         *
+         * The nav is guarded by Route::has(), so registering these is what
+         * makes their links appear.
+         */
+        Route::get('/email-log', EmailLogTable::class)->name('email-log.index');
+        Route::get('/queue-health', QueueHealth::class)->name('queue-health.index');
     });

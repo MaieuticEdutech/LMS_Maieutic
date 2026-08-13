@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Dev;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\AssessmentResultNotification;
+use App\Notifications\CourseCompletedNotification;
 use App\Notifications\EnrollmentGrantedNotification;
 use App\Notifications\EnrollmentRevokedNotification;
 use App\Notifications\PasswordChangedNotification;
@@ -78,6 +80,17 @@ final class MailPreviewController extends Controller
             'enrollment-reactivated' => static fn (User $user): MailMessage => (new EnrollmentGrantedNotification('Example Course', wasReactivated: true, expiresAt: CarbonImmutable::now()->addMonths(6)))->toMail($user),
             'enrollment-revoked' => static fn (User $user): MailMessage => (new EnrollmentRevokedNotification('Example Course', 'Refund processed.'))->toMail($user),
             'enrollment-expired' => static fn (User $user): MailMessage => (new EnrollmentRevokedNotification('Example Course', 'Access period ended.', wasAutomatic: true))->toMail($user),
+
+            /*
+             * Phase 11's last two, unblocked by Phases 8 and 9. Both have
+             * variants that read very differently and both are previewable —
+             * a pass and a fail are not the same email with a different number
+             * in it, and the failing one is the harder to get right.
+             */
+            'assessment-passed' => static fn (User $user): MailMessage => (new AssessmentResultNotification('Example Quiz', 82, true, 'preview-attempt-key'))->toMail($user),
+            'assessment-failed' => static fn (User $user): MailMessage => (new AssessmentResultNotification('Example Quiz', 41, false, 'preview-attempt-key'))->toMail($user),
+            'assessment-timed-out' => static fn (User $user): MailMessage => (new AssessmentResultNotification('Example Quiz', 36, false, 'preview-attempt-key', ranOutOfTime: true))->toMail($user),
+            'course-completed' => static fn (User $user): MailMessage => (new CourseCompletedNotification('Example Course', 12))->toMail($user),
         ];
     }
 
