@@ -331,6 +331,37 @@ Beyond the NFR-SEC requirements, these are the rules for daily work:
 10. The webhook endpoint verifies the signature against the **raw** body with a constant-time comparison, before parsing.
 11. Rate limiting is applied to every authentication, payment, media and submission route.
 12. `APP_DEBUG=false` in every non-local environment.
+13. **Every event listener is registered explicitly in `AppServiceProvider::configureEvents()`.**
+    Convention-based auto-discovery is **disabled** project-wide — see §9.1 (rules `EV-1`–`EV-3`).
+
+### 9.1 Event listeners — registration is explicit, discovery is off
+
+**Laravel 13 discovers listeners in `app/Listeners` by convention, and discovery is enabled by
+default. It is switched OFF in this project**, via
+`EventServiceProvider::disableEventDiscovery()` in `AppServiceProvider::register()`.
+
+Rule IDs are `EV-*`: `E-*` is already taken by the environment-variable rules in §11.
+
+| # | Rule |
+|---|---|
+| EV-1 | A new listener is wired in `AppServiceProvider::configureEvents()`. Creating the class is not enough — without the entry it never fires, and nothing errors. |
+| EV-2 | Never call `withEvents()` in `bootstrap/app.php`, and never remove the `disableEventDiscovery()` call. Either re-enables discovery, and **every** explicitly-registered listener then runs twice. |
+| EV-3 | `tests/Feature/EventRegistrationTest.php` asserts exactly one listener per event. If it fails, discovery has been re-enabled — fix that, do not adjust the expected count. |
+
+**Why both, rather than just discovery.** An explicit list is greppable, and a listener that
+silently *stops* being discovered after a rename or a move is a security-relevant failure — this
+is where a verified account is promoted to `active` (FR-AUTH-11). Explicit registration cannot
+fail that way. It simply must not be doubled.
+
+**Why this rule exists.** Both mechanisms were briefly active. Every listener ran twice, and the
+symptoms were nearly invisible: `ActivateUserAfterEmailVerification` had been double-firing since
+Phase 2 and nobody noticed, because it happens to be idempotent. It surfaced in Phase 11 only as
+*two identical enrolment emails to one student* — the kind of defect a user reports and monitoring
+never sees. Doubled email logging would also have written two `email_logs` rows per send, quietly
+making the support-facing log untrustworthy.
+
+**Phases 8, 9 and 12 add listeners** (`AttemptGraded`, `CourseCompleted`, payment events). Each
+needs its `Event::listen()` line, or it will do nothing at all, silently.
 
 ---
 
