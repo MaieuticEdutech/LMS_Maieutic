@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Livewire\Admin\AuditLogTable;
 use App\Livewire\Admin\CoursesTable;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Enrollments\EnrollmentsTable;
+use App\Livewire\Admin\Enrollments\GrantEnrollmentForm;
 use App\Livewire\Admin\InstructorDetail;
 use App\Livewire\Admin\InstructorForm;
 use App\Livewire\Admin\InstructorsTable;
@@ -73,4 +75,19 @@ Route::prefix('admin')
         // Phase 4 Checkpoint 6. Read-only — course CRUD is Phase 5.
         Route::get('/courses', CoursesTable::class)->name('courses.index');
         Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
+
+        /*
+         * Phase 6 — enrolments (Track C).
+         *
+         * Suspend, reinstate and revoke are Livewire actions on the table
+         * rather than routes of their own: they are state changes on a record
+         * already on screen, and a GET route that mutates access would be both
+         * wrong and CSRF-exempt by nature.
+         *
+         * The admin layout's nav is guarded by Route::has(), so registering
+         * these is what makes the "Enrolments" link appear — no edit to the
+         * shell, which is Track B's file.
+         */
+        Route::get('/enrollments', EnrollmentsTable::class)->name('enrollments.index');
+        Route::get('/enrollments/create', GrantEnrollmentForm::class)->name('enrollments.create');
     });
