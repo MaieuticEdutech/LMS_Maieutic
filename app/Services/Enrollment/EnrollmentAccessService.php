@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Enrollment;
 
+use App\Enums\EnrollmentStatus;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * THE SINGLE DEFINITION OF "HAS ACCESS TO THIS COURSE" (architecture.md §12.2).
@@ -26,22 +29,17 @@ use App\Models\User;
  * discovered by a student reaching content they did not pay for.
  *
  * ═════════════════════════════════════════════════════════════════════════
- * PHASE 3 STATE: INCOMPLETE, AND DELIBERATELY FAIL-SAFE.
+ * COMPLETE AS OF PHASE 6.
  *
- * The student branch requires the `enrollments` table, which belongs to
- * Track C (Shashank) and does not exist yet. Rather than guess, stub or
- * work around it, the student branch currently returns FALSE — deny.
+ * Through Phase 3–5 the student branch returned FALSE unconditionally,
+ * because the `enrollments` table did not exist yet and the alternative was
+ * guessing. That deny was deliberate, and the direction mattered: a forgotten
+ * Phase 6 would have shown students 403 on content they owned — visible,
+ * annoying, reported within minutes. A default of true would have shown paid
+ * content to strangers, silently.
  *
- * The failure direction matters. If Phase 6 were somehow forgotten, the
- * consequence is students seeing 403 on content they own: visible, annoying,
- * immediately reported, harmless. Had it defaulted to true, the consequence
- * would be unenrolled strangers reading paid content — silent, invisible,
- * and exactly the failure this project exists to prevent.
- *
- * PHASE 6 completes this: an enrollment with status active|completed that has
- * not expired grants access (FR-ENR-07). Nothing else about this class
- * changes — the signature, the callers and the admin/instructor branches are
- * already final.
+ * The student branch is now real (FR-ENR-07). The signature, the callers and
+ * the admin/instructor branches are unchanged, exactly as planned.
  * ═════════════════════════════════════════════════════════════════════════
  */
 final class EnrollmentAccessService
@@ -103,9 +101,45 @@ final class EnrollmentAccessService
             return $course->isAssignedTo($user);
         }
 
-        // PHASE 6: replace with the enrollment lookup once Track C's
-        // `enrollments` table exists. Denies until then — see class docblock
-        // for why that direction is the safe one.
-        return false;
+        return $this->hasLiveEnrollment($user, $course);
+    }
+
+    /**
+     * The student rule, and the whole of it (FR-ENR-07).
+     *
+     * GRANTS ACCESS: `active` — currently enrolled.
+     *                `completed` — finished the course. Access is not
+     *                withdrawn on completion; a student may revisit material
+     *                they have paid for, and revoking at 100% progress would
+     *                be a bizarre reward for finishing.
+     *
+     * DENIES:        `suspended` — access paused by an administrator.
+     *                `expired` — the access window closed.
+     *                `refunded` — the money went back, so the access goes
+     *                with it. This is the one that would be quietly
+     *                catastrophic to get wrong.
+     *
+     * Expiry is evaluated at read time rather than trusted from the status
+     * column. The ExpireEnrollments command flips `active` to `expired` on a
+     * schedule, but a schedule can be late, stopped, or not yet deployed. If
+     * access depended on that job having run, a paused scheduler would silently
+     * extend everyone's access — the failure would be invisible and would look
+     * exactly like normal operation.
+     *
+     * So the date is the authority and the status column is a cache of it. The
+     * two can disagree for at most one scheduler interval, and when they do,
+     * this method is right.
+     */
+    private function hasLiveEnrollment(User $user, Course $course): bool
+    {
+        return Enrollment::query()
+            ->where('user_id', $user->getKey())
+            ->where('course_id', $course->getKey())
+            ->whereIn('status', [EnrollmentStatus::Active, EnrollmentStatus::Completed])
+            ->where(static function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->exists();
     }
 }

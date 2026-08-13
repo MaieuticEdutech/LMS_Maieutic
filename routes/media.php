@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Media\MediaAccessController;
+use App\Http\Controllers\Media\MediaStreamController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,5 +35,33 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('media')
     ->name('media.')
     ->group(static function (): void {
-        // Phase 6.
+
+        /*
+        | STEP 1 — ask for a URL.
+        |
+        | Session-authenticated and active-account gated. A guest is redirected
+        | by `auth` before the policy is ever consulted (AC-01); an
+        | authenticated stranger is refused by the policy (AC-02).
+        */
+        Route::middleware(['auth', 'active', 'throttle:media'])
+            ->get('/{media}/url', MediaAccessController::class)
+            ->name('url');
+
+        /*
+        | STEP 2 — fetch the bytes (local disk only; S3 serves its own).
+        |
+        | `signed` proves we issued the URL and that it has not expired. It
+        | does NOT prove the holder is still entitled — the controller re-runs
+        | the policy for that, because an enrollment can be revoked between
+        | minting a URL and using it.
+        |
+        | Deliberately NOT behind `auth`. A <video> element follows a signed
+        | URL with the session cookie attached in the ordinary case, but the
+        | signature plus the in-controller policy check is what actually
+        | secures this route — and requiring the middleware too would break
+        | nothing today while adding a second thing to keep in sync.
+        */
+        Route::middleware(['signed', 'throttle:media'])
+            ->get('/{media}/stream', MediaStreamController::class)
+            ->name('stream');
     });

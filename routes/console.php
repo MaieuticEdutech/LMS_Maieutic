@@ -26,7 +26,7 @@ Artisan::command('inspire', function () {
 |   orders:reconcile        every 10m  Phase 12 (payments)
 |   orders:cancel-abandoned hourly     Phase 12 (payments)
 |   attempts:expire         every 5m   Phase 8  (assessment)
-|   enrollments:expire      daily      Phase 6  (enrollment engine)
+|   enrollments:expire      daily      Phase 6  — REGISTERED, see below
 |   media:prune-orphans     daily      Phase 5  (media) — DeleteOrphanedMedia
 |                                      exists as a job, but the command that
 |                                      finds orphans to dispatch it for does not
@@ -39,8 +39,8 @@ Artisan::command('inspire', function () {
 | Each phase registers its own task here when it builds its command; this
 | comment is the checklist for doing so.
 |
-| Registered below: only tasks whose commands exist today and whose purpose is
-| queue and mail hygiene — the subject of this phase.
+| Registered below: queue and mail hygiene (Phase 11), and enrollment expiry
+| (Phase 6).
 |
 */
 
@@ -71,6 +71,36 @@ Schedule::command('queue:prune-batches --hours=168')
  * table to be matched against.
  */
 Schedule::command('auth:clear-resets')
+    ->daily()
+    ->onOneServer()
+    ->withoutOverlapping();
+
+/*
+ * Enrollment expiry — Phase 6, FR-ENR-10.
+ *
+ * THIS DOES NOT ENFORCE EXPIRY, IT RECORDS IT. EnrollmentAccessService
+ * compares `expires_at` against now on every check, so access ends at the
+ * timestamp whether or not this has run. That ordering is deliberate: if
+ * access depended on a scheduled job, a stopped scheduler would silently
+ * extend everyone's access, and the failure would be invisible — it would look
+ * exactly like normal operation.
+ *
+ * What this provides is an accurate status column for reports and admin
+ * filters, plus the expiry notification Phase 11's listeners attach to the
+ * event. So a scheduler outage costs correct labelling and a late email. It
+ * never costs access control.
+ *
+ * Daily, per architecture.md §13. Worth revisiting as a team: `expires_at` is
+ * a timestamp rather than a date, so a daily sweep can leave the status column
+ * up to 24 hours stale, and a student seeing "active" on access they lost that
+ * morning is a support ticket. Hourly would cost 23 extra no-op runs a day.
+ * Following the specification here rather than deviating on my own judgement —
+ * architecture.md is a team-owned document.
+ *
+ * Idempotent: only `active` rows with a past `expires_at` are selected, so a
+ * re-run after a failure is safe.
+ */
+Schedule::command('lms:enrollments:expire')
     ->daily()
     ->onOneServer()
     ->withoutOverlapping();
