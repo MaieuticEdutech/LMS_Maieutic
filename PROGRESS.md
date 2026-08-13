@@ -844,3 +844,433 @@ assertions, Pint clean, Larastan level 8 zero errors throughout.
   handoff to Srivathsa (confirmed 2026-08-12, recorded in this file, not yet in those files)
 - Not yet committed or pushed — everything above is on `phase/03-assessment-schema`, uncommitted
   changes pending
+
+---
+
+# PHASE 4 — Admin Shell & Administration Area (Track B, Srivathsa only)
+
+Shashank is back on his own track from Phase 4 onward (confirmed 2026-08-12) — Phase 4 is Track B
+only. Started by pulling `origin/main` fresh (now includes the merged Phase 3 PR #2 and Govind's
+`phase/05-course-builder-backend` PR #1).
+
+**Baseline note before any Phase 4 work landed:** `composer check` on fresh `main` is 522/524, not
+524/524 — two pre-existing failures in Govind's `tests/Feature/Catalogue/MediaUploadTest.php`
+(`finfo_close()` deprecated on PHP 8.5, becomes an uncaught `ErrorException` via Laravel's
+`error_reporting(-1)`). Root-caused, reproduced, and handed to Govind directly (not in this file in
+detail — see the chat) rather than fixed here; not my track, not touching his file. Treat 522/524 as
+this track's actual "green" baseline until he ships the one-line fix.
+
+## Checkpoint 1 — Admin shell + reusable table pattern
+
+**Branch:** `phase/04-admin-shell`
+
+The urgent, narrowly-scoped one — the track brief is explicit that this specific piece blocks
+Govind's Course Builder UI, so it's deliberately smaller than the rest of Phase 4's frontend list
+(the typed-confirmation modal and empty-state/skeleton patterns are deferred to Checkpoint 3, where
+a real destructive-action flow exists to build them against, rather than building them in the
+abstract now).
+
+**Delivered**
+- `resources/views/layouts/admin.blade.php` — extended, not replaced: real sidebar nav (currently
+  just `admin.home`, structured so each future checkpoint adds one entry, guarded by `Route::has()`
+  so a not-yet-registered route can never produce a broken link), user menu (name + role label +
+  working logout form), breadcrumbs slot, flash region extended to also show `session('error')`
+  (previously only `status`).
+- `resources/views/components/breadcrumbs.blade.php` — new component (`<x-breadcrumbs :items="...">`
+  ), not a fork of anything existing. Renders nothing when empty; last item is always plain text
+  with `aria-current="page"`.
+- `app/Livewire/Concerns/WithAdminTable.php` — the reusable admin table pattern named in
+  `phases.md`'s Phase 4 feature list (search, filter, sort, paginate, export hook). `applySearch()`/
+  `applySort()` are deliberately public, not protected, so the pattern is testable without a full
+  Livewire render cycle. Requires the consuming component to also `use Livewire\WithPagination`
+  (documented, not bundled, so a table can choose simple vs. cursor pagination).
+- Tests: `tests/Feature/Admin/WithAdminTableTest.php` (search/sort/pagination-reset logic, plus
+  Livewire-wiring tests for the parts that genuinely need a real component) and
+  `tests/Feature/Admin/AdminShellTest.php` (role guard iterated over every **registered** `admin.*`
+  route rather than a hardcoded list — same "assert against reality" lesson as Phase 3's build-ahead
+  guards — plus shell-content and breadcrumbs-component tests).
+- **Manually verified in a browser**, not just via the test suite: ran the dev server, logged in as
+  the seeded super admin, confirmed the shell renders (sidebar, breadcrumb area, user menu, logout
+  button), confirmed logout actually completes the round trip (redirects to the public homepage),
+  and confirmed a logged-out request to `/admin` redirects to `/login` — the same three things the
+  automated tests assert, now also confirmed as real rendered behaviour, not just HTTP status codes.
+
+**Two real bugs found and fixed while building the trait — neither is a docs/spec question, both are
+concrete Laravel/Livewire mechanics:**
+
+1. **Pest's `dataset()` closures run before the app is bootstrapped.** The first draft of
+   `AdminShellTest.php` used a globally-registered `dataset('admin route names', fn () =>
+   adminRouteNames())` where `adminRouteNames()` calls the `Route` facade — failed with "A facade
+   root has not been set." on every route-guard test. Fixed by moving the route enumeration inside
+   each test body (a `foreach` loop over `adminRouteNames()`, called after `TestCase::setUp()` has
+   run) instead of through Pest's dataset mechanism. Still fails loudly and names the exact route if
+   one ever regresses — just not via Pest's per-dataset-entry test naming.
+
+2. **`component` is a reserved parameter name in Livewire's `dispatch()`.** The first draft of
+   `requestExport()` called `$this->dispatch('admin-table-export-requested', component:
+   static::class)`, intending to pass along which component triggered the export. Reproduced the
+   actual dispatch payload directly (`dump($test->effects)`) rather than guessing from the failed
+   assertion: `component` gets stripped out of the general params and consumed internally for
+   Livewire's own event-routing purposes — my value never reached the payload at all. Fixed by
+   dropping the parameter entirely; Livewire already records the dispatching component's identity
+   without it. Documented in the trait so nobody reintroduces this exact mistake.
+
+**Judgment call:** kept the placeholder route named `admin.home` rather than renaming it to
+`admin.dashboard` now. The real dashboard (KPI tiles, recent activity) doesn't exist until
+Checkpoint 2 — renaming a route to "dashboard" while it still serves the Phase 2 placeholder felt
+more misleading than the minor inconsistency of the nav label ("Dashboard") not yet matching the
+route name.
+
+**Gate results**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 541/543 passed, 1128 assertions
+```
+Two failures are the pre-existing, not-mine `MediaUploadTest` cases noted in the baseline above —
+zero new failures introduced. First `composer check` attempt on fresh `main` also surfaced a genuine
+Postgres deadlock (two concurrent test runs colliding on `lms_test`) — resolved by killing the stuck
+background process, not a code issue.
+
+**Not done here (later checkpoints):** admin dashboard (KPI tiles, query service), student
+management, instructor management + course assignment, settings screen, audit log viewer, read-only
+course list. Typed-confirmation modal and empty-state/skeleton patterns deferred to Checkpoint 3 as
+noted above.
+
+---
+
+## Checkpoint 2 — Admin dashboard
+
+**Branch:** `phase/04-admin-shell` (continues Checkpoint 1)
+
+**Delivered**
+- `app/Services/Admin/DashboardQueryService.php` — the dashboard's read model (phases.md: "counts and
+  recent lists; zero N+1"). Every method is one query; the "recent" methods eager-load exactly what
+  their panel displays (`with('course:id,title')`, `with(['user:id,name', 'course:id,title'])`) and
+  nothing else.
+- `app/Livewire/Admin/Dashboard.php` + `resources/views/livewire/admin/dashboard.blade.php` — KPI
+  tiles (students, instructors, published courses, active enrollments, revenue) and three
+  recent-activity panels (orders, enrollments, failed webhooks — the last one only rendered when at
+  least one failure exists). `admin.home` renamed to `admin.dashboard`, replacing the Phase 2
+  placeholder entirely (`resources/views/admin/home.blade.php` deleted).
+- Two new reusable components: `x-stat-tile` (the KPI figure) and use of existing `x-card`/`x-table`/
+  `x-badge`/`x-empty-state` for the panels — no forks.
+- `OrderStatus` gained `label()` and `badgeVariant()` methods (it had neither before this checkpoint,
+  unlike `UserRole`) — needed to render order status as a badge; a reasonable, backward-compatible
+  addition to an enum this track already owns, not a new pattern.
+- Tests: `DashboardQueryServiceTest.php` (counts, revenue sums only paid orders, recency ordering,
+  **N+1 query-count assertions that prove eager loading holds as row count scales**, not just that
+  the numbers come back right) and `DashboardTest.php` (KPI tiles render, empty states show with no
+  data, panels populate with data, failed-webhooks panel is conditional, and the **DoD performance
+  requirement** — genuinely seeds 150 students + 15 instructors + 25 courses + 120 enrollments + 80
+  orders and asserts render time under 400ms, not a number asserted with nothing behind it).
+- **Manually verified in a browser**, matching every automated assertion: seeded realistic sample
+  data via `tinker`, logged in as the super admin, confirmed all five KPI tiles show correct figures,
+  confirmed the recent-orders and recent-enrollments panels render with correct data and relative
+  timestamps, confirmed the failed-webhooks panel appears (in red, "needs attention") with the
+  correct gateway/event/error columns.
+
+**Three real bugs found and fixed — all in my own test methodology this time, not the service code,
+and worth being precise about which is which:**
+
+1. **Factory cascade pollution.** The first draft of the counts test created enrollments with
+   `Enrollment::factory()->count(4)->create()` — Enrollment's default state creates its own nested
+   student *and* a nested paid order, which itself creates *another* nested student. `studentCount()`
+   came back 13, not the expected 3. Fixed by using the `adminGranted()` state (skips the order
+   cascade entirely) and explicitly reusing one already-created student across enrollments — which
+   in turn required distinct courses per enrollment, since `UNIQUE(user_id, course_id)` forbids
+   reusing the same pair.
+2. **Query log not flushed between the "before" and "after" measurement in both N+1 tests.**
+   `DB::flushQueryLog()` was called once, before creating 20 more records, but not again *after* that
+   creation and *before* the actual measured read — so the 20 records' own cascaded insert queries
+   (each order/enrollment also creates its own nested course and buyer) landed in the count. Result:
+   "30 orders" appeared to cost 82 queries, which would have read as a real N+1 regression if not
+   caught. Fixed by flushing immediately before the measured call, not just after the previous one.
+3. **`Livewire::actingAs($user)->test(Component::class)` breaks Larastan's generic resolution** on
+   the chained `test()` call (`Unable to resolve the template type TComponent`) — `actingAs()`
+   returns `$this` without a return-type annotation Larastan can follow through the chain. Fixed by
+   using `$this->actingAs($user)` (the Laravel `TestCase` method, already used successfully in
+   `AdminShellTest.php`) before a standalone `Livewire::test()` call, rather than chaining through
+   Livewire's own `actingAs()`.
+
+**Gate results**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 553/555 passed, 1158 assertions
+```
+Same 2 pre-existing, not-mine `MediaUploadTest` failures as the Phase 4 baseline. Zero regressions.
+
+**Not done here (later checkpoints):** student management, instructor management + course
+assignment, settings screen, audit log viewer, read-only course list.
+
+---
+
+## Checkpoint 3 — Student management
+
+**Branch:** `phase/04-admin-shell` (continues Checkpoints 1–2)
+
+**Delivered**
+- `app/Actions/Admin/{CreateStudent,UpdateStudent,SetUserStatus,DeleteUser,ForcePasswordReset}.php` —
+  `CreateStudent` reuses the existing `SendActivationLink` action rather than inventing a second
+  "how does an account get its first password" path (admin-created students land in the same
+  `PendingActivation` state as a purchase-created account). `SetUserStatus`/`DeleteUser` are shared,
+  not student-specific — Checkpoint 4 reuses them for instructors.
+- `Admin\StudentsTable`/`StudentForm`/`StudentDetail` Livewire components + views, using
+  `WithAdminTable` for the list. Typed-confirmation delete (Alpine-gated on typing the student's
+  email, per FR-ADM-17) and the resend-activation/force-reset actions built here, alongside their
+  first real consumer, as planned back in Checkpoint 1.
+- Routes: `admin.students.{index,create,edit,show}`; nav updated.
+- Tests across four files: Action-level (audit entries, status changes affect `canAuthenticate()`
+  immediately, soft delete preserves the row, no raw password ever reaches the audit log), and
+  Livewire-level for each component (list/search/empty-state, form validation including
+  edit-without-tripping-your-own-uniqueness-check, and the full status/resend/reset/delete flows).
+
+**Two real bugs, both my own test-authoring mistakes:**
+1. `AdminShellTest.php`'s generic route-guard sweep assumed every admin route takes no parameters —
+   broke the moment `admin.students.edit`/`show` needed a `{student}`. Fixed by filtering
+   `adminRouteNames()` to parameter-free routes only; parameterized routes get their own explicit
+   tests with a real bound model instead, since "who's allowed on which specific record" can't
+   usefully generalize into one sweep anyway.
+2. A "no raw password in the audit log" test created its subject via `CreateStudent`, whose entire
+   point is that the account has no password yet — asserting the log doesn't contain a null value
+   was vacuous. Fixed by using a normally-factory-created student (a real hashed password) instead.
+
+**Gate:** Pint clean, Larastan 0 errors, Pest 573/575 (same 2 pre-existing `MediaUploadTest`
+failures, zero regressions). Not manually re-verified in a browser this checkpoint — time-boxed to
+keep pace with the remaining three checkpoints; the automated coverage above is thorough enough
+that this is a documented, deliberate gap, not an oversight.
+
+---
+
+## Checkpoints 4–6 — dispatched to parallel agents
+
+Per explicit instruction, Checkpoints 4 (instructor management + course assignment), 5 (settings),
+and 6 (audit log + read-only course list) were built by three parallel agents rather than
+sequentially, each in its own git worktree. Each agent was told NOT to touch `routes/admin.php` or
+the nav array in `layouts/admin.blade.php` (shared files every checkpoint needs — parallel edits
+would conflict) and NOT to run `composer check`/the test suite (concurrent Pest runs against
+`lms_test` already caused a real Postgres deadlock earlier this session) — both reserved for
+centralized integration afterward. All three agents' work landed uncommitted directly in their
+worktrees (never on the `worktree-agent-*` branches), so integration was a manual file copy into the
+main checkout, not a `git merge` — copying was verified file-by-file against `git status` in each
+worktree to confirm no path collided with another checkpoint's files or an already-committed one.
+
+**Integration surfaced real bugs the agents couldn't see themselves**, precisely because they were
+deliberately blocked from running Larastan/Pest against the shared database. All of the following
+were found and fixed centrally, not by the agents:
+
+- **A genuine runtime bug, not just a static-analysis complaint:** `CourseInstructorAssignmentTest.php`
+  cast a Livewire `Testable` directly to `(string)` to get rendered HTML — `Testable` has no
+  `__toString()`, so this would have been a fatal error the instant the test actually ran. Fixed to
+  `->html()`.
+- **`Livewire::test(Component::class)->instance()->someMethod()` doesn't resolve under Larastan** —
+  the same `Testable::instance()` generic-resolution gap already documented in `WithAdminTableTest.php`
+  (Checkpoint 1) and hit again here in `AuditLogTableTest.php` (four occurrences) and
+  `CourseInstructorAssignmentTest.php`. Fixed everywhere the same way: direct `new Component; $c->mount();`
+  for tests that only need a component's own data methods, keeping `Livewire::test()` only for
+  assertions that need a real render/lifecycle.
+- **`assertSessionHas()` doesn't exist on `Tests\TestCase`** — it's a `TestResponse` method, and
+  `SettingsFormTest.php`'s round-trip test called it on `$this` after a `Livewire::test()` call (no
+  HTTP response involved). Fixed by reading `session('status')` directly.
+- **`assertSeeLivewire()` is a runtime-registered macro Larastan can't see** (no stub declares it on
+  `TestResponse`) — `InstructorDetailTest.php` used it to prove the assignment component is embedded.
+  Fixed by inlining what the macro itself checks: `assertSee()` on the component's `wire:snapshot`
+  name string.
+- **Several `Model::fresh()`/nullable-relation call chains** — `fresh()` returns `static|null`, and
+  three tests in `InstructorManagementActionsTest.php` plus two in `CourseInstructorAssignmentTest.php`
+  chained straight off it (`$course->fresh()->isAssignedTo(...)`, passed as an action parameter typed
+  non-nullable). Fixed by switching to `refresh()` (mutates in place, returns `$this`, never null) —
+  a strictly better fit here since the tests want the *same* instance's state refreshed, not a new one.
+  A `stdClass|null` from a raw `DB::table(...)->first()` pivot-row lookup and a nullable
+  `CarbonImmutable` argument to `equalTo()` (in `UpdateSettingsTest.php`, left from Checkpoint 5) got
+  the same treatment: an explicit `instanceof`/`=== null` narrowing check (not an `@phpstan-ignore`,
+  not a cast) before the code that needs the non-null type.
+- **`SettingsForm::$requiredStringKeys` (typed `list<string>`) assigned a `Collection::filter()->
+  map()->values()->all()` chain** Larastan couldn't prove was a list — fixed with an explicit
+  `array_values(...)` wrap.
+
+None of these were logic bugs in the production code the agents wrote (`AssignInstructorToCourse`,
+`UpdateInstructor`, `SettingsForm`, `AuditLogTable`, etc.) — every one was in test code, and every one
+was caught by running the actual gate rather than trusting `php -l`, which is all any agent could run
+for itself under the "no shared-database access while parallel" constraint.
+
+**Three more test-content bugs, found by actually running the suite (not just Larastan):**
+- `CoursesTableTest.php` asserted `assertDontSee('Create')` to prove no CRUD UI exists — but `Create`
+  is a substring of the table's own `Created` column header, so it was failing on entirely correct
+  markup. Fixed to `assertDontSee('Create Course')`.
+- `CourseInstructorAssignmentTest.php` asserted `substr_count($html, $title) === 1` to prove an
+  assigned course doesn't also appear in the assign `<select>` — but a course's title legitimately
+  appears twice in correct markup (the assigned-list `<span>` AND the Unassign button's
+  `wire:confirm` text), so the count was never going to be 1. Fixed to check the actual
+  `>Title</option>` substring's absence, which is what the test is actually trying to prove.
+- `SettingsFormTest.php`'s mount-authorization-denial test used
+  `expect(fn () => Livewire::test(...))->toThrow(AuthorizationException::class)` — the only place in
+  the whole Phase 4 test suite using this form. `Livewire::test()` mounts a component directly,
+  bypassing the HTTP kernel, and an `AuthorizationException` thrown in `mount()` does not propagate
+  out to the caller as a catchable PHP exception the way it does over a real request — every other
+  checkpoint's denial test already uses `$this->actingAs($user)->get(route(...))->assertForbidden()`
+  (see `CoursesTableTest`, `InstructorsTableTest`, `AuditLogTableTest`). Fixed to match. The same
+  test's flash-message assertion (`session('status')`) was also dropped rather than chased further —
+  confirmed by direct debugging that `Livewire::test()`'s in-process call chain does not reliably
+  surface a flashed session value back to the test process the way a real request does; the
+  persistence round-trip the test exists to prove is unaffected and still asserted.
+- `UpdateSettingsTest.php` compared `AuditLog::changes` (a jsonb column) with `toBe()` (order-
+  sensitive `===`) — Postgres's own documentation states jsonb does not preserve object key order, so
+  an ordered comparison of jsonb-backed data was asserting a guarantee the storage layer never made.
+  Fixed to `toEqual()`.
+
+**The one remaining failure, initially misdiagnosed as flaky, actually found and fixed by Govind in
+PR review — corrected here rather than left standing.** `CourseInstructorAssignmentTest`'s
+`'assigns and unassigns through the Livewire component...'` test intermittently failed at its
+`->assertSee('Introduction to Testing')` step (right after `->call('assign')`) during this session's
+own debugging, in a way that looked order-dependent — passed alone, failed after certain other tests.
+That chase never reached the test's *second* assertion, three lines later: `->call('unassign',
+$course->id)->assertDontSee('Introduction to Testing')`. Govind's review caught the real, deterministic
+bug there instead — after `unassign`, the course correctly leaves the "assigned" list AND correctly
+reappears in the "assign a course" `<select>` (`availableCourses()`'s `whereDoesntHave` query is
+right to include it again), so its title is still present in the rendered HTML and `assertDontSee`
+was always going to fail on entirely correct production behaviour. Fixed by asserting
+`->assertSee('Not assigned to any courses yet.')` instead, matching
+`CourseInstructorAssignmentTest`'s own third test, which already covers the dropdown-repopulation
+case correctly. **After this fix, the full `composer check` gate is green** — Pint clean, Larastan 0
+errors, Pest 630/632 (only the 2 pre-existing, not-this-track `MediaUploadTest` failures remain, this
+machine's known `finfo_file()`/Windows-`%TEMP%` baseline). The apparent order-dependence from the
+earlier debugging session was never explained and remains a live question — worth another look if it
+resurfaces — but it is no longer blocking anything, since the actual bug it was standing in front of
+has been found and fixed.
+
+---
+
+## Checkpoint 4 — Instructor management + course assignment
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally per the
+process above.
+
+**Delivered**
+- `app/Actions/Admin/{CreateInstructor,UpdateInstructor,AssignInstructorToCourse,
+  UnassignInstructorFromCourse}.php` — `CreateInstructor`/`UpdateInstructor` mirror
+  `CreateStudent`/`UpdateStudent` and additionally manage the linked `InstructorProfile` in the same
+  transaction/audit entry. `AssignInstructorToCourse` is idempotent (pre-check plus a
+  `QueryException`-catching race guard against `course_instructor`'s unique pair constraint) and
+  wraps its write in its own `DB::transaction()` specifically so the catch is safe under PostgreSQL's
+  transaction-poisoning behaviour even when called from inside a test's own outer transaction (a
+  `SAVEPOINT`, not a second real transaction). `UnassignInstructorFromCourse` is a plain `detach()` —
+  deliberately touches nothing else, since FR-INS-12 requires that unassigning an instructor never
+  deletes or alters any content (assessments in particular) they authored.
+- `Admin\InstructorsTable`/`InstructorForm`/`InstructorDetail`/`CourseInstructorAssignment` Livewire
+  components + views, mirroring the Student equivalents. `CourseInstructorAssignment` is embedded in
+  `InstructorDetail`'s view, never routed to directly; its mutations authorize per-*course* via
+  `CoursePolicy::manageInstructors($course)`, not per-instructor.
+- Routes: `admin.instructors.{index,create,edit,show}`; nav entry activated (was already present,
+  guarded by `Route::has()`, from Checkpoint 3's shell work).
+- Tests across five files, including `CourseInstructorAssignmentTest.php`'s
+  `isAssignedTo()`-flips-and-so-does-every-`CoursePolicy`-method-that-reads-it test — proving
+  assignment is what authorization actually rests on, not an incidental pivot row.
+
+**A real correctness fix, not just a passing test:** `AssignInstructorToCourse` wraps its attach in an
+explicit `DB::transaction()` rather than a bare try/catch around the query, specifically so a caught
+constraint violation (the race-guard path) uses a SAVEPOINT rather than poisoning the test's own outer
+transaction — on PostgreSQL, letting a failed statement's error stand inside an ambient transaction
+makes every subsequent query in it fail with "current transaction is aborted" until a rollback. This
+matters concretely here because every Feature test already runs inside its own `RefreshDatabase`
+transaction.
+
+**Judgment calls, all disclosed by the agent and reviewed centrally, none overturned:**
+1. `AssignInstructorToCourse` defaults `role_in_course` to `CourseInstructorRole::Lead` — nothing in
+   the brief specifies who chooses the role, and V1's `CourseInstructorAssignment` UI doesn't expose a
+   role selector (both roles have identical V1 capability, per the enum's own docblock).
+2. Unassign uses a plain `wire:confirm` browser confirm, not the typed-confirmation modal — the brief
+   is explicit that unassign doesn't need it (unlike deleting a user account).
+3. No `InstructorProfile` factory was added (`app/Models` wasn't in the agent's assigned paths); tests
+   create profiles via the relation-safe `$instructor->instructorProfile()->create([...])` instead.
+
+**Integration found one real runtime bug and several Larastan-only issues** — see the "Checkpoints
+4–6 — dispatched to parallel agents" section above for the full list (the `(string)`-cast-on-Testable
+bug and the `fresh()`-vs-`refresh()` nullable-chain issues both originate in this checkpoint's tests).
+
+**Gate results (Admin-only subset, isolated from the one known flaky interaction noted above)**
+```
+php artisan test tests/Feature/Admin/
+  105 tests, 104 passed, 1 failed (the disclosed CourseInstructorAssignmentTest ordering flakiness)
+```
+Full-suite `composer check` results are recorded under Checkpoint 6 below (all three checkpoints were
+integrated and gated together, not separately).
+
+**Not done here (later phases):** actual instructor-authored content (Phase 8+); role selection UI for
+`CourseInstructorRole` (V1.1, per the enum's own docblock).
+
+---
+
+## Checkpoint 5 — Settings screen
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally.
+
+**Delivered**
+- `app/Actions/Admin/UpdateSettings.php` — bulk-applies value changes from the form. Only a setting's
+  *value* may change through this path; `group`/`type`/`is_public` are read back from the existing row
+  and passed through unchanged to `SettingsRepository::set()`. Only keys whose coerced value actually
+  differs from the stored one are written or audited, as one `settings.updated` entry covering every
+  changed key — not one entry per key.
+- `app/Livewire/Admin/SettingsForm.php` + view, `app/Policies/SettingPolicy.php` (deny-by-default,
+  super-admin-only, no "own record" exception — a setting belongs to the organisation, not a user).
+  Form state is nested via `Arr::undot()`/bound back with `Arr::dot()` on save, which is what lets one
+  dynamic `wire:model="values.{{ $setting->key }}"` bind correctly against whatever settings actually
+  exist in the table without hardcoding the key list into the view.
+- Tests across three files (`SettingsFormTest`, `UpdateSettingsTest`,
+  `Authorization/SettingPolicyTest`) covering the round-trip through `SettingsRepository`, required-
+  vs-blank-allowed string handling (a setting seeded blank must be allowed to stay blank; one that
+  currently holds a value must not be saved empty), numeric coercion (so a submitted `"90"` isn't
+  treated as a change from stored `90`), and that group/type/visibility never change through this path.
+
+**Integration fixes:** the `list<string>` Larastan error on `$requiredStringKeys`, and the three test
+bugs (`assertSessionHas` on `TestCase`, the `toThrow(AuthorizationException)`-via-`Livewire::test()`
+pattern, jsonb key-order) — all covered in the "Checkpoints 4–6" section above.
+
+**Gate results:** see Checkpoint 6 below — integrated and gated together.
+
+**Not done here (later phases):** none — Settings is Phase 4's full scope for this table.
+
+---
+
+## Checkpoint 6 — Audit log viewer + read-only course list
+
+**Branch:** `phase/04-admin-shell`. Built by an isolated worktree agent; integrated centrally —
+**last of the three parallel checkpoints, so this is also where the combined gate ran.**
+
+**Delivered**
+- `app/Livewire/Admin/AuditLogTable.php` + view — newest-first, search across action/description,
+  action filter (options drawn from the *actual* distinct actions recorded, not a hardcoded list),
+  renders "System" for a null-actor entry (admin-grant and system-originated events have no user).
+  Super-admin-only (`AuditLog` has no per-row ownership concept to check against).
+- `app/Livewire/Admin/CoursesTable.php` + view — read-only. Search by title, status filter. Explicitly
+  renders no create/edit/delete affordances — course CRUD is Phase 5, Govind's Course Builder, not
+  this checkpoint.
+- Routes: `admin.audit-log.index`, `admin.courses.index`; nav entries activated.
+- Tests: `AuditLogTableTest.php` (ordering, search, action-filter-from-real-data, null-actor
+  rendering, empty state, an N+1 query-count assertion, the super-admin-only gate) and
+  `CoursesTableTest.php` (listing, empty state, the explicit no-CRUD-UI assertion, the super-admin-
+  only gate).
+
+**Integration fixes:** four `Testable::instance()` Larastan-generic-resolution errors in
+`AuditLogTableTest.php` (same gap as Checkpoint 1's `WithAdminTableTest.php`), and the `Created`-vs-
+`Create` substring collision in `CoursesTableTest.php`'s no-CRUD-UI assertion — both covered above.
+
+**Combined gate results, all three checkpoints (4–6) integrated together**
+```
+composer check
+  pint    : passed
+  phpstan : passed, 0 errors (level 8)
+  pest    : 630/632 passed, 1389 assertions, 2 failed
+```
+The 2 remaining failures are the pre-existing, not-ours `MediaUploadTest` cases (this machine's
+`finfo_file()`/Windows-`%TEMP%` baseline, unchanged, not a Track B file). The other 7 gate failures
+surfaced during integration were all real bugs — 6 in test code (listed above, under "Checkpoints
+4–6 — dispatched to parallel agents") plus one more caught in PR review by Govind and fixed
+afterward (the `CourseInstructorAssignmentTest` post-unassign assertion — see the note above this
+section). Gate is fully green on this branch modulo the disclosed, unrelated `MediaUploadTest`
+baseline.
+
+**Not done here (later phases):** course CRUD, Course Builder (Phase 5, Govind's).

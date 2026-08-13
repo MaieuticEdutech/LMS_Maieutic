@@ -2,6 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Admin\AuditLogTable;
+use App\Livewire\Admin\CoursesTable;
+use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\InstructorDetail;
+use App\Livewire\Admin\InstructorForm;
+use App\Livewire\Admin\InstructorsTable;
+use App\Livewire\Admin\SettingsForm;
+use App\Livewire\Admin\StudentDetail;
+use App\Livewire\Admin\StudentForm;
+use App\Livewire\Admin\StudentsTable;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,7 +47,30 @@ Route::prefix('admin')
     ->name('admin.')
     ->middleware(['auth', 'active', 'role:super_admin'])
     ->group(static function (): void {
-        // Phase 2: role home placeholder only. Phase 4 replaces this with the
-        // real dashboard and adds user management, settings and the audit log.
-        Route::view('/', 'admin.home')->name('home');
+        // Phase 4 Checkpoint 2: the real dashboard, replacing the Phase 2
+        // placeholder. 'home' is now 'dashboard' — this route serves genuine
+        // KPI content, so the name should say so.
+        Route::get('/', Dashboard::class)->name('dashboard');
+
+        // Phase 4 Checkpoint 3. /create and /{student}/edit both route to
+        // StudentForm — it branches on whether a model was bound, the same
+        // create-or-edit pattern every admin form in this area will follow.
+        Route::get('/students', StudentsTable::class)->name('students.index');
+        Route::get('/students/create', StudentForm::class)->name('students.create');
+        Route::get('/students/{student}/edit', StudentForm::class)->name('students.edit');
+        Route::get('/students/{student}', StudentDetail::class)->name('students.show');
+
+        // Phase 4 Checkpoint 4. CourseInstructorAssignment is embedded inside
+        // InstructorDetail's view, not routed to directly.
+        Route::get('/instructors', InstructorsTable::class)->name('instructors.index');
+        Route::get('/instructors/create', InstructorForm::class)->name('instructors.create');
+        Route::get('/instructors/{instructor}/edit', InstructorForm::class)->name('instructors.edit');
+        Route::get('/instructors/{instructor}', InstructorDetail::class)->name('instructors.show');
+
+        // Phase 4 Checkpoint 5.
+        Route::get('/settings', SettingsForm::class)->name('settings.index');
+
+        // Phase 4 Checkpoint 6. Read-only — course CRUD is Phase 5.
+        Route::get('/courses', CoursesTable::class)->name('courses.index');
+        Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
     });

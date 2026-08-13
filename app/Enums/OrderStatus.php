@@ -23,6 +23,34 @@ enum OrderStatus: string
     case Refunded = 'refunded';
 
     /**
+     * Human-readable label for admin screens (Phase 4 onward).
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Created => 'Created',
+            self::Pending => 'Pending',
+            self::Paid => 'Paid',
+            self::Failed => 'Failed',
+            self::Cancelled => 'Cancelled',
+            self::Refunded => 'Refunded',
+        };
+    }
+
+    /**
+     * The {@see \x-badge} variant this status renders as.
+     */
+    public function badgeVariant(): string
+    {
+        return match ($this) {
+            self::Paid => 'success',
+            self::Pending, self::Created => 'brand',
+            self::Failed, self::Cancelled => 'danger',
+            self::Refunded => 'warning',
+        };
+    }
+
+    /**
      * @return list<string>
      */
     public static function values(): array
