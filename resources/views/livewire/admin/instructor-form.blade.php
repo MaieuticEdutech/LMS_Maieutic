@@ -8,7 +8,7 @@
             <x-textarea wire:model="bio" label="Bio (optional)" name="bio" rows="4" />
 
             @unless ($instructor)
-                <p class="text-xs text-zinc-500">
+                <p class="text-xs text-neutral-500">
                     No password is set here — the instructor receives an activation link by email to choose
                     their own, the same as a purchase-created account.
                 </p>
