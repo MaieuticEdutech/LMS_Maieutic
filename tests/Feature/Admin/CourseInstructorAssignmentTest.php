@@ -68,7 +68,7 @@ it('assigns and unassigns through the Livewire component, driving the same isAss
 
     Livewire::test(CourseInstructorAssignment::class, ['instructor' => $instructor])
         ->call('unassign', $course->id)
-        ->assertDontSee('Introduction to Testing');
+        ->assertSee('Not assigned to any courses yet.');
 
     expect($course->refresh()->isAssignedTo($instructor))->toBeFalse();
 });

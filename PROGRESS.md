@@ -1122,23 +1122,25 @@ for itself under the "no shared-database access while parallel" constraint.
   an ordered comparison of jsonb-backed data was asserting a guarantee the storage layer never made.
   Fixed to `toEqual()`.
 
-**One known, unresolved flakiness, disclosed rather than hidden:**
-`CourseInstructorAssignmentTest`'s `'assigns and unassigns through the Livewire component...'` test
-passes reliably alone, but fails when preceded by essentially any other test in
-`tests/Feature/Admin/` that calls `Livewire::test()` — reproduced with `AuditLogTableTest.php`'s
-*first* test (both the direct-instantiation version and a plain `Livewire::test()` version) run
-immediately before it. When it fails, the rendered HTML after `->call('assign')` shows the
-pre-assignment state, even though a debug harness proved the underlying `AssignInstructorToCourse`
-write (and the DB row) completes correctly in the same request — this is a test-harness rendering/
-ordering artifact, not a broken assignment flow. Confirmed via three independent lines of evidence
-that the actual production behaviour is correct: `AssignInstructorToCourse`'s own direct Action-level
-tests in `InstructorManagementActionsTest.php` pass; `CourseInstructorAssignmentTest`'s own first test
-(driving the Action directly, not through Livewire) passes; and a throwaway debug test replicating the
-exact same `set()`→`call('assign')`→`html()` chain, run in isolation, showed the assignment correctly
-reflected in the re-rendered markup. Not resolved in this session — flagged here rather than either
-silently deleting the test or declaring the gate fully green when it isn't. Worth investigating
-whether this is a known Livewire+Pest interaction (component id collision or `wire:snapshot` state
-bleed across test methods sharing one PHP process) the next time this file is touched.
+**The one remaining failure, initially misdiagnosed as flaky, actually found and fixed by Govind in
+PR review — corrected here rather than left standing.** `CourseInstructorAssignmentTest`'s
+`'assigns and unassigns through the Livewire component...'` test intermittently failed at its
+`->assertSee('Introduction to Testing')` step (right after `->call('assign')`) during this session's
+own debugging, in a way that looked order-dependent — passed alone, failed after certain other tests.
+That chase never reached the test's *second* assertion, three lines later: `->call('unassign',
+$course->id)->assertDontSee('Introduction to Testing')`. Govind's review caught the real, deterministic
+bug there instead — after `unassign`, the course correctly leaves the "assigned" list AND correctly
+reappears in the "assign a course" `<select>` (`availableCourses()`'s `whereDoesntHave` query is
+right to include it again), so its title is still present in the rendered HTML and `assertDontSee`
+was always going to fail on entirely correct production behaviour. Fixed by asserting
+`->assertSee('Not assigned to any courses yet.')` instead, matching
+`CourseInstructorAssignmentTest`'s own third test, which already covers the dropdown-repopulation
+case correctly. **After this fix, the full `composer check` gate is green** — Pint clean, Larastan 0
+errors, Pest 630/632 (only the 2 pre-existing, not-this-track `MediaUploadTest` failures remain, this
+machine's known `finfo_file()`/Windows-`%TEMP%` baseline). The apparent order-dependence from the
+earlier debugging session was never explained and remains a live question — worth another look if it
+resurfaces — but it is no longer blocking anything, since the actual bug it was standing in front of
+has been found and fixed.
 
 ---
 
@@ -1261,16 +1263,14 @@ pattern, jsonb key-order) — all covered in the "Checkpoints 4–6" section abo
 composer check
   pint    : passed
   phpstan : passed, 0 errors (level 8)
-  pest    : 623/632 passed, 1385 assertions, 9 failed
+  pest    : 630/632 passed, 1389 assertions, 2 failed
 ```
-Of the 9: **2 are the pre-existing, not-ours `MediaUploadTest` failures** (Phase 4 baseline, Govind's
-`finfo_close()`/PHP 8.5 issue, unchanged). **6 were real test-content bugs, found and fixed in this
-integration pass** (listed in full above, under "Checkpoints 4–6 — dispatched to parallel agents").
-**1 remains open and disclosed**: the `CourseInstructorAssignmentTest` ordering flakiness, also
-detailed above, confirmed NOT to indicate a production defect but not yet root-caused. Re-running
-`composer check` after all fixes above should show 8/9 accounted for (2 known-baseline, 6 fixed),
-with the 1 flaky test the only remaining red — not re-run to completion as part of this pass; this
-file was written and the branch pushed on explicit instruction to stop chasing tests and push, with
-the disclosed flaky test as the one open item for whoever reviews the PR.
+The 2 remaining failures are the pre-existing, not-ours `MediaUploadTest` cases (this machine's
+`finfo_file()`/Windows-`%TEMP%` baseline, unchanged, not a Track B file). The other 7 gate failures
+surfaced during integration were all real bugs — 6 in test code (listed above, under "Checkpoints
+4–6 — dispatched to parallel agents") plus one more caught in PR review by Govind and fixed
+afterward (the `CourseInstructorAssignmentTest` post-unassign assertion — see the note above this
+section). Gate is fully green on this branch modulo the disclosed, unrelated `MediaUploadTest`
+baseline.
 
 **Not done here (later phases):** course CRUD, Course Builder (Phase 5, Govind's).
