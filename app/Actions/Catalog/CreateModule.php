@@ -63,8 +63,25 @@ final class CreateModule
         return $module;
     }
 
+    /**
+     * The next free slot at the end of the course.
+     *
+     * ZERO-BASED, matching ReorderModules, which writes positions from the
+     * index of the submitted array. The two disagreed until now: a fresh
+     * course numbered its modules 1, 2, 3, and the first drag renumbered them
+     * 0, 1, 2.
+     *
+     * Ordering was correct either way — it is `ORDER BY position` — so nothing
+     * was visibly broken. It becomes a real bug the moment anything treats
+     * position 0 as "first": a move-to-top control, an import, or a test
+     * asserting a known layout. Cheaper to align while it is still harmless.
+     *
+     * max() returns null on an empty course, so the first module lands at 0.
+     */
     private function nextPosition(Course $course): int
     {
-        return (int) $course->modules()->max('position') + 1;
+        $max = $course->modules()->max('position');
+
+        return $max === null ? 0 : (int) $max + 1;
     }
 }

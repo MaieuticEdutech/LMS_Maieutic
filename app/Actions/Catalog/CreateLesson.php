@@ -117,8 +117,18 @@ final class CreateLesson
         return $slug;
     }
 
+    /**
+     * The next free slot at the end of the module.
+     *
+     * ZERO-BASED, matching ReorderLessons — see CreateModule::nextPosition()
+     * for the full reasoning. The same off-by-one lived in both create
+     * actions, which is why fixing only the one that was noticed would have
+     * left the inconsistency in place for lessons.
+     */
     private function nextPosition(Module $module): int
     {
-        return (int) $module->lessons()->max('position') + 1;
+        $max = $module->lessons()->max('position');
+
+        return $max === null ? 0 : (int) $max + 1;
     }
 }
