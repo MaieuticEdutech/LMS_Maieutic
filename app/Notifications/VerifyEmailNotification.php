@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\User;
 use App\Services\Settings\BrandingService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
@@ -24,9 +25,16 @@ use Illuminate\Support\Facades\URL;
  * a hash of their email address, so the link cannot be altered to verify a
  * different account or a changed address.
  */
-class VerifyEmailNotification extends Notification
+class VerifyEmailNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public function __construct()
+    {
+        // PHASE 11 (FR-MAIL-06): queued on the named mail queue, never sent
+        // inside the registration request.
+        $this->onQueue(config()->string('lms.queues.mail'));
+    }
 
     /**
      * @return list<string>

@@ -15,6 +15,18 @@ return [
     |
     */
 
+    /*
+     * PHASE 11 (architecture.md §13).
+     *
+     * Development and CI run `database` so a developer needs no Redis; production
+     * runs `redis` (PD-07, architecture.md §22). Both are configured below with
+     * IDENTICAL semantics, so switching is an environment change and nothing else.
+     *
+     * NEVER set this to `sync` outside the test suite. Under `sync` a mailable
+     * runs inside the originating request, which breaks AC-33: a mail failure
+     * would surface as a request failure and roll back the enrollment
+     * transaction that triggered it.
+     */
     'default' => env('QUEUE_CONNECTION', 'database'),
 
     /*
@@ -42,8 +54,27 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
+
+            /*
+             * retry_after MUST exceed the longest job timeout, or the queue will
+             * hand a still-running job to a second worker and it will execute
+             * twice. SendMailJob's timeout is 30s (config/lms.php); 90s leaves
+             * ample headroom for the slowest job in §13.
+             */
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+
+            /*
+             * AC-33, AND THE REASON THIS PHASE PRECEDES PAYMENTS.
+             *
+             * Jobs dispatched inside a transaction are held until it COMMITS.
+             * Without this, Phase 12's ProcessPaymentWebhook would enqueue the
+             * activation email from inside its enrollment transaction, and a
+             * worker on another machine could pick it up before the commit —
+             * emailing "your course is ready" for an enrollment that then
+             * rolled back. The reverse of the failure everyone expects, and
+             * far harder to notice.
+             */
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [
@@ -66,13 +97,20 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         * The production connection (architecture.md §22). Kept semantically
+         * identical to `database` above so promoting an environment to Redis
+         * changes throughput and nothing else about how jobs behave.
+         */
         'redis' => [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
             'block_for' => null,
-            'after_commit' => false,
+
+            // Same reasoning as `database` above — see AC-33 note there.
+            'after_commit' => true,
         ],
 
         'deferred' => [

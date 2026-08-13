@@ -152,4 +152,76 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Queues (Phase 11, architecture.md §13)
+    |--------------------------------------------------------------------------
+    |
+    | Four named queues, in priority order. Workers drain them left to right,
+    | so a backlog of report exports can never delay a payment webhook or an
+    | activation email.
+    |
+    |   critical — payments, enrollment. Money and access.
+    |   mail     — every outbound email.
+    |   default  — progress, audit.
+    |   low      — media cleanup, exports.
+    |
+    | Queue names are referenced through this config, never hardcoded in a job
+    | class, so renaming a queue is a config change and a job cannot be
+    | silently orphaned onto a queue no worker is listening to.
+    |
+    */
+
+    'queues' => [
+        'critical' => 'critical',
+        'mail' => 'mail',
+        'default' => 'default',
+        'low' => 'low',
+
+        /*
+         * The worker's drain order, and the single source of truth for it.
+         * Deployment (Phase 16) builds the supervisor `--queue=` argument from
+         * this list rather than repeating it in a process manager config where
+         * it would drift.
+         */
+        'priority' => ['critical', 'mail', 'default', 'low'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mail (Phase 11, architecture.md §14)
+    |--------------------------------------------------------------------------
+    |
+    | TRANSPORT-AGNOSTIC BY CONSTRUCTION (PD-07). Nothing here — and nothing in
+    | any mailable — names a delivery provider. Development uses log/Mailpit and
+    | production selects a provider in Phase 16 by setting MAIL_MAILER, with no
+    | application code change (FR-MAIL-09).
+    |
+    | Organisation identity (name, logo, support address, footer) is NOT here.
+    | It lives in `settings` behind BrandingService — see the header of this
+    | file and rule S-1.
+    |
+    */
+
+    'mail' => [
+        // SendMailJob retry policy (architecture.md §13: "3, 60s").
+        'tries' => (int) env('LMS_MAIL_TRIES', 3),
+        'backoff' => [60, 300, 900],
+
+        /*
+         * Hard ceiling on one send attempt. Must stay well below the queue
+         * connection's retry_after (90s) or a slow SMTP handshake would let
+         * the job be dispatched to a second worker while still running, and
+         * the recipient would get the email twice.
+         */
+        'timeout' => (int) env('LMS_MAIL_TIMEOUT', 30),
+
+        /*
+         * Whether mail previews are reachable. Development only — the routes
+         * render real templates with real branding and must never be exposed
+         * in production, where they would leak organisation configuration.
+         */
+        'preview_enabled' => (bool) env('LMS_MAIL_PREVIEW_ENABLED', false),
+    ],
+
 ];
