@@ -105,9 +105,41 @@ function pngBytes(): string
     return "\x89PNG\r\n\x1a\n".pack('N', 13).'IHDR'.pack('NN', 1, 1)."\x08\x02\x00\x00\x00".pack('N', 0);
 }
 
+/**
+ * A file that finfo identifies as PHP, containing nothing dangerous.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * DELIBERATELY INERT. Do not "improve" this into a realistic webshell.
+ *
+ * This used to be `<?php system($_GET['cmd']); ?>` — the textbook webshell,
+ * chosen for realism. It was a mistake. That exact string is in every
+ * antivirus signature database, so Windows Defender quarantined or locked the
+ * file between the write and the finfo read, and the test failed on two of
+ * three developer machines while passing on the third and in CI. Reported by
+ * Shashank, who isolated it precisely: same directory, same timing, different
+ * result purely from file CONTENT.
+ *
+ * The realism bought nothing. finfo identifies PHP from the `<?php` open tag,
+ * not from what the code does — verified across several payloads, all of which
+ * sniff as text/x-php. So the sniff is exercised exactly as before, and the
+ * suite no longer depends on each developer's antivirus configuration.
+ *
+ * (A short echo tag `<?=` sniffs as text/plain, so it would silently weaken
+ * these tests. Keep the full open tag.)
+ * ─────────────────────────────────────────────────────────────────────────
+ */
 function phpBytes(): string
 {
-    return "<?php system(\$_GET['cmd']); ?>\n";
+    return <<<'PHP'
+        <?php
+
+        declare(strict_types=1);
+
+        function inertFixture(): string
+        {
+            return 'This file exists so finfo reports text/x-php.';
+        }
+        PHP;
 }
 
 /*
