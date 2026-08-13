@@ -44,7 +44,7 @@
                 x-on:loadedmetadata="seekToResume()"
                 x-on:timeupdate.throttle.10000ms="report()"
                 x-on:pause="report()"
-                x-on:ended="report(true)"
+                x-on:ended="report()"
             >
                 {{-- Captions land in Phase 15 with the accessibility pass. --}}
                 Your browser cannot play this video.
@@ -66,6 +66,33 @@
             </div>
         @endif
     </div>
+
+    {{--
+        How close this lesson is to completing itself (FR-PROG-04).
+
+        Shown because the rule is otherwise invisible: a student who stops at
+        85% has no way to know why the lesson did not tick, and "it just
+        doesn't work" is the reasonable conclusion. The figure is the MAXIMUM
+        ever watched, not the current playhead — scrubbing back does not take
+        it away.
+    --}}
+    @php
+        $watchedSeconds = $progress?->video_watched_seconds ?? 0;
+        $knownDuration = $lesson->duration_seconds ?? $progress?->video_duration_seconds ?? 0;
+        $watchedPercent = $knownDuration > 0
+            ? min(100, (int) floor(($watchedSeconds / $knownDuration) * 100))
+            : null;
+    @endphp
+
+    @if ($media && $watchedPercent !== null && $progress?->completed_at === null)
+        <div>
+            <p class="flex items-baseline justify-between font-mono text-[11px] tracking-[0.04em] text-neutral-500">
+                <span>{{ $watchedPercent }}% WATCHED</span>
+                <span>COMPLETES AT {{ $videoThreshold }}%</span>
+            </p>
+            <x-progress-bar :value="$watchedPercent" size="sm" class="mt-1.5" />
+        </div>
+    @endif
 
     @if ($lesson->summary)
         <p class="max-w-[68ch] leading-relaxed text-neutral-700">{{ $lesson->summary }}</p>

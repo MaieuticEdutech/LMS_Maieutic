@@ -92,15 +92,20 @@ document.addEventListener('alpine:init', () => {
          * on end. A `timeupdate` fires roughly four times a second — reporting
          * each one would be hundreds of writes per lesson for a resume point
          * accurate to the same ten seconds either way.
+         *
+         * IT SENDS A POSITION AND NOTHING ELSE. Whether that amounts to having
+         * watched the lesson is the server's decision, taken against the
+         * configured threshold. A browser that could claim completion would
+         * make the threshold decoration (FR-PROG-04).
          */
-        report(completed = false) {
+        report() {
             const video = this.$refs.video;
 
             if (!video || !Number.isFinite(video.currentTime)) {
                 return;
             }
 
-            this.$wire?.recordProgress(Math.floor(video.currentTime), completed);
+            this.$wire?.recordProgress(Math.floor(video.currentTime));
         },
     }));
 

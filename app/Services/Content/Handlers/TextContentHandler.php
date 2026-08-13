@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content\Handlers;
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 use App\Models\Lesson;
@@ -23,6 +24,11 @@ final class TextContentHandler implements LessonContentHandler
     public function type(): LessonType
     {
         return LessonType::Text;
+    }
+
+    public function completionStrategy(): CompletionStrategy
+    {
+        return CompletionStrategy::Manual;
     }
 
     public function label(): string

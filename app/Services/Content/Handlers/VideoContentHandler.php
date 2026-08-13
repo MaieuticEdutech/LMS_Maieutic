@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content\Handlers;
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 use App\Models\Lesson;
@@ -27,6 +28,11 @@ final class VideoContentHandler extends AbstractMediaContentHandler
     public function type(): LessonType
     {
         return LessonType::Video;
+    }
+
+    public function completionStrategy(): CompletionStrategy
+    {
+        return CompletionStrategy::VideoThreshold;
     }
 
     public function label(): string

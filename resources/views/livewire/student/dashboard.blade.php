@@ -34,9 +34,12 @@
                     </h2>
 
                     @if ($continue->progress_percentage > 0)
-                        <p class="mt-3 font-mono text-xs tracking-[0.04em] text-white/60">
-                            {{ $continue->progress_percentage }}% COMPLETE
-                        </p>
+                        <div class="mt-4 max-w-sm">
+                            <p class="font-mono text-xs tracking-[0.04em] text-white/60">
+                                {{ $continue->progress_percentage }}% COMPLETE
+                            </p>
+                            <x-progress-bar :value="$continue->progress_percentage" tone="inverse" class="mt-2" />
+                        </div>
                     @endif
 
                     <div class="mt-6">
@@ -50,10 +53,36 @@
         @endif
 
         {{-- ══ STATS ══ --}}
-        <section aria-label="Your progress" class="grid gap-4 sm:grid-cols-3">
-            <x-stat-tile label="Enrolled" :value="$stats['enrolled']" />
-            <x-stat-tile label="In progress" :value="$stats['in_progress']" />
-            <x-stat-tile label="Completed" :value="$stats['completed']" />
+        <section aria-label="Your progress" class="space-y-4">
+
+            {{-- Overall progress (FR-PROG-07). A MEAN OF COURSE PERCENTAGES,
+                 not of lessons: someone halfway through two courses is 50%
+                 whether one has ten lessons and the other a hundred, which is
+                 how a person actually thinks about their own progress. --}}
+            <div class="rounded-card border border-neutral-200 bg-white p-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                    <p class="eyebrow text-neutral-500">Overall progress</p>
+                    <p class="font-serif text-2xl font-semibold tracking-[-0.015em] text-neutral-900">
+                        {{ $overall['percentage'] }}%
+                    </p>
+                </div>
+
+                <x-progress-bar :value="$overall['percentage']" class="mt-3" />
+
+                {{-- Built as one expression rather than inline @if/@endif:
+                     Blade will not compile a directive glued to a word
+                     character, so `finished@endif` silently leaves the @if
+                     open and the whole view fails to parse. --}}
+                <p class="mt-3 text-sm text-neutral-500">
+                    Across {{ $overall['courses'] }} {{ Str::plural('course', $overall['courses']) }}{{ $overall['completed'] > 0 ? ', '.$overall['completed'].' finished' : '' }}.
+                </p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <x-stat-tile label="Enrolled" :value="$stats['enrolled']" />
+                <x-stat-tile label="In progress" :value="$stats['in_progress']" />
+                <x-stat-tile label="Completed" :value="$stats['completed']" />
+            </div>
         </section>
 
         {{-- ══ COURSES ══ --}}

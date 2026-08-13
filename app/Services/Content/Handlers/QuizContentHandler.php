@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content\Handlers;
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 use App\Models\Assessment;
@@ -26,6 +27,11 @@ final class QuizContentHandler implements LessonContentHandler
     public function type(): LessonType
     {
         return LessonType::Quiz;
+    }
+
+    public function completionStrategy(): CompletionStrategy
+    {
+        return CompletionStrategy::Assessment;
     }
 
     public function label(): string

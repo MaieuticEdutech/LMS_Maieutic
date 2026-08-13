@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Events\AttemptGraded;
+use App\Events\CourseStructureChanged;
 use App\Events\EnrollmentGranted;
 use App\Events\EnrollmentRevoked;
+use App\Jobs\Progress\RecalculateProgressForCourseEnrollments;
 use App\Listeners\ActivateUserAfterEmailVerification;
 use App\Listeners\AlertOnFailedJob;
+use App\Listeners\CompleteLessonOnPassedAttempt;
 use App\Listeners\LogOutboundEmail;
 use App\Listeners\SendEnrollmentGrantedNotification;
 use App\Listeners\SendEnrollmentRevokedNotification;
@@ -144,6 +148,29 @@ class AppServiceProvider extends ServiceProvider
          */
         Event::listen(EnrollmentGranted::class, SendEnrollmentGrantedNotification::class);
         Event::listen(EnrollmentRevoked::class, SendEnrollmentRevokedNotification::class);
+
+        /*
+         * Progress (Phase 9). A curriculum change moves the denominator of
+         * every enrollment's percentage in that course, so the batch job
+         * refreshes them all (FR-PROG-09, AC-30).
+         *
+         * Registered explicitly like every other listener here: convention
+         * discovery is off project-wide, so a listener not named here simply
+         * never runs.
+         */
+        /*
+         * A passed attempt completes the quiz lesson hosting it (FR-PROG-04).
+         * Wired through the event rather than called inside GradingService --
+         * that is Track B's, and grading must not fail because progress did.
+         */
+        Event::listen(AttemptGraded::class, CompleteLessonOnPassedAttempt::class);
+
+        Event::listen(
+            CourseStructureChanged::class,
+            static fn (CourseStructureChanged $event) => RecalculateProgressForCourseEnrollments::dispatch(
+                $event->course->getKey(),
+            ),
+        );
     }
 
     /**

@@ -827,11 +827,28 @@ Phase 8.
 - Dashboard with 20 enrollments issues a bounded number of queries (NFR-PERF-04)
 
 ### Definition of Done
-- [ ] Progress is correct at all four levels and matches a rebuild from raw facts
-- [ ] AC-28 … AC-32 pass
-- [ ] Curriculum changes propagate to every affected enrollment
-- [ ] Dashboards read cached aggregates, not raw scans
-- [ ] Universal DoD satisfied
+- [x] Progress is correct at all four levels and matches a rebuild from raw facts
+- [x] AC-28 … AC-32 pass
+- [x] Curriculum changes propagate to every affected enrollment
+- [x] Dashboards read cached aggregates, not raw scans
+- [x] Universal DoD satisfied
+
+> **Completed 2026-08-13** (Track A, branch `phase/09-progress-tracking`).
+> 59 progress tests; whole suite **1006/1006**, 2,119 assertions; Pint clean; Larastan level 8, 0 errors.
+>
+> **Two deviations from the plan above, both deliberate:**
+>
+> 1. **`RecalculateCourseProgress` (the per-enrollment job) was not shipped.** The refresh it would
+>    have carried is two COUNTs on indexed columns and runs only on a completion transition, so it
+>    happens inline in `RecordLessonProgress`. `queue.default` is `database`: queued, a student with
+>    no worker running ticks a lesson and watches the bar never move. The batch job
+>    (`RecalculateProgressForCourseEnrollments`) stays queued, because that one touches every
+>    enrollment in a course and nobody is watching a single figure.
+> 2. **`CompletionStrategy` maps to the existing `CompletionSource` rather than sharing its
+>    backing values.** `lesson_progress.completion_source` is CHECK-constrained to
+>    `CompletionSource` (ADR-012), which carries a case the strategy set does not (`Download`).
+>    `CompletionStrategy::toSource()` is the single explicit crossover; a test asserts every arm
+>    lands inside the constraint.
 
 ### Deliverables
 The progress engine, completion strategies, recalculation jobs, progress UI throughout the student experience, the rebuild command, and the progress test suite.

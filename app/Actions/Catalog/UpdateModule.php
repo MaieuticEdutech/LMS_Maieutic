@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Catalog;
 
+use App\Events\CourseStructureChanged;
 use App\Models\Module;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
@@ -55,6 +56,23 @@ final class UpdateModule
 
         $module->refresh();
         $this->counters->refreshModule($module);
+
+        /*
+         * Publishing or unpublishing a module changes the visible curriculum
+         * for every enrolled student — and it moves MORE lessons at once than
+         * a single lesson toggle does, since an unpublished module hides all
+         * of its lessons regardless of their own flags.
+         *
+         * Same reasoning as UpdateLesson: fired only on a real change, so
+         * renaming a module does not queue a recalculation across every
+         * enrollment in the course.
+         */
+        if ($module->course !== null && $before['is_published'] !== $module->is_published) {
+            CourseStructureChanged::dispatch(
+                $module->course,
+                sprintf('Module "%s" was %s.', $module->title, $module->is_published ? 'published' : 'unpublished'),
+            );
+        }
 
         $this->audit->record(
             action: 'module.updated',
