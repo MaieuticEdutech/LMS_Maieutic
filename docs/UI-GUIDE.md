@@ -87,23 +87,61 @@ illustrations or animation flourishes it does not have.
 
 ---
 
-## 3. Screens mapped to phases
+## 3. Screens mapped to phases, and who builds them
 
-Ownership currently follows the existing plan — **Track B (Srivathsa) owns `app/Livewire/**` and
-`resources/views/**`.** A split is under discussion but **is not in effect**; it will be settled
-after Phase 4 merges. Until then, do not build UI outside your existing assignment.
+**Decided 2026-08-13, after Phase 4 merged.** UI is no longer built by one person. It splits into a
+shared layer and feature screens, and feature screens follow the phase.
 
-| Reference screens | Phase | Backend owner |
+### The shared layer — one owner, permanently
+
+| Layer | Owner | Files |
 |---|---|---|
-| Auth & States — all 10 | 2 (built, unstyled) | Govind |
-| Super Admin — dashboard, students, instructors, settings | 4 | Srivathsa |
-| Super Admin — courses, builder · public browse + detail | 5 | Govind |
-| Student — dashboard, my courses, player | 6–7 | Govind |
-| Student/Instructor — quizzes, quiz, result, assessments | 8 | Srivathsa |
-| Student/Instructor — progress | 9 | Govind |
-| Instructor — all | 10 | Srivathsa |
-| Student — checkout, success · Super Admin — orders | 12 | Govind |
-| Super Admin — enrolments | 6 | Govind |
+| Design foundation — tokens, fonts, base layer | **Govind** (done, merged) | `resources/css/app.css`, `vite.config.js` |
+| Shared component library | **Srivathsa** | `resources/views/components/**` |
+| Layouts and shells | **Srivathsa** | `resources/views/layouts/**` |
+
+The twelve components and the four shells stay single-owner. That is what stops a second button
+component existing, and it is not negotiable however convenient a local copy looks.
+
+### Feature screens — owned by subdirectory
+
+Subdirectory ownership is what makes parallel UI work safe. It is not a formality: four branches
+merged in one week with **zero overlapping files** because of it. Stay in your own directory.
+
+| Screens | Livewire | Views | Owner |
+|---|---|---|---|
+| Course Builder, course list | `Admin/Courses/**` | `livewire/admin/courses/**` | **Srivathsa** |
+| Public catalogue, course detail | `Catalogue/**` | `livewire/catalogue/**` | **Srivathsa** |
+| Admin enrolments — table, grant, revoke | `Admin/Enrollments/**` | `livewire/admin/enrollments/**` | **Shashank** |
+| Assessment, instructor | `Assessment/**`, `Instructor/**` | matching | **Srivathsa** |
+| Reporting, mail templates | `Reporting/**` | `livewire/reporting/**` | **Shashank** |
+| Student dashboard, my courses, player | `Student/**` | `livewire/student/**` | **Govind** |
+
+### Screen-to-phase map
+
+| Reference screens | Phase | Backend | UI |
+|---|---|---|---|
+| Auth & States — all 10 | 2 | Govind | ✅ done |
+| Super Admin — dashboard, students, instructors, settings | 4 | Srivathsa | ✅ done |
+| Super Admin — courses, builder · public browse + detail | 5 | Govind ✅ | **Srivathsa** |
+| Super Admin — enrolments | 6 | Govind ✅ | **Shashank** |
+| Student — dashboard, my courses, player | 7 | Govind | Govind |
+| Student/Instructor — quizzes, quiz, result, assessments | 8 | Srivathsa | Srivathsa |
+| Student/Instructor — progress | 9 | Govind | Govind |
+| Instructor — all | 10 | Srivathsa | Srivathsa |
+| Student — checkout, success · Super Admin — orders | 12 | Govind | Govind |
+
+### Two things to know before starting a screen
+
+**The backend defends itself.** A UI mistake cannot create a security hole. `GrantEnrollment` is the
+only writer of enrollments, `RevokeEnrollment` throws without a reason, and every route authorises
+server-side. Rendering a control never implies permission (Rule 20) — so build the screen you think
+is right, and the action behind it will still refuse what it should.
+
+**Phase 6's UI is the gentlest starting point** if you have not written Livewire on this project: a
+table, a form and a confirm modal, all consuming actions that are already tested. It is also the
+screen that grants paid access, so the confirm step matters — revocation asks for a reason because
+the action demands one, not as a courtesy.
 
 ---
 
@@ -561,83 +599,87 @@ Numerals for data. Em dashes for asides. Minimal exclamation marks. **No emoji, 
 4. **Where `sample ui/` lives.** ~300KB of reference HTML plus a React bundle we do not consume. It
    probably belongs in `docs/design/` rather than the application root, and may not belong in git at
    all.
-5. **UI ownership.** Currently Track B owns all views. A per-subdirectory split is under discussion
-   and will be settled **after Phase 4 merges**. Until then, follow the existing plan.
+5. ~~**UI ownership.**~~ **Resolved 2026-08-13** — split into a single-owner shared layer and
+   per-subdirectory feature screens. Phase 5's UI is Srivathsa's, Phase 6's is Shashank's. See §3.
 
 ---
 
 ## 16. Implementation plan
 
-**Nothing in this section starts until Phase 4 is merged.** Srivathsa finishes and merges Phase 4
-first; no UI work below touches his branch while it is in flight.
+### Step 0 — the gate ✅ CLEARED
 
-### Step 0 — the gate
+- [x] Phase 4 merged to `main`
+- [x] UI ownership decided — see §3
+- [x] Design foundation merged (PR #7)
+- [ ] **Phase 6 merged** — PR #9. The enrolment screens consume `GrantEnrollment` and
+      `RevokeEnrollment`; until it lands, Shashank has nothing to build against.
 
-- [ ] Phase 4 merged to `main`
-- [ ] Everyone has pulled `main`
-- [ ] UI ownership decided (open question 5) — this determines who does Steps 3 and 4
+### Step 1 — design foundation ✅ DONE, merged in PR #7
 
-### Step 1 — design foundation · one PR, small and fast
+Already on `main`, so start from it rather than repeating it:
 
-The whole system depends on this, so it lands as a single reviewable change and everyone rebases the
-same day.
-
-| Change | File |
+| Landed | Where |
 |---|---|
-| Replace the placeholder blue palette with §5's tokens | `resources/css/app.css` |
-| Add the three font families | `vite.config.js` |
-| Move and rename both logos | `resources/images/` |
-| Set base element defaults — serif `h1`–`h3`, mono eyebrow | `resources/css/app.css` |
+| Brand tokens — teal, warm neutrals, radius, shadows, motion | `resources/css/app.css` |
+| Three self-hosted fonts — Newsreader, Hanken Grotesk, JetBrains Mono | `vite.config.js` |
+| Both official logos | `public/images/logo-maieutic{,-reversed}.png` |
+| `eyebrow` and `m-motif` utilities | `resources/css/app.css` |
+| Base element defaults — serif `h1`–`h3`, focus ring, reduced motion | `resources/css/app.css` |
 
-**Done when:** `npm run build` succeeds, all three fonts self-host into `public/build`, and a
-throwaway page renders serif heading, sans body and tracked mono eyebrow correctly.
+The compatibility aliases in `app.css` (`brand-*`, `danger-*`, and the `zinc-*` shim) exist so
+pre-existing views picked up the brand without being edited. **Write `teal-*` and `neutral-*` in new
+work**; the shim is scheduled for deletion once the last `zinc-*` reference is gone.
 
-**Expect the app to look temporarily wrong.** Existing views are styled against the old blue tokens.
-That is the point of doing it in one hit — the alternative is a slow drift where half the product is
-one palette and half the other.
+### Step 2 — component library · the 12 primitives · PARTLY DONE
 
-> Warning: this changes how **every existing screen** renders. It must be a standalone PR — never
-> bundled with feature work — so it can be reverted cleanly if something is off.
+All twelve were restyled against the brand tokens in PR #7 and are on `main`:
 
-### Step 2 — component library · the 12 primitives
+```
+alert  badge  button  card  checkbox  empty-state
+input  modal  pagination  select  table  textarea
+```
 
-Restyle each against the new tokens, working from the reference prototypes. Order matters — later
-ones build on earlier:
+Plus `breadcrumbs` and `stat-tile` from Phase 4. **Use them. Do not fork them.** If one needs a
+variant, add a prop — that is a conversation with Srivathsa, who owns the library, not a local copy.
 
-1. `button` · `input` · `select` · `textarea` · `checkbox` — the form spine
-2. `card` · `badge` · `table` · `pagination` — the data surfaces
-3. `alert` · `modal` · `empty-state` — feedback and overlays
+**Still outstanding:** loading and skeleton states. The components carry default, hover,
+focus-visible, disabled and error; a shared skeleton treatment does not exist yet, and every table
+and card in Phases 5 and 6 will want one. Worth agreeing once rather than three times.
 
-Each component ships with **all its states**: default, hover, focus-visible, disabled, error,
-loading. A component missing a focus style is not done.
+### Step 3 — shells · one done, three to build
 
-**Done when:** a demo page renders every component in every state, keyboard-navigable, passing
-contrast at 360 px and 1440 px.
-
-### Step 3 — shells · four layouts
-
-Build in this order, because screens are blocked on them:
-
-1. **Auth** — split screen, `teal-900` brand panel + 400 px form column *(unblocks 10 screens)*
-2. **Admin** — 248 px `teal-900` sidebar, drawer below 1024 px
-3. **Student** — content-first top bar
-4. **Public** — editorial, 1240 px, 96 px rhythm
+| Shell | State |
+|---|---|
+| **Auth** — split screen, `teal-900` brand panel + 400 px form column | ✅ done, PR #7 |
+| **Admin** — 248 px `teal-900` sidebar, drawer below 1024 px | Phase 4's exists; needs the brand pass |
+| **Student** — content-first top bar | not built (Phase 7) |
+| **Public** — editorial, 1240 px, 96 px rhythm | not built (Phase 5) |
 
 Each shell handles its own responsive collapse, focus trapping and skip-to-content link **before**
-any screen is built inside it. Retrofitting focus management into a finished shell is miserable.
+any screen is built inside it. Retrofitting focus management into a finished shell is miserable —
+the auth shell is the worked example to copy from.
 
-### Step 4 — screens, by phase
+### Step 4 — screens · WE ARE HERE
 
-Now parallel. Each screen follows the §14 checklist and ships with loading, empty and error states.
+Parallel from now on. Each screen follows the §14 checklist and ships with loading, empty and error
+states. Stay in your own subdirectory (§3).
 
-| Priority | Screens | Why first |
+| Who | Build | Blocked on |
 |---|---|---|
-| 1 | Auth — all 10 | Already built and functional; only needs restyling. Fastest visible win |
-| 2 | Admin — dashboard, students, instructors, settings | Phase 4's own screens |
-| 3 | Admin — courses, builder | Unblocks Phase 5's UI, whose backend is already merged |
-| 4 | Public — catalogue, course detail | First thing a buyer sees |
-| 5 | Student — dashboard, my courses, player | Needs Phase 6/7 backend |
-| 6 | Assessment, instructor, reporting | Follow their own phases |
+| **Srivathsa** | Course Builder — module/lesson tree, drag reorder, publish checklist | nothing |
+| **Srivathsa** | Public catalogue + course detail — metadata only, AC-01 | nothing; needs the public shell |
+| **Shashank** | Admin enrolments — table, grant form, revoke modal | **PR #9 merging** |
+| **Govind** | Student dashboard, my courses, player | Phase 7 |
+
+**Two rules that matter more than the order:**
+
+Drag-and-drop reorder must call the existing `ReorderModules` / `ReorderLessons` actions and send the
+**complete** ordered id list. Both refuse a partial or foreign set — a stale page reloads rather than
+corrupting order, which is deliberate. Do not "fix" that by relaxing the action.
+
+The public catalogue renders **metadata only** — titles, durations, outcomes, price. No lesson body,
+no media, no resource, by any URL (AC-01). The policies enforce it; the view must not be the only
+thing standing between a guest and paid content.
 
 ### Step 5 — Phase 15
 
