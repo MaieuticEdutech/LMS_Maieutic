@@ -11,6 +11,11 @@
     Organisation name comes from config for now; Phase 2 replaces this with
     BrandingService reading the `settings` table, so that nothing hardcodes
     organisation identity (rule S-1, FR-SYS-01).
+
+    Brand pass (docs/UI-GUIDE.md §7 "Public — editorial"): max-w-content
+    (1240px) rhythm, 24px gutters, generous air. No sidebar — this is the
+    most brand-visible surface in the product, so restraint matters more
+    here than anywhere else in the app.
 --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -24,18 +29,37 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="flex min-h-full flex-col bg-white text-neutral-900 antialiased">
+<body class="flex min-h-full flex-col bg-neutral-50 text-neutral-800 antialiased">
     <a href="#main"
-       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
+       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
         Skip to content
     </a>
 
-    <header class="border-b border-neutral-200">
-        <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <a href="{{ route('home') }}" class="text-lg font-semibold text-neutral-900">
-                {{ config('app.name') }}
+    <header class="border-b border-neutral-200 bg-neutral-0">
+        <nav class="mx-auto flex max-w-content items-center justify-between gap-6 px-6 py-4" aria-label="Primary">
+            <a href="{{ route('home') }}" class="shrink-0">
+                <img src="{{ asset('images/logo-maieutic.png') }}" alt="Maieutic" class="h-8 w-auto">
             </a>
-            {{-- Phase 5 adds catalogue navigation; Phase 2 adds auth links. --}}
+
+            <div class="flex items-center gap-6">
+                @if (Route::has('catalogue.index'))
+                    <a href="{{ route('catalogue.index') }}" class="text-sm font-medium text-neutral-700 hover:text-teal-700">
+                        Catalogue
+                    </a>
+                @endif
+
+                @auth
+                    <x-button :href="auth()->user()->role->homePath()" variant="secondary" size="sm" wire:navigate>
+                        Dashboard
+                    </x-button>
+                @else
+                    @if (Route::has('login'))
+                        <a href="{{ route('login') }}" class="text-sm font-medium text-neutral-700 hover:text-teal-700">
+                            Sign in
+                        </a>
+                    @endif
+                @endauth
+            </div>
         </nav>
     </header>
 
@@ -45,7 +69,7 @@
     </main>
 
     <footer class="border-t border-neutral-200">
-        <div class="mx-auto max-w-7xl px-4 py-6 text-sm text-neutral-500 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-content px-6 py-8 text-sm text-neutral-500">
             &copy; {{ now()->year }} {{ config('app.name') }}
         </div>
     </footer>

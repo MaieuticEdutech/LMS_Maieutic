@@ -132,7 +132,20 @@
 
     /* LAYOUT */
     --spacing-sidebar: 248px;
+    --spacing-builder-aside: 360px;
+    --spacing-detail-aside: 340px;
+    --spacing-drawer: 520px;
     --container-content: 1240px;
+    --container-measure: 68ch;
+
+    /*
+    | The brand's one display letter-spacing value, used on every serif
+    | headline and standalone serif wordmark. Overriding Tailwind's default
+    | -tight here (rather than reaching for tracking-[-0.015em] inline
+    | wherever a serif element isn't an h1-h3) keeps the value a token per
+    | UI-GUIDE §4 rule 3 instead of an arbitrary value repeated ad hoc.
+    */
+    --tracking-tight: -0.015em;
 
     /*
     | ── COMPATIBILITY ALIASES ───────────────────────────────────────────

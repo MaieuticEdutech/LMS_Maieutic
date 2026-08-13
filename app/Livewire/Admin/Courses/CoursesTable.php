@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Livewire\Admin;
+namespace App\Livewire\Admin\Courses;
 
 use App\Enums\CourseStatus;
 use App\Livewire\Concerns\WithAdminTable;
@@ -14,10 +14,10 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * READ-ONLY course list (phases.md Phase 4: "Course list with status, search
- * and filters (CRUD arrives in Phase 5)"). No create/edit/delete UI and no
- * row-level links — those routes belong to Phase 5's Course Builder and do
- * not exist yet.
+ * Course list (docs/UI-GUIDE.md §3: Admin/Courses/**, Srivathsa). Phase 4
+ * shipped this read-only; Phase 5 adds the "Create course" entry point and
+ * the per-card links into CourseBuilder — the query/search/filter/paginate
+ * logic here is otherwise unchanged from Phase 4 Checkpoint 6.
  *
  * Authorisation nuance: CoursePolicy::viewAny() is deliberately `true` for
  * everyone — it is the public catalogue browse permission, not an admin
@@ -77,11 +77,31 @@ final class CoursesTable extends Component
         return CourseStatus::cases();
     }
 
+    /**
+     * Counts for the header summary line ("22 courses · 18 published · 3
+     * draft · 1 archived") — unfiltered, so the tabs' own counts stay stable
+     * as the admin filters/searches the list beneath them.
+     *
+     * @return array<string, int>
+     */
+    public function statusCounts(): array
+    {
+        return [
+            'all' => Course::query()->count(),
+            ...Course::query()
+                ->selectRaw('status, count(*) as count')
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->all(),
+        ];
+    }
+
     public function render(): View
     {
-        return view('livewire.admin.courses-table', [
+        return view('livewire.admin.courses.table', [
             'courses' => $this->rows(),
             'statusOptions' => $this->statusOptions(),
+            'statusCounts' => $this->statusCounts(),
         ]);
     }
 }

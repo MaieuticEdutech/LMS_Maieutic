@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Livewire\Admin\CoursesTable;
+use App\Livewire\Admin\Courses\CoursesTable;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
@@ -63,20 +63,16 @@ it('shows an empty state with no courses', function (): void {
     Livewire::test(CoursesTable::class)->assertSee('No courses yet');
 });
 
-it('renders no create, edit or delete UI — CRUD is Phase 5, not Phase 4', function (): void {
+it('links to the course builder for create and edit', function (): void {
     $admin = User::factory()->superAdmin()->create();
     $this->actingAs($admin);
 
     Course::factory()->create(['title' => 'Introduction to Algebra']);
 
-    // 'Create' alone is not a safe needle — it's a substring of the table's
-    // own 'Created' column header, so assertDontSee('Create') would falsely
-    // fail on entirely legitimate markup.
     Livewire::test(CoursesTable::class)
-        ->assertDontSee('Create Course')
-        ->assertDontSee('Add course')
-        ->assertDontSee('Edit')
-        ->assertDontSee('Delete');
+        ->assertSee('Create course')
+        ->assertSee(route('admin.courses.create'), false)
+        ->assertSee(route('admin.courses.builder', Course::first()), false);
 });
 
 it('denies an instructor and a student from viewing the courses table', function (): void {
