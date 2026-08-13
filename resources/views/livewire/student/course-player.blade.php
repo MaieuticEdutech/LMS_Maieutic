@@ -22,10 +22,34 @@
             <h1 class="mt-2 text-2xl text-balance">{{ $course->title }}</h1>
         </div>
 
-        <p class="shrink-0 font-mono text-xs tracking-[0.04em] text-neutral-500">
-            {{ $completedCount }} / {{ $totalCount }} COMPLETE
-        </p>
+        {{-- The course figure, counted from the curriculum on screen so it can
+             never disagree with the ticks in the sidebar. --}}
+        <div class="w-full shrink-0 sm:w-56">
+            <p class="flex items-baseline justify-between font-mono text-xs tracking-[0.04em] text-neutral-500">
+                <span>{{ $completedCount }} / {{ $totalCount }} COMPLETE</span>
+                <span class="text-neutral-800">{{ $percentage }}%</span>
+            </p>
+            <x-progress-bar :value="$percentage" class="mt-2" />
+        </div>
     </div>
+
+    {{-- ══ COURSE COMPLETE ══
+         Shown only once the enrollment itself records completion — which for a
+         course with a final test means the test was passed, not merely that
+         every lesson was ticked (AC-31). --}}
+    @if ($courseCompletedAt)
+        <div class="m-motif relative mb-6 overflow-hidden rounded-card bg-teal-900 p-6 text-white">
+            <div class="relative">
+                <p class="eyebrow text-white/55">Course complete</p>
+                <p class="mt-2 font-serif text-xl font-semibold tracking-[-0.015em] text-balance">
+                    You finished {{ $course->title }}
+                </p>
+                <p class="mt-1 text-sm text-white/70">
+                    Completed {{ $courseCompletedAt->format('d M Y') }}. Everything stays available to revisit.
+                </p>
+            </div>
+        </div>
+    @endif
 
     {{-- Mobile curriculum toggle. Hidden on desktop, where the sidebar is
          always visible. --}}
@@ -48,9 +72,23 @@
             <div class="overflow-hidden rounded-card border border-neutral-200 bg-white">
                 @foreach ($curriculum as $module)
                     <div class="border-b border-neutral-100 last:border-b-0">
+                        @php $figures = $moduleProgress[$module->id] ?? ['completed' => 0, 'total' => 0, 'percentage' => 0]; @endphp
+
                         <div class="bg-neutral-50 px-4 py-3">
                             <p class="eyebrow text-neutral-500">Module {{ $loop->iteration }}</p>
                             <p class="mt-1 font-serif text-base font-semibold text-neutral-900">{{ $module->title }}</p>
+
+                            {{-- Module progress is DERIVED, never stored
+                                 (ADR-008) — computed here from the lessons and
+                                 progress this page already loaded, so the
+                                 sidebar costs no extra queries however many
+                                 modules a course has. --}}
+                            @if ($figures['total'] > 0)
+                                <p class="mt-2 font-mono text-[11px] tracking-[0.04em] text-neutral-500">
+                                    {{ $figures['completed'] }} / {{ $figures['total'] }} LESSONS
+                                </p>
+                                <x-progress-bar :value="$figures['percentage']" size="sm" class="mt-1.5" />
+                            @endif
                         </div>
 
                         <ul>
@@ -106,11 +144,42 @@
 
             {{-- ══ FOOTER: completion + navigation ══ --}}
             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 pt-5">
-                <x-button wire:click="toggleComplete"
-                          :variant="$lessonProgress?->completed_at !== null ? 'secondary' : 'primary'"
-                          wire:loading.attr="disabled">
-                    {{ $lessonProgress?->completed_at !== null ? 'Completed' : 'Mark as complete' }}
-                </x-button>
+                {{--
+                    WHICH CONTROL APPEARS IS THE TYPE'S COMPLETION RULE, asked
+                    of the registry rather than matched on the lesson type here
+                    (ADR-003, FR-PROG-04).
+
+                    A video completes by being watched and a quiz by being
+                    passed, so neither offers a button. Showing one that the
+                    server would refuse is worse than showing none — it reads
+                    as broken rather than as a rule.
+                --}}
+                @php $done = $lessonProgress?->completed_at !== null; @endphp
+
+                @if ($done)
+                    <div class="flex items-center gap-2">
+                        <x-badge variant="success">Completed</x-badge>
+
+                        @if ($strategy->allowsManualCompletion())
+                            <button type="button" wire:click="toggleComplete" wire:loading.attr="disabled"
+                                    class="text-sm text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-800 hover:underline">
+                                Mark as not complete
+                            </button>
+                        @endif
+                    </div>
+                @elseif ($strategy->allowsManualCompletion())
+                    <x-button wire:click="toggleComplete" variant="primary" wire:loading.attr="disabled">
+                        Mark as complete
+                    </x-button>
+                @elseif ($strategy === \App\Enums\CompletionStrategy::VideoThreshold)
+                    <p class="text-sm text-neutral-500">
+                        This lesson completes once you have watched {{ $videoThreshold }}% of the video.
+                    </p>
+                @else
+                    <p class="text-sm text-neutral-500">
+                        This lesson completes when you pass its assessment.
+                    </p>
+                @endif
 
                 <div class="flex items-center gap-2">
                     @if ($neighbours['previous'])

@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Module;
 use App\Models\User;
+use App\Services\Progress\ProgressCalculator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
@@ -179,6 +180,33 @@ final class CoursePlayerService
             ->where('user_id', $student->getKey())
             ->where('course_id', $course->getKey())
             ->first();
+    }
+
+    /**
+     * Per-module figures for the sidebar, keyed by module id (FR-PROG-06).
+     *
+     * ZERO ADDITIONAL QUERIES. The curriculum is already loaded with its
+     * lessons and the progress map is already in memory, so every figure here
+     * is arithmetic over data the page had anyway. Asking ProgressCalculator
+     * per module instead would be two queries each — the N+1 this whole
+     * service exists to prevent.
+     *
+     * The rule itself still lives in ProgressCalculator, so the sidebar and a
+     * report cannot disagree about what a module percentage means.
+     *
+     * @param  Collection<int, Module>  $curriculum
+     * @param  array<int, LessonProgress>  $progress
+     * @return array<int, array{completed: int, total: int, percentage: int}>
+     */
+    public function moduleProgressMap(Collection $curriculum, array $progress, ProgressCalculator $calculator): array
+    {
+        $map = [];
+
+        foreach ($curriculum as $module) {
+            $map[$module->getKey()] = $calculator->moduleProgressFrom($module->lessons, $progress);
+        }
+
+        return $map;
     }
 
     /**

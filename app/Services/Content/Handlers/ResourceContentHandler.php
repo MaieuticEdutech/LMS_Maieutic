@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content\Handlers;
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 
@@ -21,6 +22,11 @@ final class ResourceContentHandler extends AbstractMediaContentHandler
     public function type(): LessonType
     {
         return LessonType::Resource;
+    }
+
+    public function completionStrategy(): CompletionStrategy
+    {
+        return CompletionStrategy::Manual;
     }
 
     public function label(): string

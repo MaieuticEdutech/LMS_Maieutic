@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Catalog;
 
+use App\Events\CourseStructureChanged;
 use App\Models\Lesson;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
@@ -83,6 +84,26 @@ final class UpdateLesson
         if ($module !== null) {
             // Publication state and duration both feed the course totals.
             $this->counters->refreshModule($module);
+        }
+
+        /*
+         * A change in publication state moves the DENOMINATOR of every
+         * enrollment's progress in this course (FR-PROG-09, AC-30).
+         *
+         * Publishing a tenth lesson to a course where a student had completed
+         * nine must take them from 100% to 90%. Leaving them at 100% would
+         * tell them they had finished a course they had not — and course
+         * completion, the completion email and any future certificate all
+         * read that figure.
+         *
+         * Only fired when the flag ACTUALLY changed: renaming a lesson must
+         * not queue a recalculation across thousands of enrollments.
+         */
+        if ($module?->course !== null && $before['is_published'] !== $lesson->is_published) {
+            CourseStructureChanged::dispatch(
+                $module->course,
+                sprintf('Lesson "%s" was %s.', $lesson->title, $lesson->is_published ? 'published' : 'unpublished'),
+            );
         }
 
         $this->audit->record(

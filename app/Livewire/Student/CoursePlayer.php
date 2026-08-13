@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Livewire\Student;
 
 use App\Actions\Student\RecordLessonProgress;
+use App\Enums\CompletionStrategy;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\User;
 use App\Services\Content\ContentTypeRegistry;
+use App\Services\Progress\ProgressCalculator;
+use App\Services\Progress\ProgressSettings;
 use App\Services\Student\CoursePlayerService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +46,17 @@ final class CoursePlayer extends Component
 
     public int $lessonId;
 
+    /**
+     * Memoised for the duration of ONE request.
+     *
+     * Private, so Livewire never serialises it into the page — a hydrated
+     * model in the browser would carry columns a student should not see and
+     * would be accepted back as input. Re-resolved on every subsequent
+     * request, which is what keeps a revoked enrollment from surviving in
+     * memory.
+     */
+    private ?Enrollment $currentEnrollment = null;
+
     public function mount(Course $course, ?Lesson $lesson = null): void
     {
         $this->authorize('access', $course);
@@ -71,12 +85,18 @@ final class CoursePlayer extends Component
     }
 
     /**
-     * Record playback position, and optionally completion.
+     * Record the playback position (FR-PROG-02).
      *
      * Called by the video player's throttled reporter. Re-authorises first:
      * see the class docblock.
+     *
+     * IT REPORTS A POSITION AND NOTHING ELSE. Completion for a video is the
+     * watch threshold's decision, made server-side from the maximum position
+     * ever reached — never something the browser asserts. A client that could
+     * say "I finished" would let anyone complete a course by opening the
+     * console, and the threshold would be decoration (FR-PROG-04).
      */
-    public function recordProgress(int $seconds, bool $completed = false): void
+    public function recordProgress(int $seconds): void
     {
         $this->authorize('access', $this->course());
 
@@ -84,7 +104,6 @@ final class CoursePlayer extends Component
             $this->enrollment(),
             $this->lesson(),
             positionSeconds: $seconds,
-            completed: $completed ? true : null,
         );
     }
 
@@ -92,16 +111,25 @@ final class CoursePlayer extends Component
      * The manual "mark as complete" control (FR-PROG-02).
      *
      * A toggle rather than a one-way switch: a student who ticked the wrong
-     * lesson must be able to correct it. Automatic completion rules arrive in
-     * Phase 9.
+     * lesson must be able to correct it.
+     *
+     * ONLY OFFERED WHERE THE TYPE ALLOWS IT (FR-PROG-04). A video completes by
+     * being watched and a quiz by being passed, so the view hides the control
+     * for those — and this refuses it as well, because a hidden button is not
+     * a check (Rule 20). RecordLessonProgress refuses it a third time; the
+     * three layers are independent on purpose.
      */
     public function toggleComplete(): void
     {
         $this->authorize('access', $this->course());
 
-        $enrollment = $this->enrollment();
         $lesson = $this->lesson();
 
+        if (! $this->strategyFor($lesson)->allowsManualCompletion()) {
+            return;
+        }
+
+        $enrollment = $this->enrollment();
         $progress = app(CoursePlayerService::class)->progressMap($enrollment)[$lesson->getKey()] ?? null;
 
         app(RecordLessonProgress::class)->handle(
@@ -111,14 +139,22 @@ final class CoursePlayer extends Component
         );
     }
 
-    public function render(CoursePlayerService $player, ContentTypeRegistry $registry): View
-    {
+    public function render(
+        CoursePlayerService $player,
+        ContentTypeRegistry $registry,
+        ProgressCalculator $calculator,
+        ProgressSettings $settings,
+    ): View {
         $course = $this->course();
         $lesson = $this->lesson();
+        $enrollment = $this->enrollment();
 
         $curriculum = $player->curriculum($course);
         $flat = $player->flatLessons($curriculum);
-        $progress = $player->progressMap($this->enrollment());
+        $progress = $player->progressMap($enrollment);
+
+        $completedCount = $player->completedCount($flat, $progress);
+        $totalCount = count($flat);
 
         return view('livewire.student.course-player', [
             'course' => $course,
@@ -126,14 +162,38 @@ final class CoursePlayer extends Component
             'curriculum' => $curriculum,
             'progress' => $progress,
             'neighbours' => $player->neighbours($flat, $lesson),
-            'completedCount' => $player->completedCount($flat, $progress),
-            'totalCount' => count($flat),
+            'completedCount' => $completedCount,
+            'totalCount' => $totalCount,
+            /*
+             * COUNTED FROM THE LIST ON SCREEN, not read from
+             * enrollments.progress_percentage.
+             *
+             * The cached figure is for dashboards, where recounting per course
+             * would be the N+1 it exists to avoid. Here the numbers are already
+             * in hand, and a bar that disagreed with the ticks beside it would
+             * make both look wrong (ADR-008).
+             */
+            'percentage' => $totalCount > 0 ? (int) floor(($completedCount / $totalCount) * 100) : 0,
+            'moduleProgress' => $player->moduleProgressMap($curriculum, $progress, $calculator),
             // The registry decides which partial renders this lesson, so a new
             // content type needs a handler and a view and nothing here (ADR-003).
             'playerView' => $registry->for($lesson->type)->playerView(),
             'media' => $lesson->media->first(),
             'lessonProgress' => $progress[$lesson->getKey()] ?? null,
+            // What "complete" MEANS for this lesson decides which control the
+            // footer shows — never a match on the lesson type in the view.
+            'strategy' => $this->strategyFor($lesson),
+            'videoThreshold' => $settings->videoCompletionThreshold(),
+            // The course-completion surface. Read from the enrollment rather
+            // than inferred from 100%, because a course requiring a final test
+            // is not finished at 100% of lessons (AC-31).
+            'courseCompletedAt' => $enrollment->completed_at,
         ]);
+    }
+
+    private function strategyFor(Lesson $lesson): CompletionStrategy
+    {
+        return app(ContentTypeRegistry::class)->for($lesson->type)->completionStrategy();
     }
 
     private function course(): Course
@@ -155,6 +215,10 @@ final class CoursePlayer extends Component
      */
     private function enrollment(): Enrollment
     {
+        if ($this->currentEnrollment !== null) {
+            return $this->currentEnrollment;
+        }
+
         /** @var User $student */
         $student = Auth::user();
 
@@ -166,7 +230,7 @@ final class CoursePlayer extends Component
         // completion figures.
         abort_if($enrollment === null, 403, 'Only enrolled students can record progress.');
 
-        return $enrollment;
+        return $this->currentEnrollment = $enrollment;
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Student;
 
 use App\Models\User;
+use App\Services\Progress\ProgressCalculator;
 use App\Services\Student\StudentDashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ use Livewire\Component;
 #[Title('Dashboard')]
 final class Dashboard extends Component
 {
-    public function render(StudentDashboardService $dashboard): View
+    public function render(StudentDashboardService $dashboard, ProgressCalculator $calculator): View
     {
         /** @var User $student */
         $student = Auth::user();
@@ -41,6 +42,15 @@ final class Dashboard extends Component
             'continue' => $dashboard->continueLearning($student),
             'enrollments' => $dashboard->activeEnrollments($student),
             'stats' => $dashboard->stats($student),
+            /*
+             * Overall progress (FR-PROG-07).
+             *
+             * One aggregate query over the CACHED per-enrollment figures, not
+             * a scan of lesson rows. That is what the cache is for: a student
+             * with eight courses and one with eight hundred cost the same here
+             * (NFR-PERF-04, ADR-008).
+             */
+            'overall' => $calculator->studentOverall($student),
         ]);
     }
 }

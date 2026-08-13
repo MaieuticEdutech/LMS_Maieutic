@@ -14,14 +14,26 @@
 @php
     $course = $enrollment->course;
     $percent = (int) $enrollment->progress_percentage;
+    $finished = $enrollment->completed_at !== null;
 @endphp
 
 <a href="{{ route('student.courses.play', $course) }}"
    class="group flex flex-col rounded-card border border-neutral-200 bg-white p-5 transition-all hover:-translate-y-px hover:border-neutral-300 hover:shadow-sm">
 
-    @if ($course->category)
-        <p class="eyebrow text-teal-600">{{ $course->category->name }}</p>
-    @endif
+    <div class="flex items-start justify-between gap-3">
+        @if ($course->category)
+            <p class="eyebrow text-teal-600">{{ $course->category->name }}</p>
+        @else
+            <span></span>
+        @endif
+
+        {{-- Stated in words, not by a green bar alone (WCAG 1.4.1) — and
+             worth stating: a finished course reads as abandoned at a glance
+             otherwise. --}}
+        @if ($finished)
+            <x-badge variant="success">Completed</x-badge>
+        @endif
+    </div>
 
     <h3 class="mt-2 text-lg text-balance group-hover:text-teal-700">{{ $course->title }}</h3>
 
@@ -37,10 +49,8 @@
             <span>{{ $course->lessons_count }} {{ Str::plural('LESSON', $course->lessons_count) }}</span>
         </div>
 
-        {{-- aria-hidden: the percentage above already states this in text, and
-             a screen reader announcing a decorative bar twice is noise. --}}
-        <div class="mt-2 h-1 overflow-hidden rounded-full bg-neutral-100" aria-hidden="true">
-            <div class="h-full rounded-full bg-teal-600 transition-[width]" style="width: {{ max(2, $percent) }}%"></div>
-        </div>
+        {{-- The percentage above already states this in text, so the bar is
+             decorative and the component hides it from screen readers. --}}
+        <x-progress-bar :value="$percent" size="sm" :tone="$finished ? 'success' : 'brand'" class="mt-2" />
     </div>
 </a>

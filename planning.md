@@ -37,12 +37,15 @@ Build a professional, secure, maintainable Learning Management System that lets 
 | **Phase 4 status** | 🟢 **Complete, 2026-08-13** (PR #5). Admin shell, dashboard, student and instructor management, instructor-to-course assignment, settings, audit viewer. |
 | **Phase 5 status** | 🟡 **Backend complete** (PR #1; FR-CRS-06 closed in PR #10). **UI outstanding — Srivathsa**: Course Builder screens, public catalogue, course detail. |
 | **Phase 6 status** | 🟡 **Backend complete, 2026-08-13** (PR #9). `GrantEnrollment` as sole writer, `EnrollmentAccessService` completed, protected media delivery with HTTP Range, scheduled expiry. **UI outstanding — Shashank**: enrolments table, grant form, revoke modal. |
+| **Phase 7 status** | 🟢 **Complete, 2026-08-13** (PR #19). Student dashboard, My Courses, course player, six lesson player views, profile management. |
+| **Phase 8 status** | 🟢 **Complete, 2026-08-13** (PR #23). Assessment authoring, attempt runner, grading, `AttemptGraded`. |
+| **Phase 9 status** | 🟢 **Complete, 2026-08-13** (branch `phase/09-progress-tracking`). Completion strategies per content type, throttled watch tracking, derived module progress, cached course progress, student overall, curriculum-change recalculation, `lms:progress:rebuild`, progress UI throughout the student experience. |
 | **Phase 11 status** | 🟡 **Infrastructure complete** (PR #6) — queues, mail layout on `BrandingService`, `EmailLogger`, scheduler. 4 of 10 mailables built; the other 6 have no trigger until Phases 8, 9 and 12. Correctly NOT marked done. |
 | Code written | Foundation, identity, catalogue, full domain schema, Phase 5 backend, Phase 4 admin area, Phase 6 enrollment engine and protected delivery, Phase 11 queue and mail infrastructure, brand design system. Laravel 13.25.0 on PHP 8.5.9 / PostgreSQL 17.10. **28 tables**: 7 framework + 4 identity + 6 catalogue/media + 11 commerce/assessment/progress. |
 | Repository | Branch `main`, **fully pushed** to github.com/MaieuticEdutech/LMS_Maieutic. Nothing outstanding locally. |
 | CI | 🟢 **Green.** First run failed on two workflow bugs (Vite manifest missing in the test job; `composer audit` with no `vendor/`); both fixed in `7993da5` and verified. This closes the Phase 1 outstanding item — CI is now proven, not merely authored. |
 | Environments | Local development only. Staging/production provisioned in Phase 16. |
-| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **760/760**, 1,633 assertions, **zero warnings** — measured on merged `main` (`7e4c844`) with all four tracks' work together |
+| Quality gates | Pint clean · Larastan **level 8**, 0 errors · Pest **1006/1006**, 2,119 assertions, **zero warnings** — measured on `phase/09-progress-tracking` rebased on `main` (`a2698ec`), so the figure includes every track's work together |
 | Open decisions, none blocking Phase 3 | **PD-05** (upload limits — Phase 5), **PD-07** (production email provider — Phase 16), **PD-08** (error tracking — Phase 16), **PD-10** (hosting — Phase 16), **PD-11** (V2 identity model — Phase 18). **PD-06** resolved by default: proposed session lifetimes adopted. |
 | Outstanding verification items | (1) ~~CI never executed~~ — 🟢 **CLOSED**, green on `7993da5`. (2) **Vite HMR not interactively verified** — still open, does not block anything. (3) **Branch protection not enabled on `main`** — until it is, the PR rules in §21.6 are documentation rather than enforcement. |
 | Team | **Three full-stack developers from 2026-08-12.** Work is organised into three tracks with convergence gates — see **§21**. Development Rule 1 amended accordingly. Phase 3 is split three ways by domain with pre-agreed migration ordering (`phases.md` Phase 3). |
@@ -61,9 +64,9 @@ Update this table at the close of every phase. Nothing else in this document tra
 | 4 | Admin Shell & Administration Area | 🟢 Complete | 2026-08-13 | Track B, PR #5. Shell, dashboard, student + instructor management, assignment, settings, audit viewer |
 | 5 | Course Builder & Content Management | 🟡 **Backend complete** | — | PR #1: 17 actions, registry + 6 handlers, media pipeline, validator, counters, sanitiser. FR-CRS-06 closed PR #10. **UI: Srivathsa** — Builder screens, drag reorder (AC-16), public catalogue + detail |
 | 6 | Enrollment Core & Protected Delivery | 🟡 **Backend complete** | — | PR #9: `GrantEnrollment` sole writer (two-layer idempotency), access gate completed, media delivery with Range, expiry command. 54 tests, AC-01/02/19. **UI: Shashank** — enrolments table, grant, revoke |
-| 7 | Student Learning Experience | 🟡 **In progress** | — | Track A. Dashboard, My Courses, course player consuming Phase 6's media delivery |
-| 8 | Assessment Engine | ⚪ Not started | — | |
-| 9 | Progress Tracking | ⚪ Not started | — | |
+| 7 | Student Learning Experience | 🟢 Complete | 2026-08-13 | Track A, PR #19. Dashboard, My Courses, course player, six per-type player views, profile management |
+| 8 | Assessment Engine | 🟢 Complete | 2026-08-13 | Track B, PR #23. Authoring, attempt runner, grading, `AttemptGraded` |
+| 9 | Progress Tracking | 🟢 Complete | 2026-08-13 | Track A. `CompletionStrategy` per content type, throttled watch tracking, `ProgressCalculator` (module derived / course cached / student overall), curriculum-change recalculation (AC-30), final-test gate (AC-31), `lms:progress:rebuild`, progress UI. 59 tests |
 | 10 | Instructor Module | ⚪ Not started | — | |
 | 11 | Queues, Mail & Notifications | 🟡 **Infrastructure complete** | — | PR #6: queues, branded mail layout on `BrandingService`, `EmailLogger`, scheduler. 4/10 mailables built; 6 await Phases 8, 9, 12. Correctly not marked done |
 | 12 | Payments & Automated Enrollment | ⚪ Not started | — | High risk. PD-09 resolved; test credentials needed before start |

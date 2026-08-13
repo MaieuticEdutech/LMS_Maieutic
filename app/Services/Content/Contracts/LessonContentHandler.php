@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content\Contracts;
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 use App\Models\Lesson;
@@ -33,6 +34,15 @@ interface LessonContentHandler
      * The type this handler serves. Used as the registry key.
      */
     public function type(): LessonType;
+
+    /**
+     * How a lesson of this type becomes complete (FR-PROG-01, Phase 9).
+     *
+     * RecordLessonProgress asks this rather than branching on LessonType, so
+     * a new content type brings its own completion rule and progress tracking
+     * needs no edit.
+     */
+    public function completionStrategy(): CompletionStrategy;
 
     /**
      * Human label for the Course Builder's type picker.

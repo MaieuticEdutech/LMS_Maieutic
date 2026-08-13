@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\CompletionStrategy;
 use App\Enums\LessonType;
 use App\Enums\MediaPurpose;
 use App\Models\Lesson;
@@ -106,6 +107,15 @@ it('accepts a brand new content type with no schema change', function (): void {
         public function label(): string
         {
             return 'SCORM package';
+        }
+
+        public function completionStrategy(): CompletionStrategy
+        {
+            // A new type brings its OWN completion rule (Phase 9). Progress
+            // tracking asks the handler rather than branching on LessonType,
+            // which is why RecordLessonProgress needed no edit to support
+            // this one.
+            return CompletionStrategy::Manual;
         }
 
         public function description(): string
