@@ -86,6 +86,10 @@ final class ModuleList extends Component
         $this->course->refresh();
         $this->showForm = false;
         $this->reset(['editing', 'title', 'description', 'is_published']);
+
+        // Tells CourseBuilder to recount — its header sits outside this
+        // component and would otherwise keep showing the old total.
+        $this->dispatch('module-list-changed');
     }
 
     public function confirmDelete(int $moduleId): void
@@ -108,6 +112,9 @@ final class ModuleList extends Component
         $delete->handle($module, $actor);
         $this->course->refresh();
         $this->deletingModuleId = null;
+
+        // Deleting a module takes its lessons with it, so both counts move.
+        $this->dispatch('module-list-changed');
     }
 
     /**
