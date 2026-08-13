@@ -69,7 +69,11 @@
     @endforeach
 
     @if ($showForm)
-        <div x-data x-init="$dispatch('open-modal', 'lesson-form-{{ $module->id }}')">
+        {{-- $nextTick is load-bearing — see module-list.blade.php for the full
+             reasoning. Alpine initialises this parent before the nested
+             <x-modal> binds its window listener, so an immediate dispatch is
+             sent before anything is listening. --}}
+        <div x-data x-init="$nextTick(() => $dispatch('open-modal', 'lesson-form-{{ $module->id }}'))">
             <x-modal name="lesson-form-{{ $module->id }}" title="Add lesson">
                 <form wire:submit="save" id="lesson-form-{{ $module->id }}" class="space-y-4">
                     <x-input wire:model="title" label="Lesson title" name="title" required />
