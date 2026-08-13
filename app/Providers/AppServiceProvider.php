@@ -5,14 +5,22 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\ActivateUserAfterEmailVerification;
+use App\Listeners\AlertOnFailedJob;
+use App\Listeners\LogOutboundEmail;
+use App\Listeners\SendPasswordChangedNotification;
 use App\Models\AssessmentAttempt;
 use App\Policies\AttemptPolicy;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Events\PasswordUpdatedViaController;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,6 +54,39 @@ class AppServiceProvider extends ServiceProvider
     private function configureEvents(): void
     {
         Event::listen(Verified::class, ActivateUserAfterEmailVerification::class);
+
+        /*
+         * Phase 11 — every outbound email is logged (FR-MAIL-10).
+         *
+         * Bound to the transport events rather than to individual mailables so
+         * coverage cannot be forgotten when a later phase adds an email. See
+         * LogOutboundEmail for why it is not itself queued.
+         */
+        Event::listen(MessageSending::class, [LogOutboundEmail::class, 'sending']);
+        Event::listen(MessageSent::class, [LogOutboundEmail::class, 'sent']);
+
+        /*
+         * A job that has exhausted its retries is an operational incident, not
+         * a log line to be discovered later (phases.md Phase 11: "failures
+         * alert"). For mail specifically it means a student did not receive
+         * something the system promised them.
+         */
+        Event::listen(JobFailed::class, AlertOnFailedJob::class);
+
+        /*
+         * Password changes are a security event the user must be told about
+         * (FR-MAIL-07). Listening to events keeps the notification out of
+         * ChangeUserPassword, which is Track A's action.
+         *
+         * BOTH events are required, and this is easy to get wrong: Fortify
+         * dispatches `PasswordReset` from the forgot-password flow but
+         * `PasswordUpdatedViaController` from the profile screen. Listening to
+         * only the first would mean the notice never reaches the user whose
+         * password was changed while they were signed in — precisely the case
+         * where a hijacked session makes the warning worth sending.
+         */
+        Event::listen(PasswordReset::class, SendPasswordChangedNotification::class);
+        Event::listen(PasswordUpdatedViaController::class, SendPasswordChangedNotification::class);
     }
 
     /**

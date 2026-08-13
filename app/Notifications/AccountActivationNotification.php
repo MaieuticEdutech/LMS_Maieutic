@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\User;
 use App\Services\Settings\BrandingService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -26,11 +27,25 @@ use Illuminate\Notifications\Notification;
  * Branding is resolved through BrandingService, never hardcoded, so V2 can
  * make it per-organisation without touching this class (rule S-1, FR-MAIL-08).
  */
-class AccountActivationNotification extends Notification
+class AccountActivationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly string $token) {}
+    public function __construct(private readonly string $token)
+    {
+        /*
+         * PHASE 11 (FR-MAIL-06, AC-33): queued, never sent in the request.
+         *
+         * This is the email Phase 12 sends from inside the enrollment
+         * transaction. Sending it synchronously would mean a slow or failing
+         * mail transport could roll back a paid enrollment — the customer's
+         * single most important guarantee, broken by an SMTP timeout.
+         *
+         * The token is a string, not a model, so the serialised payload is
+         * explicit and carries no ambient state (FR-SYS-04).
+         */
+        $this->onQueue(config()->string('lms.queues.mail'));
+    }
 
     /**
      * @return list<string>

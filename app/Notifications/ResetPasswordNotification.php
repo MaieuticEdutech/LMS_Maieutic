@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\User;
 use App\Services\Settings\BrandingService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -22,11 +23,18 @@ use Illuminate\Notifications\Notification;
  * triggers it returns the same response whether or not the address is known,
  * so it cannot be used to enumerate accounts.
  */
-class ResetPasswordNotification extends Notification
+class ResetPasswordNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly string $token) {}
+    public function __construct(private readonly string $token)
+    {
+        // PHASE 11 (FR-MAIL-06): queued on the named mail queue. Also keeps the
+        // forgot-password endpoint's response time independent of the mail
+        // transport, which would otherwise leak whether an address is known
+        // through a timing difference.
+        $this->onQueue(config()->string('lms.queues.mail'));
+    }
 
     /**
      * @return list<string>

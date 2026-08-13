@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\ActivateAccountController;
+use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,3 +69,27 @@ Route::middleware('guest')->group(static function (): void {
         ->middleware('throttle:activation-resend')
         ->name('activate.resend');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mail previews — DEVELOPMENT ONLY (Phase 11)
+|--------------------------------------------------------------------------
+|
+| Renders each transactional email in the browser so templates and branding
+| can be checked without triggering the flow behind them.
+|
+| NOT REGISTERED IN PRODUCTION. These routes render real templates with the
+| organisation's real settings; exposing them would leak branding and support
+| configuration and would hand an attacker a template library for phishing
+| students. The controller repeats this check in its constructor so that a
+| cached route table cannot resurrect them (defence in depth, NFR-SEC-*).
+|
+| Enable locally with LMS_MAIL_PREVIEW_ENABLED=true.
+|
+*/
+if (! app()->isProduction() && config()->boolean('lms.mail.preview_enabled', false)) {
+    Route::prefix('dev/mail')->name('dev.mail.')->group(static function (): void {
+        Route::get('/', [MailPreviewController::class, 'index'])->name('index');
+        Route::get('/{email}', [MailPreviewController::class, 'show'])->name('preview');
+    });
+}
