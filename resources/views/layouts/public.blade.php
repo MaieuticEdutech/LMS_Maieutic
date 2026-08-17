@@ -24,7 +24,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name'))</title>
+    <title>@yield('title', app(\App\Services\Settings\BrandingService::class)->organisationName())</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -53,7 +53,9 @@
     <header class="border-b border-neutral-200 bg-neutral-0">
         <nav class="mx-auto flex max-w-content items-center justify-between gap-6 px-6 py-4" aria-label="Primary">
             <a href="{{ route('home') }}" class="shrink-0">
-                <img src="{{ asset('images/logo-maieutic.png') }}" alt="Maieutic" class="h-8 w-auto">
+                <img src="{{ asset('images/logo-maieutic.png') }}"
+                     alt="{{ app(\App\Services\Settings\BrandingService::class)->organisationName() }}"
+                     class="h-8 w-auto">
             </a>
 
             <div class="flex items-center gap-6">
@@ -86,7 +88,7 @@
 
     <footer class="border-t border-neutral-200">
         <div class="mx-auto max-w-content px-6 py-8 text-sm text-neutral-500">
-            &copy; {{ now()->year }} {{ config('app.name') }}
+            &copy; {{ now()->year }} {{ app(\App\Services\Settings\BrandingService::class)->organisationName() }}
         </div>
     </footer>
 

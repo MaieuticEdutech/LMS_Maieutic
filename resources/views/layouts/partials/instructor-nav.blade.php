@@ -5,6 +5,13 @@
     once for the sticky desktop aside and once inside the mobile drawer.
 --}}
 @php
+    // Organisation identity from BrandingService, never a literal (rule S-1).
+    // Assigned inside this existing block rather than via a second @php
+    // directive: a further raw php block in this file stops every directive
+    // after it from compiling, and the error points at an @endforeach nowhere
+    // near the cause (the same trap layouts/app.blade.php documents).
+    $branding = app(\App\Services\Settings\BrandingService::class);
+
     $navItems = [
         ['route' => 'instructor.home', 'label' => 'Dashboard', 'icon' => 'dashboard'],
         ['route' => 'instructor.courses.index', 'label' => 'My courses', 'icon' => 'courses'],
@@ -20,7 +27,7 @@
 @endphp
 
 <div class="border-b border-white/12 px-5 py-5">
-    <div class="font-serif text-2xl font-semibold tracking-tight text-white">Maieutic</div>
+    <div class="font-serif text-2xl font-semibold tracking-tight text-white">{{ $branding->organisationName() }}</div>
     <div class="eyebrow mt-1.5 text-white/55">Instructor</div>
 </div>
 
