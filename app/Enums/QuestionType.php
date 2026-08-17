@@ -21,6 +21,28 @@ enum QuestionType: string
     case ShortAnswer = 'short_answer';
 
     /**
+     * A human name for the type.
+     *
+     * Every other enum in this codebase carries one; this was the exception,
+     * and the question list called `->label()` on it anyway. The list is empty
+     * until an assessment has its first question, so the screen rendered
+     * perfectly right up until somebody successfully added one — then 500'd.
+     *
+     * Written out rather than derived from the backed value, because
+     * "True or false" is not what `str_replace('_', ' ', 'true_false')`
+     * produces, and an author should see the phrase they would say out loud.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::SingleChoice => 'Single choice',
+            self::MultipleChoice => 'Multiple choice',
+            self::TrueFalse => 'True or false',
+            self::ShortAnswer => 'Short answer',
+        };
+    }
+
+    /**
      * @return list<string>
      */
     public static function values(): array

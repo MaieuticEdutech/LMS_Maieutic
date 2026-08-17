@@ -53,7 +53,23 @@
     @endforelse
 
     @if ($showForm)
-        <div x-data x-init="$dispatch('open-modal', 'question-form')">
+        {{--
+            $nextTick is required, not decorative.
+
+            Alpine initialises a parent before its children, so an x-init on
+            this wrapper runs BEFORE the <x-modal> inside it has registered
+            its `x-on:open-modal.window` listener. Dispatching immediately
+            sends the event into the void: `showForm` flips true, the markup
+            enters the DOM, and the dialog never appears — no error anywhere,
+            because nothing failed. It simply was not listening yet.
+
+            Deferring by one tick lets the children initialise first.
+
+            The same bug shipped three times, on Add module, Add lesson and
+            here. If a fourth modal is ever opened this way, copy the working
+            form below rather than the intuitive one.
+        --}}
+        <div x-data x-init="$nextTick(() => $dispatch('open-modal', 'question-form'))">
             <x-modal name="question-form" title="Add question">
                 <form wire:submit="save" id="question-form" class="space-y-4">
                     <x-select wire:model="type" label="Question type" name="type" placeholder="Choose a type" required>
