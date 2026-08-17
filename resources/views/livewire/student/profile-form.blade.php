@@ -10,13 +10,36 @@
 
     <x-card title="Your details" description="Visible to instructors on courses you are enrolled in.">
         <form wire:submit="saveDetails" class="space-y-5">
-            <x-input label="Name" name="name" wire:model="name" required />
+            {{-- Side by side on anything wider than a phone, stacked below —
+                 two half-width boxes on a 360px screen would be cramped. --}}
+            <div class="grid gap-5 sm:grid-cols-2">
+                <x-input label="First name" name="firstName" wire:model="firstName" autocomplete="given-name" required />
+                <x-input label="Last name" name="lastName" wire:model="lastName" autocomplete="family-name" required />
+            </div>
 
+            {{-- Required now, and the hint says why rather than just marking it
+                 with an asterisk. "We need this" without a reason reads as the
+                 form being nosy. --}}
             <x-input
-                label="Phone"
+                label="Mobile number"
                 name="phone"
+                type="tel"
                 wire:model="phone"
-                hint="Optional. Used only if an administrator needs to contact you."
+                autocomplete="tel"
+                hint="So we can reach you about your enrolment or a course you are taking."
+                required
+            />
+
+            {{-- Asked separately from the name above, because the two are
+                 genuinely different: the name someone goes by day to day is
+                 not always the one they want on a document shown to an
+                 employer. Optional — blank means "use my name as above". --}}
+            <x-input
+                label="Name for your certificate"
+                name="certificateName"
+                wire:model="certificateName"
+                autocomplete="off"
+                hint="How your name should appear on any certificate you earn. Leave blank to use your name above."
             />
 
             <div class="flex items-center gap-3">
