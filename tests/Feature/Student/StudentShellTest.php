@@ -105,20 +105,38 @@ it('does not put the student nav in front of an instructor', function (): void {
         ->assertDontSee('My Learning');
 });
 
-it('omits the features that do not exist yet', function (): void {
+it('carries the Certificates tab now that the feature exists', function (): void {
+    // It was deliberately absent while nothing stood behind it. The feature
+    // landed, so the nav item did too.
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee(route('student.certificates.index'));
+});
+
+it('keeps the Certificates tab away from an instructor', function (): void {
+    // The route is behind role:student, so showing the link to an instructor
+    // would be a link to a 403. Hiding it is presentation; the middleware is
+    // the control (Rule 20).
+    $this->actingAs(User::factory()->instructor()->create())
+        ->get(route('catalogue.index'))
+        ->assertOk()
+        ->assertDontSee(route('student.certificates.index'));
+});
+
+it('still omits the notifications bell', function (): void {
     /*
-     * The mockup's header carries a Certificates tab and a notifications bell.
-     * Neither feature exists — no certificate model, migration or issuing rule
-     * anywhere, and no notification centre. A tab leading to an empty screen
-     * promises something the product cannot do (Rule 5 — do not build ahead).
+     * The one thing from the mockup's header with nothing behind it. There is
+     * no notification centre, and a bell that never rings promises something
+     * the product cannot do (Rule 5 — do not build ahead).
      *
-     * Pinned as a test because "add the missing nav item" is a tempting and
-     * wrong five-second fix for someone comparing the screen to the mockup.
+     * Pinned because "add the missing icon" is a tempting and wrong five-second
+     * fix for someone comparing the screen to the mockup.
      */
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Certificates');
+        ->assertDontSee('Notifications');
 });
 
 /*
@@ -332,11 +350,20 @@ it('never prints a rating or a learner count', function (): void {
         ->assertDontSee('learners');
 });
 
-it('never claims a certificate the system cannot issue', function (): void {
-    ($this->enrol)($this->student, Course::factory()->published()->create());
+it('counts certificates from the table rather than from completed courses', function (): void {
+    /*
+     * The two are allowed to differ, and conflating them would promise a
+     * document that does not exist: a course completed before certificates
+     * existed has no award, and issuing is a queued listener that may not have
+     * run yet. The tile reads 0 here even though the course is finished.
+     */
+    $enrollment = ($this->enrol)($this->student, Course::factory()->published()->create());
+    $enrollment->forceFill(['completed_at' => now()])->save();
 
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Certificates earned');
+        ->assertSee('Certificates earned');
+
+    expect(App\Models\Certificate::query()->count())->toBe(0);
 });

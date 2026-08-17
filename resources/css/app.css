@@ -282,6 +282,35 @@
         border-radius: var(--radius-sm);
     }
 
+    /*
+    | Printing.
+    |
+    | One page in this product is genuinely meant to be printed — the
+    | certificate — and "Download" is a link to it with ?print=1 rather than a
+    | server-generated PDF, so the printed result has to look deliberate.
+    |
+    | Site chrome goes; the document keeps its colours. `print-color-adjust`
+    | matters here: browsers strip backgrounds by default, and a certificate
+    | whose dark banner printed as white would lose the thing that makes it look
+    | like a certificate.
+    */
+    @media print {
+        header,
+        footer,
+        nav {
+            display: none !important;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+
     /* Respect users who have asked for reduced motion. */
     @media (prefers-reduced-motion: reduce) {
         *,

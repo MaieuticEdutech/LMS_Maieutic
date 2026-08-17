@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Livewire\Student\AttemptHistory;
 use App\Livewire\Student\AttemptResult;
 use App\Livewire\Student\AttemptRunner;
+use App\Livewire\Student\Certificates;
 use App\Livewire\Student\CoursePlayer;
 use App\Livewire\Student\Dashboard;
 use App\Livewire\Student\MyCourses;
@@ -72,6 +73,19 @@ Route::name('student.')
         Route::get('/assessments/{assessment}/attempt', AttemptRunner::class)->name('assessments.attempt');
         Route::get('/assessments/{assessment}/history', AttemptHistory::class)->name('assessments.history');
         Route::get('/attempts/{attempt}/result', AttemptResult::class)->name('assessments.result');
+
+        /*
+        | Certificates (design handoff §7).
+        |
+        | The LIST is student-only and self-scoped by its query. The single
+        | certificate view is authorised per record by CertificatePolicy — a
+        | super admin may open any, a student only their own.
+        |
+        | Note what is NOT here: the public verification route. It lives in
+        | web.php with no auth at all, because a credential a stranger cannot
+        | check is not a credential. See CertificatePolicy for why that is safe.
+        */
+        Route::get('/certificates', Certificates::class)->name('certificates.index');
     });
 
 /*

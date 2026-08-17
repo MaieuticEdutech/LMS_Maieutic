@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Student;
 
 use App\Enums\EnrollmentStatus;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
@@ -118,7 +119,7 @@ final class StudentDashboardService
      * PHP — the difference does not matter at eight enrolments and matters a
      * great deal at eight hundred.
      *
-     * @return array{enrolled: int, completed: int, in_progress: int}
+     * @return array{enrolled: int, completed: int, in_progress: int, certificates: int}
      */
     public function stats(User $student): array
     {
@@ -131,6 +132,14 @@ final class StudentDashboardService
             'enrolled' => $enrolled,
             'completed' => $completed,
             'in_progress' => $enrolled - $completed,
+            /*
+             * Counted from `certificates` rather than inferred from completed
+             * enrolments. The two can legitimately differ — a course completed
+             * before certificates existed has no award, and issuing is a queued
+             * listener that may not have run yet. Showing the count of
+             * completions here would promise a document that does not exist.
+             */
+            'certificates' => Certificate::query()->where('user_id', $student->getKey())->count(),
         ];
     }
 

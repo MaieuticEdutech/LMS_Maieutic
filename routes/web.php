@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\ActivateAccountController;
 use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\VerifyCertificateController;
 use App\Livewire\Catalogue\Index as CatalogueIndex;
 use App\Livewire\Catalogue\Show as CatalogueShow;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,31 @@ Route::get('/', static fn () => view('welcome'))->name('home');
 */
 Route::get('/courses', CatalogueIndex::class)->name('catalogue.index');
 Route::get('/courses/{course}', CatalogueShow::class)->name('catalogue.show');
+
+/*
+|--------------------------------------------------------------------------
+| Certificate verification — public, and deliberately so
+|--------------------------------------------------------------------------
+|
+| A credential a stranger cannot check is not a credential. An employer holding
+| a certificate number must be able to confirm it without an account, so this
+| route has no auth middleware and consults no policy.
+|
+| WHAT MAKES THAT SAFE IS THE SHAPE OF THE LOOKUP, NOT A PERMISSION:
+|
+|   - the number is 8 characters from a 29-character alphabet, generated with
+|     random_int — it cannot be walked, which a sequential id could be;
+|   - the page shows only what the certificate already asserts in public: a
+|     name, a course title, and a date;
+|   - it exposes nothing about the account behind it — no email, no other
+|     awards, no progress.
+|
+| Same trade as a password-reset link: possession of an unguessable token is the
+| authorisation. Rate-limited so it cannot be used to brute-force the space.
+*/
+Route::get('/verify/{certificate}', VerifyCertificateController::class)
+    ->middleware('throttle:30,1')
+    ->name('certificates.verify');
 
 /*
  * Health / readiness probe.

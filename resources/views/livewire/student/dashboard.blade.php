@@ -61,14 +61,27 @@
                 <div class="mt-2 text-[13px] font-medium text-neutral-500">Courses completed</div>
             </div>
 
-            {{-- Overall progress (FR-PROG-07). A MEAN OF COURSE PERCENTAGES,
-                 not of lessons: someone halfway through two courses is 50%
-                 whether one has ten lessons and the other a hundred, which is
-                 how a person actually thinks about their own progress. --}}
-            <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $overall['percentage'] }}%</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Overall progress</div>
+            {{-- Counted from the certificates table, not from completed
+                 courses — see StudentDashboardService for why those two are
+                 allowed to differ. --}}
+            <a href="{{ route('student.certificates.index') }}"
+               class="rounded-card border border-neutral-200 bg-white px-[22px] py-5 transition-colors hover:border-neutral-300">
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['certificates'] }}</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Certificates earned</div>
+            </a>
+        </div>
+
+        {{-- Overall progress (FR-PROG-07). A MEAN OF COURSE PERCENTAGES, not of
+             lessons: someone halfway through two courses is 50% whether one has
+             ten lessons and the other a hundred, which is how a person actually
+             thinks about their own progress. --}}
+        <div class="mb-14 rounded-card border border-neutral-200 bg-white px-[22px] py-5">
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <p class="eyebrow text-neutral-500">Overall progress</p>
+                <p class="font-serif text-2xl font-medium text-neutral-900">{{ $overall['percentage'] }}%</p>
             </div>
+
+            <x-progress-bar :value="$overall['percentage']" label="Overall progress" class="mt-3" />
         </div>
 
         {{-- ══ CONTINUE LEARNING ══ the single most useful control on the page

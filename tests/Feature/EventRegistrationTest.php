@@ -54,8 +54,27 @@ it('registers exactly one listener per domain event', function (string $event): 
     PasswordUpdatedViaController::class,
     EnrollmentGranted::class,
     EnrollmentRevoked::class,
-    CourseCompleted::class,
 ]);
+
+it('registers both CourseCompleted listeners, and only those two', function (): void {
+    /*
+     * The second event that legitimately has more than one listener, asserted
+     * separately for the same reason as AttemptGraded below — an uncovered event
+     * is exactly where a silent doubling would hide.
+     *
+     * Two, and deliberately separate:
+     *   SendCourseCompletedNotification   — emails the congratulations (Phase 11)
+     *   IssueCertificateOnCourseCompletion — awards the certificate
+     *
+     * Merging them would mean a failing mail template could stop a certificate
+     * being awarded, and a database hiccup during issuing could swallow the
+     * email. Three would mean discovery is back on.
+     */
+    expect(Event::getListeners(CourseCompleted::class))->toHaveCount(2,
+        '[CourseCompleted] must have exactly two listeners: mail and certificate. '
+        .'More usually means listener auto-discovery has been re-enabled.',
+    );
+});
 
 it('registers both AttemptGraded listeners, and only those two', function (): void {
     /*

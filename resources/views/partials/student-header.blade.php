@@ -21,12 +21,9 @@
     a value off the 4px grid (34px avatar, 14px nav padding) it is written as an
     arbitrary value rather than snapped to the nearest step.
 
-    TWO THINGS FROM THE MOCKUP ARE DELIBERATELY ABSENT: a "Certificates" nav
-    item and a notifications bell. Neither feature exists — no certificate
-    model, migration or issuing rule anywhere in the codebase, and no
-    notification centre. A nav item leading to an empty screen and a bell that
-    never rings promise something the product cannot do; they belong with the
-    phase that builds them (Rule 5 — do not build ahead).
+    ONE THING FROM THE MOCKUP IS STILL ABSENT: the notifications bell. There is
+    no notification centre, and a bell that never rings promises something the
+    product cannot do. It belongs with the phase that builds it.
 
     Rendering a link here is presentation only. Every route behind it is
     independently authorised server-side — hiding a link is never the control
@@ -57,6 +54,17 @@
            class="rounded-sm px-[14px] py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.courses.index') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
             My Learning
         </a>
+
+        {{-- Student-only: the route is behind `role:student`, so showing it to
+             an instructor browsing the catalogue would be a link to a 403.
+             Hiding it is presentation; the middleware is the control. --}}
+        @if (auth()->user()?->isStudent())
+            <a href="{{ route('student.certificates.index') }}"
+               @if (request()->routeIs('student.certificates.*')) aria-current="page" @endif
+               class="rounded-sm px-[14px] py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.certificates.*') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
+                Certificates
+            </a>
+        @endif
     </nav>
 
     {{-- A plain GET form, not a Livewire input: this header renders above every
