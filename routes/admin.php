@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Livewire\Admin\Assessments\AssessmentBuilder;
 use App\Livewire\Admin\Assessments\AssessmentsTable;
 use App\Livewire\Admin\AuditLogTable;
+use App\Livewire\Admin\Courses\CategoriesTable;
 use App\Livewire\Admin\Courses\CourseBuilder;
 use App\Livewire\Admin\Courses\CoursesTable;
 use App\Livewire\Admin\Dashboard;
@@ -82,6 +83,14 @@ Route::prefix('admin')
         // and the Course Builder. CourseBuilder is a single combined
         // meta + structure screen (architecture.md §9.3) — there is no
         // separate edit route, "editing" a course always means the builder.
+        /*
+         * Categories. The table, model, policy and factory shipped in Phase 3
+         * and the Course Builder has always offered the field, but nothing
+         * could populate the list — so the dropdown was permanently empty on
+         * a fresh database. This is the screen that was missing.
+         */
+        Route::get('/categories', CategoriesTable::class)->name('categories.index');
+
         Route::get('/courses', CoursesTable::class)->name('courses.index');
         Route::get('/courses/create', CourseBuilder::class)->name('courses.create');
         Route::get('/courses/{course}/builder', CourseBuilder::class)->name('courses.builder');
