@@ -221,19 +221,55 @@ it('narrows the catalogue by level', function (): void {
     Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('level', CourseLevel::Beginner->value)
+        ->set('level', [CourseLevel::Beginner->value])
         ->assertSee('Easy Course')
         ->assertDontSee('Hard Course');
 });
 
+it('accepts more than one level at once', function (): void {
+    /*
+     * The facets are checkboxes in the design, so they have to be genuinely
+     * multi-select. A learner who ticks Beginner and Intermediate and watches
+     * the first one clear concludes the page is broken.
+     */
+    Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
+    Course::factory()->published()->create(['title' => 'Middling Course', 'level' => CourseLevel::Intermediate]);
+    Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', [CourseLevel::Beginner->value, CourseLevel::Intermediate->value])
+        ->assertSee('Easy Course')
+        ->assertSee('Middling Course')
+        ->assertDontSee('Hard Course');
+});
+
+it('treats an empty group as no constraint rather than as matching nothing', function (): void {
+    Course::factory()->published()->create(['title' => 'Some Course']);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', [])
+        ->assertSee('Some Course');
+});
+
 it('ignores a level that is not a real one', function (): void {
-    // ?level=' OR 1=1 must narrow to nothing recognised rather than reach the
-    // query. CourseLevel::tryFrom returns null for junk.
+    // ?level[]=' OR 1=1 must be dropped rather than reach the query.
+    // CourseLevel::tryFrom returns null for junk, and an array of only junk
+    // therefore behaves like no selection at all.
     Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('level', "' OR 1=1")
+        ->set('level', ["' OR 1=1"])
         ->assertSee('Easy Course');
+});
+
+it('keeps the real levels when junk is mixed in', function (): void {
+    Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
+    Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', ['nonsense', CourseLevel::Beginner->value])
+        ->assertSee('Easy Course')
+        ->assertDontSee('Hard Course');
 });
 
 it('combines level with a search term', function (): void {
@@ -243,7 +279,7 @@ it('combines level with a search term', function (): void {
 
     Livewire::test(CatalogueIndex::class)
         ->set('search', 'Python')
-        ->set('level', CourseLevel::Beginner->value)
+        ->set('level', [CourseLevel::Beginner->value])
         ->assertSee('Python Basics')
         ->assertDontSee('Python Advanced')
         ->assertDontSee('Ruby Basics');
@@ -258,13 +294,35 @@ it('narrows the catalogue by duration band', function (): void {
     Course::factory()->published()->create(['title' => 'Epic Course', 'total_duration_seconds' => 30 * 3600]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('duration', 'short')
+        ->set('duration', ['short'])
         ->assertSee('Short Course')
         ->assertDontSee('Middling Course')
         ->assertDontSee('Epic Course')
-        ->set('duration', 'long')
+        ->set('duration', ['long'])
         ->assertSee('Epic Course')
         ->assertDontSee('Short Course');
+});
+
+it('ORs several duration bands without widening the whole result set', function (): void {
+    /*
+     * The classic Eloquent filter bug: an orWhere that is not wrapped escapes
+     * its group and cancels every AND before it, so the page quietly shows
+     * MORE than it should rather than less. Combined with a search term here,
+     * because that is the condition the loose OR would destroy.
+     */
+    Course::factory()->published()->create(['title' => 'Python Short', 'total_duration_seconds' => 5 * 3600]);
+    Course::factory()->published()->create(['title' => 'Python Epic', 'total_duration_seconds' => 30 * 3600]);
+    Course::factory()->published()->create(['title' => 'Python Middling', 'total_duration_seconds' => 15 * 3600]);
+    Course::factory()->published()->create(['title' => 'Ruby Short', 'total_duration_seconds' => 5 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('search', 'Python')
+        ->set('duration', ['short', 'long'])
+        ->assertSee('Python Short')
+        ->assertSee('Python Epic')
+        ->assertDontSee('Python Middling')
+        // The one the escaped OR would have dragged back in.
+        ->assertDontSee('Ruby Short');
 });
 
 it('puts a course on a band boundary in exactly one band', function (): void {
@@ -273,9 +331,9 @@ it('puts a course on a band boundary in exactly one band', function (): void {
     Course::factory()->published()->create(['title' => 'Boundary Course', 'total_duration_seconds' => 10 * 3600]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('duration', 'short')
+        ->set('duration', ['short'])
         ->assertDontSee('Boundary Course')
-        ->set('duration', 'medium')
+        ->set('duration', ['medium'])
         ->assertSee('Boundary Course');
 });
 
@@ -283,7 +341,7 @@ it('ignores a duration band that does not exist', function (): void {
     Course::factory()->published()->create(['title' => 'Some Course', 'total_duration_seconds' => 3600]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('duration', 'forever')
+        ->set('duration', ['forever'])
         ->assertSee('Some Course');
 });
 

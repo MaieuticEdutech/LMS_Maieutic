@@ -8,6 +8,7 @@ use App\Enums\EnrollmentStatus;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\LessonProgress;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -71,10 +72,16 @@ final class StudentDashboardService
      */
     public function continueLearning(User $student): ?Enrollment
     {
+        /*
+         * `lastLesson` is eager-loaded because the card names it — "Lesson 6:
+         * Data cleaning" (design handoff §1). It is the resume pointer the
+         * player already maintains, so the dashboard and the player cannot
+         * disagree about where the student left off.
+         */
         return $this->accessibleQuery($student)
             ->where('status', EnrollmentStatus::Active)
             ->whereNotNull('last_accessed_at')
-            ->with('course')
+            ->with(['course.category', 'lastLesson'])
             ->orderByDesc('last_accessed_at')
             ->first();
     }
@@ -119,7 +126,7 @@ final class StudentDashboardService
      * PHP — the difference does not matter at eight enrolments and matters a
      * great deal at eight hundred.
      *
-     * @return array{enrolled: int, completed: int, in_progress: int, certificates: int}
+     * @return array{enrolled: int, completed: int, in_progress: int, certificates: int, hours: int, lessons_this_month: int}
      */
     public function stats(User $student): array
     {
@@ -140,6 +147,28 @@ final class StudentDashboardService
              * completions here would promise a document that does not exist.
              */
             'certificates' => Certificate::query()->where('user_id', $student->getKey())->count(),
+            /*
+             * "42h learned" (design handoff §1) — real, from
+             * lesson_progress.video_watched_seconds.
+             *
+             * That column holds the MAXIMUM ever watched rather than the current
+             * playhead, so scrubbing back does not reduce it and it cannot be
+             * inflated by leaving a tab open. Floored to whole hours: a headline
+             * claiming "42.7h" would pretend to a precision a throttled progress
+             * ping does not have.
+             */
+            'hours' => intdiv((int) LessonProgress::query()
+                ->where('user_id', $student->getKey())
+                ->sum('video_watched_seconds'), 3600),
+            /*
+             * "17 lessons this month" — completions since the start of the
+             * current month, which is what a learner means by "this month".
+             */
+            'lessons_this_month' => LessonProgress::query()
+                ->where('user_id', $student->getKey())
+                ->whereNotNull('completed_at')
+                ->where('completed_at', '>=', now()->startOfMonth())
+                ->count(),
         ];
     }
 

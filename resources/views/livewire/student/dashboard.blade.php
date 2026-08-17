@@ -44,11 +44,13 @@
             />
         </div>
     @else
-        {{-- ══ STATS ══ four tiles, serif figure over a small label. --}}
+        {{-- ══ STATS ══ the handoff's four tiles, serif figure over a small
+             label. Every one is measured: hours and lessons-this-month come
+             from lesson_progress, certificates from the certificates table. --}}
         <div class="mb-14 mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['enrolled'] }}</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Courses enrolled</div>
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['hours'] }}h</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Hours learned</div>
             </div>
 
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
@@ -57,8 +59,8 @@
             </div>
 
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['completed'] }}</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Courses completed</div>
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['lessons_this_month'] }}</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Lessons this month</div>
             </div>
 
             {{-- Counted from the certificates table, not from completed
@@ -71,17 +73,25 @@
             </a>
         </div>
 
-        {{-- Overall progress (FR-PROG-07). A MEAN OF COURSE PERCENTAGES, not of
-             lessons: someone halfway through two courses is 50% whether one has
-             ten lessons and the other a hundred, which is how a person actually
-             thinks about their own progress. --}}
-        <div class="mb-14 rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-            <div class="flex flex-wrap items-baseline justify-between gap-2">
-                <p class="eyebrow text-neutral-500">Overall progress</p>
-                <p class="font-serif text-2xl font-medium text-neutral-900">{{ $overall['percentage'] }}%</p>
-            </div>
+        {{-- ══ OVERALL PROGRESS ══
+             THE ONE ADDITION TO THE DESIGN'S DASHBOARD, AND IT IS REQUIRED.
 
-            <x-progress-bar :value="$overall['percentage']" label="Overall progress" class="mt-3" />
+             FR-PROG-07 puts a student's overall progress on this screen; the
+             prototype's four tiles do not include it. Rather than drop a
+             committed requirement to match a mockup, it sits here as a single
+             slim row — it states the figure without competing with the tiles
+             above or the cards below.
+
+             A MEAN OF COURSE PERCENTAGES, not of lessons: someone halfway
+             through two courses is 50% whether one has ten lessons and the
+             other a hundred, which is how a person thinks about their own
+             progress. --}}
+        <div class="mb-14 flex flex-wrap items-center gap-4">
+            <p class="eyebrow shrink-0 text-neutral-500">Overall progress</p>
+
+            <x-progress-bar :value="$overall['percentage']" label="Overall progress" class="min-w-40 flex-1" />
+
+            <p class="shrink-0 font-mono text-xs font-semibold text-neutral-700">{{ $overall['percentage'] }}%</p>
         </div>
 
         {{-- ══ CONTINUE LEARNING ══ the single most useful control on the page
@@ -107,8 +117,16 @@
                             {{ $continueCourse->title }}
                         </h3>
 
+                        {{-- The lesson they will land on, named — the handoff's
+                             "Lesson 6: Data cleaning". It is the resume pointer
+                             the player itself maintains, so the two cannot
+                             disagree about where they left off. --}}
                         <p class="text-[13.5px] text-neutral-500">
-                            {{ $continueCourse->lessons_count }} {{ Str::plural('lesson', $continueCourse->lessons_count) }} · {{ $continueCourse->level->label() }}
+                            @if ($continue->lastLesson)
+                                Next: {{ $continue->lastLesson->title }}
+                            @else
+                                {{ $continueCourse->lessons_count }} {{ Str::plural('lesson', $continueCourse->lessons_count) }} · {{ $continueCourse->level->label() }}
+                            @endif
                         </p>
 
                         <div class="mt-auto flex flex-col gap-[10px]">
