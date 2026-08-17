@@ -39,7 +39,7 @@ use Livewire\Component;
  * the whole row — including columns a student should never see — into the
  * browser and accept it back as input.
  */
-#[Layout('layouts.app')]
+#[Layout('layouts.student')]
 final class CoursePlayer extends Component
 {
     public int $courseId;

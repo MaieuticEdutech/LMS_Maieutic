@@ -59,15 +59,15 @@ it('offers mark-as-complete only on a lesson that honours it', function (): void
     $this->actingAs($this->student);
 
     Livewire::test(CoursePlayer::class, ['course' => $this->course, 'lesson' => $this->text])
-        ->assertSee('Mark as complete');
+        ->assertSee('Mark complete');
 
     // A button the server would refuse reads as broken, not as a rule.
     Livewire::test(CoursePlayer::class, ['course' => $this->course, 'lesson' => $this->video])
-        ->assertDontSee('Mark as complete')
+        ->assertDontSee('Mark complete')
         ->assertSee('completes once you have watched');
 
     Livewire::test(CoursePlayer::class, ['course' => $this->course, 'lesson' => $this->quiz])
-        ->assertDontSee('Mark as complete')
+        ->assertDontSee('Mark complete')
         ->assertSee('completes when you pass its assessment');
 });
 
@@ -89,7 +89,7 @@ it('lets a student undo a manual completion they did not mean', function (): voi
         ->call('toggleComplete')
         ->assertSee('Completed')
         ->call('toggleComplete')
-        ->assertSee('Mark as complete');
+        ->assertSee('Mark complete');
 });
 
 it('does not accept a completion claim from the browser on a video', function (): void {
@@ -112,10 +112,13 @@ it('shows course and module progress in the player', function (): void {
 
     $this->actingAs($this->student);
 
+    // Course figure, percentage, and the per-module figure — three separate
+    // statements, all counted from the curriculum on screen so none of them can
+    // disagree with the ticks beside the lessons.
     Livewire::test(CoursePlayer::class, ['course' => $this->course, 'lesson' => $this->text])
-        ->assertSee('1 / 3 COMPLETE')
+        ->assertSee('1 of 3 lessons completed')
         ->assertSee('33%')
-        ->assertSee('1 / 3 LESSONS');
+        ->assertSee('1 / 3');
 });
 
 it('shows how much of a video counts as watched so far', function (): void {

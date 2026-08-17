@@ -1,4 +1,22 @@
 {{--
+    ═════════════════════════════════════════════════════════════════════════
+    SUPERSEDED — DO NOT USE FOR NEW STUDENT SCREENS. USE `layouts.student`.
+
+    Every student screen now renders under `layouts.student`, which wears the
+    header from `sample student ui/`. The only thing still extending this file
+    is `resources/views/student/home.blade.php`, a Phase 2 placeholder that no
+    route reaches and no test exercises — Phase 7's Dashboard component replaced
+    it, as its own comment predicted.
+
+    Left in place rather than deleted only because a layout is shared ground and
+    another track may have work in flight against it (CLAUDE.md — check the
+    owner before editing). Delete this file and that placeholder together once
+    the other tracks confirm neither is referenced.
+
+    A second student layout is a trap: someone adding a screen picks this one,
+    gets the old header, and the product quietly has two navigations.
+    ═════════════════════════════════════════════════════════════════════════
+
     STUDENT LAYOUT — authenticated students.
 
     Used by the dashboard, My Courses, the course player and profile

@@ -1,8 +1,13 @@
 @extends('layouts.auth')
 
+{{-- Copy from the mockup's login screen. The two-panel brand layout is kept:
+     it is a stronger treatment than the mockup's plain centred form, and the
+     mockup's login was a stand-in beside the eight student screens it was
+     actually drawn for. --}}
 @section('title', 'Sign in')
-@section('heading', 'Sign in')
-@section('subheading', 'Welcome back — pick up where you left off.')
+@section('eyebrow', 'Welcome back')
+@section('heading', 'Sign in to keep learning')
+@section('subheading', 'Pick up exactly where you left off.')
 
 @section('content')
     {{--
