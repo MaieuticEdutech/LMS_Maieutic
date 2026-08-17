@@ -10,18 +10,14 @@
     way to make an interface feel broken. The heading carries the accessible
     name; the surrounding anchor is the hit area.
 
-    ═════════════════════════════════════════════════════════════════════════
-    WHERE THE MOCKUP SHOWS AN INSTRUCTOR NAME, THIS SHOWS LESSONS AND LEVEL.
+    The instructor line the handoff specifies (§2) needs `course.instructors`
+    eager-loaded — StudentDashboardService does that deliberately, because
+    preventLazyLoading would otherwise throw outside production and fire one
+    query per card inside it. A course with no instructor assigned falls back to
+    lessons and level rather than printing an empty line.
 
-    Not a design change for its own sake. `Model::preventLazyLoading()` is
-    active outside production, and the queries feeding this card eager-load
-    `course.category` and nothing else — touching `$course->instructor` here
-    would throw on the dashboard and fire one query per card if it did not.
-    Lessons count and level are columns already on the row, so they cost
-    nothing and fill the same line honestly.
-    ═════════════════════════════════════════════════════════════════════════
-
-    Expects: $enrollment (with `course` and `course.category` loaded).
+    Expects: $enrollment (with `course`, `course.category` and
+    `course.instructors` loaded).
 --}}
 @php
     $course = $enrollment->course;
@@ -45,7 +41,11 @@
         </h3>
 
         <p class="text-[13px] text-neutral-500">
-            {{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }} · {{ $course->level->label() }}
+            @if ($course->instructors->isNotEmpty())
+                {{ $course->instructors->first()->name }}
+            @else
+                {{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }} · {{ $course->level->label() }}
+            @endif
         </p>
 
         {{-- mt-auto pins the progress row to the bottom, so cards of differing

@@ -65,6 +65,31 @@
                     @endforeach
                 </div>
             </div>
+
+            <div>
+                <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">DURATION</h2>
+
+                <div class="flex flex-col gap-[9px]">
+                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
+                        <input type="radio" wire:model.live="duration" value="" class="h-[15px] w-[15px] accent-teal-600">
+                        Any length
+                    </label>
+
+                    {{-- Labels come from the same array the query reads, so the
+                         band a student picks and the band they get cannot
+                         drift. --}}
+                    @foreach ($this->durationBands() as $key => $band)
+                        <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="duration-{{ $key }}">
+                            <input type="radio" wire:model.live="duration" value="{{ $key }}" class="h-[15px] w-[15px] accent-teal-600">
+                            {{ $band['label'] }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- The handoff's fourth group, RATING, is absent rather than drawn
+                 inert: there is no rating table in this schema, so the facet
+                 could only ever be a control that does nothing. --}}
         </aside>
 
         {{-- ══ RESULTS ══ --}}

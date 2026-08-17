@@ -131,4 +131,50 @@
             @endforeach
         </div>
     @endif
+
+    {{-- ══ RECOMMENDED FOR YOU ══ (design handoff §1)
+         Shown to a brand-new account too — on day one it is the only thing on
+         the page worth doing, and an empty dashboard with nowhere to go is a
+         poor first impression. Absent only when there is genuinely nothing
+         published they are not already in. --}}
+    @if ($recommended->isNotEmpty())
+        <div class="mb-5 mt-14 flex items-baseline justify-between">
+            <h2 class="font-serif text-[26px] font-medium tracking-[-0.01em]">Recommended for you</h2>
+
+            <a href="{{ route('catalogue.index') }}" class="text-sm font-medium text-teal-600 hover:text-teal-700">
+                Explore all courses
+            </a>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($recommended as $course)
+                <a href="{{ route('catalogue.show', $course) }}"
+                   wire:key="recommended-{{ $course->id }}"
+                   class="group flex flex-col overflow-hidden rounded-card border border-neutral-200 bg-white transition-all duration-[180ms] ease-standard hover:-translate-y-px hover:border-neutral-300 hover:shadow-[0_2px_8px_rgba(26,24,21,0.06)]">
+
+                    @include('partials.course-thumb', ['course' => $course])
+
+                    <div class="flex flex-1 flex-col gap-1.5 px-5 pb-5 pt-[18px]">
+                        <h3 class="font-sans text-base/[1.35] font-semibold tracking-normal text-neutral-900 group-hover:text-teal-700">
+                            {{ $course->title }}
+                        </h3>
+
+                        <p class="text-[13px] text-neutral-500">
+                            @if ($course->instructors->isNotEmpty())
+                                {{ $course->instructors->first()->name }}
+                            @else
+                                {{ $course->category?->name ?? 'General' }}
+                            @endif
+                        </p>
+
+                        <div class="mt-auto flex items-center gap-2 pt-2 text-[13px] text-neutral-600">
+                            <span>{{ $course->level->label() }}</span>
+                            <span class="text-neutral-300">·</span>
+                            <span>{{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }}</span>
+                        </div>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    @endif
 </div>

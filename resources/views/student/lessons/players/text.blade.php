@@ -13,10 +13,8 @@
     Available: $lesson, $media (null for this type), $progress.
 --}}
 <article class="space-y-5">
-    @if ($lesson->summary)
-        <p class="max-w-[68ch] text-lg leading-relaxed text-neutral-600">{{ $lesson->summary }}</p>
-    @endif
-
+    {{-- The summary is drawn once by the player, below the lesson title
+         (design handoff §4) — see video.blade.php. --}}
     @if ($lesson->body)
         {{-- Capped at 68ch: a reading measure running the full width of a
              desktop screen is the fastest way to make prose unreadable. --}}

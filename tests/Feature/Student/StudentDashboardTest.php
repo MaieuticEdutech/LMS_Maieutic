@@ -53,10 +53,23 @@ it('lists an enrolled course', function (): void {
 it('never lists another student\'s courses', function (): void {
     ($this->enrol)(User::factory()->create(), $this->course);
 
+    /*
+     * ASSERTS THE ABSENCE OF THE ACCESS AFFORDANCE, NOT OF THE TITLE.
+     *
+     * The title alone stopped being the right assertion when the dashboard
+     * gained "Recommended for you": this course is PUBLISHED, so it is public
+     * at /courses and recommending it to a student who is not enrolled leaks
+     * nothing they could not already read.
+     *
+     * What must never appear is a way IN — the player link exists only for a
+     * course this student can open, so its absence is the property that
+     * actually matters. The empty state confirms their own library is empty.
+     */
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Visible Course');
+        ->assertDontSee(route('student.courses.play', $this->course))
+        ->assertSee('not enrolled in any courses');
 });
 
 /*

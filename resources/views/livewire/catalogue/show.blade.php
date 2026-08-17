@@ -156,26 +156,28 @@
                     @endif
                 </div>
 
-                <div class="overflow-hidden rounded-md border border-neutral-200 bg-white">
+                {{-- ONE SECTION OPEN AT A TIME (design handoff, Interactions).
+                     The shared index lives on the container, so opening a
+                     section closes the previous one; clicking the open section
+                     collapses it. The first is open on arrival, because an
+                     accordion that starts entirely shut hides the thing the
+                     reader came for. --}}
+                <div x-data="{ open: 0 }" class="overflow-hidden rounded-md border border-neutral-200 bg-white">
                     @forelse ($curriculum as $module)
-                        {{-- Alpine per section rather than one shared index: each
-                             row owns its own open state, so no section can be
-                             closed by opening another, and the first is open on
-                             arrival because an accordion that starts entirely
-                             shut hides the thing the reader came for. --}}
-                        <div x-data="{ open: {{ $loop->first ? 'true' : 'false' }} }"
-                             class="border-t border-neutral-200 first:border-t-0"
+                        <div class="border-t border-neutral-200 first:border-t-0"
                              wire:key="module-{{ $module->id }}">
 
+                            @php($i = $loop->index)
+
                             <button type="button"
-                                    x-on:click="open = !open"
-                                    x-bind:aria-expanded="open ? 'true' : 'false'"
+                                    x-on:click="open = (open === {{ $i }} ? null : {{ $i }})"
+                                    x-bind:aria-expanded="open === {{ $i }} ? 'true' : 'false'"
                                     class="flex w-full cursor-pointer items-center gap-3 bg-white px-5 py-4 text-left transition-colors hover:bg-neutral-50">
 
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                      class="shrink-0 text-neutral-600 transition-transform duration-[180ms]"
-                                     x-bind:class="open ? 'rotate-180' : ''" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                                     x-bind:class="open === {{ $i }} ? 'rotate-180' : ''" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
 
                                 <span class="flex-1 font-sans text-[15px] font-semibold tracking-normal text-neutral-900">
                                     {{ $module->title }}
@@ -186,7 +188,7 @@
                                 </span>
                             </button>
 
-                            <div x-show="open" x-cloak class="border-t border-neutral-100">
+                            <div x-show="open === {{ $i }}" x-cloak class="border-t border-neutral-100">
                                 @foreach ($module->lessons as $lesson)
                                     <div class="flex items-center gap-3 py-3 pl-[47px] pr-5 text-sm text-neutral-700">
                                         {{-- Locked for everyone on this page, enrolled
