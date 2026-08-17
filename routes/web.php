@@ -56,8 +56,9 @@ Route::get('/courses/{course}', CatalogueShow::class)->name('catalogue.show');
 |
 | WHAT MAKES THAT SAFE IS THE SHAPE OF THE LOOKUP, NOT A PERMISSION:
 |
-|   - the number is 8 characters from a 29-character alphabet, generated with
-|     random_int — it cannot be walked, which a sequential id could be;
+|   - the number is 8 characters from a 28-character alphabet, generated with
+|     random_int (~3.8e11 combinations) — it cannot be walked, which a
+|     sequential id could be;
 |   - the page shows only what the certificate already asserts in public: a
 |     name, a course title, and a date;
 |   - it exposes nothing about the account behind it — no email, no other
