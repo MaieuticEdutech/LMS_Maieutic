@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * A sellable course (FR-CRS-01…11).
  *
+ * @property int $rating_sum
+ * @property int $rating_count
  * @property int $id
  * @property int|null $category_id
  * @property string $title
@@ -93,7 +95,43 @@ class Course extends Model
             'modules_count' => 'integer',
             'lessons_count' => 'integer',
             'total_duration_seconds' => 'integer',
+            'rating_sum' => 'integer',
+            'rating_count' => 'integer',
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rating
+    |--------------------------------------------------------------------------
+    |
+    | Stored as an integer SUM and COUNT, never as an average — see the
+    | course_reviews migration. The mean is derived here, in one place, so no
+    | caller has to remember the division or the divide-by-zero.
+    |
+    | SubmitCourseReview is the only writer of the two counters.
+    */
+
+    /**
+     * The mean rating to one decimal place, or null when nobody has rated it.
+     *
+     * NULL RATHER THAN 0.0, DELIBERATELY. "No ratings yet" and "rated zero" are
+     * different facts, and a card showing ★ 0.0 on a brand-new course states the
+     * second when the first is true — which is worse than showing nothing.
+     * Every caller has to handle the null, which is the point.
+     */
+    public function averageRating(): ?float
+    {
+        if ($this->rating_count < 1) {
+            return null;
+        }
+
+        return round($this->rating_sum / $this->rating_count, 1);
+    }
+
+    public function hasRatings(): bool
+    {
+        return $this->rating_count > 0;
     }
 
     public function getRouteKeyName(): string
@@ -185,6 +223,20 @@ class Course extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Ratings and written reviews (design handoff §2).
+     *
+     * SubmitCourseReview is the only writer, and it keeps `rating_sum` and
+     * `rating_count` in step — this relation is for reading the words, never
+     * for recomputing the average on the fly.
+     *
+     * @return HasMany<CourseReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CourseReview::class);
     }
 
     /**

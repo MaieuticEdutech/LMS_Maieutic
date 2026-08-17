@@ -40,6 +40,16 @@
                 @endif
 
                 <div class="mt-6 flex flex-wrap gap-6 text-sm text-white/75">
+                    @include('partials.course-rating', ['course' => $course, 'tone' => 'inverse'])
+
+                    {{-- Every enrolment ever granted, not currently-active
+                         access — see Show::learnerCount(). Absent entirely
+                         until somebody has enrolled: "0 learners" on a sales
+                         page is an argument against buying. --}}
+                    @if ($learners > 0)
+                        <span>{{ number_format($learners) }} {{ Str::plural('learner', $learners) }}</span>
+                    @endif
+
                     <span>{{ $course->level->label() }}</span>
 
                     @if ($course->total_duration_seconds > 0)
@@ -217,6 +227,40 @@
                     @endforelse
                 </div>
             </section>
+
+            @if ($reviews->isNotEmpty())
+                <section>
+                    <h2 class="mb-5 font-serif text-[26px] font-medium">What learners say</h2>
+
+                    <div class="flex flex-col gap-4">
+                        @foreach ($reviews as $review)
+                            <div class="rounded-card border border-neutral-200 bg-white p-6" wire:key="review-{{ $review->id }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-semibold text-white"
+                                         aria-hidden="true">
+                                        {{ $review->user?->initials() }}
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-sm font-semibold text-neutral-900">{{ $review->user?->name }}</div>
+                                        <div class="text-[12.5px] text-neutral-500">{{ $review->created_at?->format('F Y') }}</div>
+                                    </div>
+
+                                    {{-- This review's own stars, not the course
+                                         mean — so the partial is not reused
+                                         here. --}}
+                                    <div class="font-semibold text-red-500" aria-hidden="true">
+                                        {{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}
+                                    </div>
+                                    <span class="sr-only">Rated {{ $review->rating }} out of 5</span>
+                                </div>
+
+                                <p class="mt-3 text-[14.5px]/[1.6] text-neutral-700">{{ $review->body }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
 
             @if ($course->instructors->isNotEmpty())
                 <section>

@@ -87,9 +87,27 @@
                 </div>
             </div>
 
-            {{-- The handoff's fourth group, RATING, is absent rather than drawn
-                 inert: there is no rating table in this schema, so the facet
-                 could only ever be a control that does nothing. --}}
+            <div>
+                <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">RATING</h2>
+
+                <div class="flex flex-col gap-[9px]">
+                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
+                        <input type="radio" wire:model.live="rating" value="" class="h-[15px] w-[15px] accent-teal-600">
+                        Any rating
+                    </label>
+
+                    {{-- A course nobody has rated is excluded from every band
+                         rather than treated as zero — unrated is not a bad
+                         rating. See the component. --}}
+                    @foreach ($this->ratingBands() as $value => $label)
+                        <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="rating-{{ $value }}">
+                            <input type="radio" wire:model.live="rating" value="{{ $value }}" class="h-[15px] w-[15px] accent-teal-600">
+                            <span class="font-semibold text-red-500" aria-hidden="true">★</span>
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
         </aside>
 
         {{-- ══ RESULTS ══ --}}
@@ -133,7 +151,13 @@
                                     <p class="line-clamp-2 text-[13px] text-neutral-500">{{ $course->subtitle }}</p>
                                 @endif
 
-                                <div class="mt-auto flex items-center gap-2 pt-2 text-[13px] text-neutral-600">
+                                <div class="mt-auto flex flex-wrap items-center gap-2 pt-2 text-[13px] text-neutral-600">
+                                    @include('partials.course-rating', ['course' => $course])
+
+                                    @if ($course->hasRatings())
+                                        <span class="text-neutral-300">·</span>
+                                    @endif
+
                                     <span>{{ $course->level->label() }}</span>
                                     <span class="text-neutral-300">·</span>
                                     <span>{{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }}</span>
