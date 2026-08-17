@@ -106,14 +106,71 @@
             <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
         </svg>
 
-        {{-- The disc is the profile link, exactly as in the mockup. Its
-             initials are decorative — the accessible name says where it goes,
-             which is what a screen-reader user needs from it. --}}
-        <a href="{{ route('profile.show') }}"
-           class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-teal-600 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700"
-           @if (request()->routeIs('profile.*')) aria-current="page" @endif>
-            <span aria-hidden="true">{{ $me?->initials() }}</span>
-            <span class="sr-only">Your profile</span>
-        </a>
+        {{--
+            THE AVATAR IS A MENU, NOT A LINK, AND THAT IS A DEPARTURE WORTH
+            EXPLAINING.
+
+            The prototype draws the disc as a plain circle with no menu, and the
+            first version of this header copied that literally — which left the
+            product with NO VISIBLE WAY TO SIGN OUT from the dashboard, My
+            Learning, Certificates or the player. Logout existed only at the
+            bottom of the profile page, reachable if you already guessed the disc
+            led there.
+
+            A static mockup cannot depict an open dropdown; that is a limitation
+            of the artefact, not a design decision that sign-out should be
+            hidden. The disc looks exactly as drawn — 34px, teal, initials — and
+            opens the menu every product of this kind puts behind it.
+        --}}
+        <div class="relative" x-data="{ open: false }">
+            <button type="button"
+                    x-on:click="open = ! open"
+                    x-on:click.outside="open = false"
+                    x-on:keydown.escape.window="open = false"
+                    x-bind:aria-expanded="open ? 'true' : 'false'"
+                    aria-haspopup="true"
+                    class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-teal-600 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700">
+                <span aria-hidden="true">{{ $me?->initials() }}</span>
+                <span class="sr-only">Your account</span>
+            </button>
+
+            <div x-show="open"
+                 x-cloak
+                 x-transition.opacity.duration.150ms
+                 class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-card border border-neutral-200 bg-white shadow-[0_6px_20px_-6px_rgba(26,24,21,0.1)]">
+
+                {{-- Who you are signed in as. Worth stating: on a shared machine
+                     it is the difference between signing out and wondering why
+                     someone else's courses are listed. --}}
+                <div class="border-b border-neutral-100 px-4 py-3">
+                    <div class="truncate text-sm font-semibold text-neutral-900">{{ $me?->name }}</div>
+                    <div class="truncate text-[12.5px] text-neutral-500">{{ $me?->email }}</div>
+                </div>
+
+                <a href="{{ route('profile.show') }}"
+                   class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50">
+                    Profile
+                </a>
+
+                @if ($me?->isStudent())
+                    <a href="{{ route('student.certificates.index') }}"
+                       class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50">
+                        Certificates
+                    </a>
+                @endif
+
+                {{-- A POST form, not a link. Logout changes state, and a GET
+                     route for it can be triggered by anything that prefetches a
+                     URL — a browser, a chat client unfurling a link, an email
+                     scanner — signing people out at random. --}}
+                <form method="POST" action="{{ route('logout') }}" class="border-t border-neutral-100">
+                    @csrf
+                    <button type="submit"
+                            class="block w-full px-4 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
+                        Log out
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </header>

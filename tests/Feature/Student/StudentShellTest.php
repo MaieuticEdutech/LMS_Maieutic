@@ -84,7 +84,10 @@ it('keeps a signed-in student on their own header while browsing the catalogue',
         ->get(route('catalogue.index'))
         ->assertOk()
         ->assertSee('My Learning')
-        ->assertSee('Your profile')
+        // The avatar's accessible name. "Your account" rather than "Your
+        // profile" because the disc opens a menu now instead of navigating —
+        // see partials/student-header.blade.php for why it had to.
+        ->assertSee('Your account')
         // And NOT the guest header's way in.
         ->assertDontSee('Sign in');
 });

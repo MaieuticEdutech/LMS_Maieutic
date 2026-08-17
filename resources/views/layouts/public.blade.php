@@ -67,6 +67,25 @@
                     <x-button :href="auth()->user()->role->homePath()" variant="secondary" size="sm" wire:navigate>
                         Dashboard
                     </x-button>
+
+                    {{-- Sign out belongs here too.
+
+                         Instructors and administrators browsing the catalogue
+                         get THIS header, not the student one, so without this
+                         they had a page with no way out — the same gap that was
+                         reported on the student screens. "Dashboard" leads back
+                         to a shell that has one, but expecting someone to work
+                         that out is the reasoning that caused the problem in the
+                         first place.
+
+                         A POST form, not a link: a GET logout route can be
+                         triggered by anything that prefetches a URL. --}}
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-sm font-medium text-neutral-700 transition-colors hover:text-red-600">
+                            Log out
+                        </button>
+                    </form>
                 @else
                     @if (Route::has('login'))
                         <a href="{{ route('login') }}" class="text-sm font-medium text-neutral-700 hover:text-teal-700">
