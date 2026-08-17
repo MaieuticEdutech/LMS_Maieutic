@@ -196,6 +196,51 @@ it('logs the user out', function (): void {
 });
 
 /*
+| ═══════════════ WHERE LOGGING OUT LEAVES YOU ═══════════════
+|
+| Fortify's default is `/` — the public homepage. Right for a consumer site
+| someone might keep browsing; wrong here, where everyone signing out is a
+| learner, instructor or administrator finishing a session, and the next thing
+| they want is the way back in.
+*/
+it('sends every role to the login screen after signing out', function (string $state): void {
+    $this->actingAs(User::factory()->{$state}()->create())
+        ->post('/logout')
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
+})->with(['superAdmin', 'instructor', 'student']);
+
+it('says the sign-out worked rather than leaving a bare form', function (): void {
+    // Landing on a login form with no explanation reads the same as a session
+    // that expired or a click that failed.
+    $this->actingAs(User::factory()->student()->create())
+        ->post('/logout')
+        ->assertSessionHas('status', 'You have been signed out.');
+});
+
+it('shows that message on the login screen it lands on', function (): void {
+    // The flash is written AFTER Fortify invalidates the session, so it has to
+    // survive into the regenerated one. Following the redirect proves it does —
+    // asserting on the session alone would not.
+    $this->actingAs(User::factory()->student()->create())
+        ->post('/logout')
+        ->assertRedirect(route('login'));
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('You have been signed out.');
+});
+
+it('gives an API client 204 rather than a redirect to an HTML form', function (): void {
+    $this->actingAs(User::factory()->student()->create())
+        ->postJson('/logout')
+        ->assertNoContent();
+
+    $this->assertGuest();
+});
+
+/*
 | Role-based landing (architecture.md §7.3).
 */
 it('sends each role to its own home after login', function (string $state, string $home): void {
