@@ -1,6 +1,19 @@
 <div>
     <div class="mb-4 flex items-center justify-between gap-4">
-        <x-input wire:model.live.debounce.300ms="search" type="search" placeholder="Search by name or email" class="max-w-xs" />
+        <div class="flex flex-wrap items-end gap-3">
+            <x-input wire:model.live.debounce.300ms="search" type="search" placeholder="Search by name or email" class="max-w-xs" />
+
+            <x-select wire:model.live="statusFilter" name="statusFilter" label="Status" class="max-w-[12rem]">
+                <option value="">All statuses</option>
+                @foreach ($statusOptions as $status)
+                    <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                @endforeach
+            </x-select>
+
+            @if ($search !== '' || $statusFilter !== '' || $sortField !== null)
+                <x-button variant="secondary" wire:click="resetTableFilters">Clear filters</x-button>
+            @endif
+        </div>
 
         @can('create', App\Models\User::class)
             <x-button :href="route('admin.students.create')" wire:navigate>Add student</x-button>

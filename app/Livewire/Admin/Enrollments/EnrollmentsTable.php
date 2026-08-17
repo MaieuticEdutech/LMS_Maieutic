@@ -94,6 +94,14 @@ final class EnrollmentsTable extends Component
         $this->authorize('viewAny', Enrollment::class);
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['statusFilter', 'sourceFilter', 'courseFilter'];
+    }
+
     public function updatingStatusFilter(): void
     {
         $this->resetPage();

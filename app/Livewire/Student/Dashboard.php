@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Student;
 
+use App\Enums\CourseStatus;
+use App\Models\Course;
 use App\Models\User;
 use App\Services\Progress\ProgressCalculator;
 use App\Services\Student\StudentDashboardService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -51,6 +54,35 @@ final class Dashboard extends Component
              * (NFR-PERF-04, ADR-008).
              */
             'overall' => $calculator->studentOverall($student),
+
+            /*
+             * "Recommended for you" (design_handoff_lms_student_ui §1).
+             *
+             * There is no recommendation engine, and inventing one would be a
+             * feature rather than a design pass. This is the honest reading of
+             * the section: published courses the student is not already
+             * enrolled in, newest first — genuinely things they could take
+             * next, and true in production as well as in review.
+             *
+             * category and instructors are eager-loaded because
+             * preventLazyLoading() is active outside production and the card
+             * reads both.
+             */
+            'recommended' => $this->recommendations($student),
         ]);
+    }
+
+    /**
+     * @return Collection<int, Course>
+     */
+    private function recommendations(User $student): Collection
+    {
+        return Course::query()
+            ->where('status', CourseStatus::Published)
+            ->whereDoesntHave('enrollments', fn ($q) => $q->where('user_id', $student->getKey()))
+            ->with(['category', 'instructors'])
+            ->latest('published_at')
+            ->limit(3)
+            ->get();
     }
 }

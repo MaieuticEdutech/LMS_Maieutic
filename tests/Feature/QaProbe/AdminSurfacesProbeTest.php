@@ -279,21 +279,9 @@ it('offers action options built from real recorded actions', function (): void {
 /*
 | ═══════════ STU-07 / STU-08 — the status filter the plan assumes ═══════════
 |
-| Documents actual behaviour: WithAdminTable declares $filters, but no admin
-| table reads it and neither the students nor the instructors table exposes a
-| status filter.
+| This probe used to document the absence: no table read the trait's `$filters`
+| array, and neither Students nor Instructors offered a status filter at all.
+| Both are now built, so the behaviour is covered properly in
+| tests/Feature/Admin/AdminTableFiltersTest.php rather than asserted as a
+| known gap here.
 */
-
-it('has no status filter on the students table', function (): void {
-    $c = Livewire::test(StudentsTable::class);
-
-    expect($c->get('filters'))->toBe([]);
-
-    $suspended = User::factory()->suspended()->create(['name' => 'Suspended Person']);
-    $active = User::factory()->create(['name' => 'Active Person']);
-
-    // Setting the trait's filter array changes nothing — it is never applied.
-    $c->set('filters', ['status' => 'suspended'])
-        ->assertSee('Active Person')
-        ->assertSee('Suspended Person');
-});

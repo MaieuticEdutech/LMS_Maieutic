@@ -47,6 +47,25 @@ final class TestAdminUsersTable extends Component
     use WithPagination;
 
     /**
+     * A filter declared the way every real admin table declares one: a typed
+     * property named by filterProperties(), not an entry in a shared array.
+     */
+    public string $roleFilter = '';
+
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['roleFilter'];
+    }
+
+    public function updatingRoleFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    /**
      * @return LengthAwarePaginator<int, User>
      */
     public function rows(): LengthAwarePaginator
@@ -146,11 +165,11 @@ it('resets pagination to page 1 when the search term changes', function (): void
     expect($table->getPage())->toBe(1);
 });
 
-it('resets pagination to page 1 when filters change', function (): void {
+it('resets pagination to page 1 when a filter changes', function (): void {
     $table = new TestAdminUsersTable;
     $table->setPage(3);
 
-    $table->updatingFilters();
+    $table->updatingRoleFilter();
 
     expect($table->getPage())->toBe(1);
 });
@@ -161,15 +180,19 @@ it('resets pagination to page 1 when filters change', function (): void {
 | methods (reset(), dispatch()) that a bare trait-only double doesn't have —
 | by design, per the trait's docblock: it requires a real component.
 */
-it('clears search, filters and sort together via resetTableFilters', function (): void {
+it('clears search, the tables own filters and sort together via resetTableFilters', function (): void {
+    // The filter is reached through filterProperties(). Previously reset
+    // cleared a shared `$filters` array that no real table populated, so on
+    // the Enrolments screen "Clear filters" cleared the search box and left
+    // every actual filter in place.
     Livewire::test(TestAdminUsersTable::class)
         ->set('search', 'something')
-        ->set('filters', ['role' => 'student'])
+        ->set('roleFilter', 'student')
         ->call('sortBy', 'name')
         ->call('gotoPage', 3)
         ->call('resetTableFilters')
         ->assertSet('search', '')
-        ->assertSet('filters', [])
+        ->assertSet('roleFilter', '')
         ->assertSet('sortField', null)
         ->assertSet('sortDirection', 'asc')
         ->assertSet('paginators.page', 1);

@@ -50,13 +50,28 @@ it('lists an enrolled course', function (): void {
         ->assertSee('Visible Course');
 });
 
-it('never lists another student\'s courses', function (): void {
+it('never lists another student\'s courses as enrolled', function (): void {
     ($this->enrol)(User::factory()->create(), $this->course);
 
+    /*
+     * NARROWED WHEN "Recommended for you" LANDED, and worth being precise
+     * about why.
+     *
+     * This used to assert the title was absent from the dashboard entirely.
+     * The redesign adds a recommendations section listing PUBLISHED courses
+     * the student is not enrolled in — so a published course now legitimately
+     * appears on every dashboard, including this one.
+     *
+     * That is not the leak this test exists to catch. The course's own
+     * metadata is already public at /courses (AC-01), and nothing about the
+     * other student's enrollment is exposed. What must never happen is this
+     * student's dashboard treating it as THEIRS, so the assertion is now that
+     * they still have no enrollments at all.
+     */
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Visible Course');
+        ->assertSee('not enrolled in any courses');
 });
 
 /*
