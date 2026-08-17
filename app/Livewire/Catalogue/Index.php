@@ -30,40 +30,65 @@ final class Index extends Component
     #[Url(as: 'q')]
     public string $search = '';
 
-    #[Url(as: 'category')]
-    public string $category = '';
+    /*
+    |--------------------------------------------------------------------------
+    | The filter rail
+    |--------------------------------------------------------------------------
+    |
+    | ═════════════════════════════════════════════════════════════════════
+    | CHECKBOXES, SO THE FILTERS ARE GENUINELY MULTI-SELECT.
+    |
+    | The design draws every facet as a checkbox, and a checkbox that behaved
+    | like a radio would be the worst of both: a learner ticks "Beginner" and
+    | "Intermediate", watches the first one silently clear, and concludes the
+    | page is broken. So each facet is an ARRAY and the query ORs within a group
+    | while ANDing across groups — which is what anyone who has used a shop
+    | expects, and the only reading of a checkbox that is not a lie.
+    |
+    | Ticking nothing in a group means "no constraint from this group", not
+    | "match nothing".
+    | ═════════════════════════════════════════════════════════════════════
+    */
 
     /**
-     * Difficulty filter — one of CourseLevel's values, or '' for any.
+     * Selected category slugs.
+     *
+     * @var array<array-key, mixed>
+     */
+    #[Url(as: 'category')]
+    public array $category = [];
+
+    /**
+     * Selected CourseLevel values.
+     *
+     * @var array<array-key, mixed>
      */
     #[Url(as: 'level')]
-    public string $level = '';
+    public array $level = [];
 
     /**
-     * Duration band — 'short', 'medium', 'long', or '' for any.
-     *
-     * The handoff's rail offers CATEGORY, LEVEL, DURATION and RATING. Three are
-     * filterable against something this system records; RATING is not, because
-     * there is no rating table anywhere in the schema. A facet that quietly
-     * does nothing is worse than its absence, so it is omitted rather than
-     * drawn inert.
+     * Selected duration bands — any of 'short', 'medium', 'long'.
      *
      * The bands match the labels in the prototype's own data — under 10 hours,
      * 10–20, 20+ — measured against `total_duration_seconds`, which the course
      * row already caches.
+     *
+     * @var array<array-key, mixed>
      */
     #[Url(as: 'duration')]
-    public string $duration = '';
+    public array $duration = [];
 
     /**
-     * Minimum mean rating — '4.5', '4.0', or '' for any.
+     * Selected minimum-rating bands.
      *
-     * The handoff's fourth facet, real now that course_reviews exists. Compared
-     * against the cached sum and count rather than a stored average, because
-     * there is no stored average — see the migration for why.
+     * Real now that course_reviews exists. Several may be ticked; the LOWEST
+     * wins, because "4.5 & up" and "4.0 & up" together can only sensibly mean
+     * "4.0 and up" — the bands nest rather than sitting side by side.
+     *
+     * @var array<array-key, mixed>
      */
     #[Url(as: 'rating')]
-    public string $rating = '';
+    public array $rating = [];
 
     /**
      * @return array<string, string>
@@ -130,29 +155,59 @@ final class Index extends Component
             $query->where('title', 'like', '%'.$this->search.'%');
         }
 
-        if ($this->category !== '') {
-            $query->whereHas('category', fn (Builder $q) => $q->where('slug', $this->category));
+        // OR within the group, AND across groups. An empty group constrains
+        // nothing rather than matching nothing.
+        $categories = array_values(array_filter($this->category, 'is_string'));
+
+        if ($categories !== []) {
+            $query->whereHas('category', fn (Builder $q) => $q->whereIn('slug', $categories));
         }
 
-        // Matched against the enum rather than passed through: a hand-typed
-        // ?level=anything must narrow to nothing recognised rather than reach
-        // the query. CourseLevel::tryFrom returns null for junk.
-        if ($this->level !== '' && CourseLevel::tryFrom($this->level) instanceof CourseLevel) {
-            $query->where('level', $this->level);
+        /*
+         * Matched against the enum rather than passed through: a hand-typed
+         * ?level[]=anything must narrow to nothing recognised rather than reach
+         * the query. Filtering through tryFrom leaves only real cases, and an
+         * array of junk therefore behaves like no selection at all.
+         */
+        $levels = array_values(array_filter(
+            array_map(
+                static fn (mixed $value): ?CourseLevel => is_string($value) ? CourseLevel::tryFrom($value) : null,
+                $this->level,
+            ),
+        ));
+
+        if ($levels !== []) {
+            $query->whereIn('level', array_map(static fn (CourseLevel $l): string => $l->value, $levels));
         }
 
-        // Bands are looked up rather than parsed, so an unrecognised ?duration=
-        // narrows to nothing recognised instead of reaching the query. The upper
-        // bound is exclusive so a course of exactly 10 hours lands in one band
-        // and not two.
-        $band = $this->durationBands()[$this->duration] ?? null;
+        /*
+         * Bands are looked up rather than parsed, so an unrecognised
+         * ?duration[]= is dropped instead of reaching the query. The upper bound
+         * is exclusive so a course of exactly 10 hours lands in one band and not
+         * two.
+         *
+         * Several ticked bands OR together inside one nested group — without the
+         * nesting the ORs would escape and cancel every AND before them,
+         * quietly widening the whole result set rather than narrowing it. That
+         * is the classic Eloquent filter bug and it fails silently.
+         */
+        $bands = array_values(array_filter(array_map(
+            fn (mixed $key): ?array => is_string($key) ? ($this->durationBands()[$key] ?? null) : null,
+            $this->duration,
+        )));
 
-        if ($band !== null) {
-            $query->where('total_duration_seconds', '>=', $band['min']);
+        if ($bands !== []) {
+            $query->where(function (Builder $group) use ($bands): void {
+                foreach ($bands as $band) {
+                    $group->orWhere(function (Builder $one) use ($band): void {
+                        $one->where('total_duration_seconds', '>=', $band['min']);
 
-            if ($band['max'] !== null) {
-                $query->where('total_duration_seconds', '<', $band['max']);
-            }
+                        if ($band['max'] !== null) {
+                            $one->where('total_duration_seconds', '<', $band['max']);
+                        }
+                    });
+                }
+            });
         }
 
         /*
@@ -175,8 +230,15 @@ final class Index extends Component
          * unrated is not a high rating.
          * ═════════════════════════════════════════════════════════════════
          */
-        if (isset($this->ratingBands()[$this->rating])) {
-            $tenths = (int) round(((float) $this->rating) * 10);
+        $thresholds = array_values(array_filter(
+            $this->rating,
+            fn (mixed $value): bool => is_string($value) && isset($this->ratingBands()[$value]),
+        ));
+
+        if ($thresholds !== []) {
+            // The LOWEST ticked band wins: "4.5 & up" and "4.0 & up" together
+            // can only sensibly mean "4.0 and up", because the bands nest.
+            $tenths = (int) round(min(array_map('floatval', $thresholds)) * 10);
 
             $query->where('rating_count', '>', 0)
                 ->whereRaw('rating_sum * 10 >= ? * rating_count', [$tenths]);

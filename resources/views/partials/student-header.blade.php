@@ -21,9 +21,8 @@
     a value off the 4px grid (34px avatar, 14px nav padding) it is written as an
     arbitrary value rather than snapped to the nearest step.
 
-    ONE THING FROM THE MOCKUP IS STILL ABSENT: the notifications bell. There is
-    no notification centre, and a bell that never rings promises something the
-    product cannot do. It belongs with the phase that builds it.
+    The bell is a non-interactive mark, exactly as the prototype has it — see
+    the note beside it.
 
     Rendering a link here is presentation only. Every route behind it is
     independently authorised server-side — hiding a link is never the control
@@ -94,6 +93,19 @@
     </form>
 
     <div class="ml-auto flex items-center gap-4 md:ml-0">
+        {{-- The bell.
+
+             NOT A BUTTON, and that is how the design has it too: in the
+             prototype it is a bare <svg> with no onClick, so reproducing it
+             exactly means a non-interactive mark rather than a control that
+             does nothing when clicked. There is no notification centre behind
+             it yet; when there is, this becomes a link and gains a count. --}}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-neutral-600">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+        </svg>
+
         {{-- The disc is the profile link, exactly as in the mockup. Its
              initials are decorative — the accessible name says where it goes,
              which is what a screen-reader user needs from it. --}}

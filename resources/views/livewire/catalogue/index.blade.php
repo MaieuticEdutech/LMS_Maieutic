@@ -27,21 +27,17 @@
         {{-- ══ FILTER RAIL ══ sticks below the 64px header. --}}
         <aside class="flex flex-col gap-7 lg:sticky lg:top-[88px]" aria-label="Filter courses">
 
+            {{-- Checkboxes, as the design draws them — and genuinely
+                 multi-select, because a checkbox that cleared its neighbour
+                 would read as the page being broken. Ticking nothing in a group
+                 means "no constraint from this group". --}}
             <div>
                 <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">CATEGORY</h2>
 
                 <div class="flex flex-col gap-[9px]">
-                    {{-- Radios, not checkboxes: the query filters on one
-                         category. Checkboxes would promise multi-select and
-                         then quietly keep only the last one clicked. --}}
-                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
-                        <input type="radio" wire:model.live="category" value="" class="h-[15px] w-[15px] accent-teal-600">
-                        All categories
-                    </label>
-
                     @foreach ($categories as $cat)
                         <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="cat-{{ $cat->id }}">
-                            <input type="radio" wire:model.live="category" value="{{ $cat->slug }}" class="h-[15px] w-[15px] accent-teal-600">
+                            <input type="checkbox" wire:model.live="category" value="{{ $cat->slug }}" class="h-[15px] w-[15px] accent-teal-600">
                             {{ $cat->name }}
                         </label>
                     @endforeach
@@ -52,14 +48,9 @@
                 <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">LEVEL</h2>
 
                 <div class="flex flex-col gap-[9px]">
-                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
-                        <input type="radio" wire:model.live="level" value="" class="h-[15px] w-[15px] accent-teal-600">
-                        Any level
-                    </label>
-
                     @foreach (\App\Enums\CourseLevel::cases() as $case)
                         <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="level-{{ $case->value }}">
-                            <input type="radio" wire:model.live="level" value="{{ $case->value }}" class="h-[15px] w-[15px] accent-teal-600">
+                            <input type="checkbox" wire:model.live="level" value="{{ $case->value }}" class="h-[15px] w-[15px] accent-teal-600">
                             {{ $case->label() }}
                         </label>
                     @endforeach
@@ -70,17 +61,12 @@
                 <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">DURATION</h2>
 
                 <div class="flex flex-col gap-[9px]">
-                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
-                        <input type="radio" wire:model.live="duration" value="" class="h-[15px] w-[15px] accent-teal-600">
-                        Any length
-                    </label>
-
                     {{-- Labels come from the same array the query reads, so the
                          band a student picks and the band they get cannot
                          drift. --}}
                     @foreach ($this->durationBands() as $key => $band)
                         <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="duration-{{ $key }}">
-                            <input type="radio" wire:model.live="duration" value="{{ $key }}" class="h-[15px] w-[15px] accent-teal-600">
+                            <input type="checkbox" wire:model.live="duration" value="{{ $key }}" class="h-[15px] w-[15px] accent-teal-600">
                             {{ $band['label'] }}
                         </label>
                     @endforeach
@@ -91,17 +77,12 @@
                 <h2 class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">RATING</h2>
 
                 <div class="flex flex-col gap-[9px]">
-                    <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700">
-                        <input type="radio" wire:model.live="rating" value="" class="h-[15px] w-[15px] accent-teal-600">
-                        Any rating
-                    </label>
-
                     {{-- A course nobody has rated is excluded from every band
                          rather than treated as zero — unrated is not a bad
-                         rating. See the component. --}}
+                         rating. Ticking two bands takes the lower: they nest. --}}
                     @foreach ($this->ratingBands() as $value => $label)
                         <label class="flex cursor-pointer items-center gap-[9px] text-sm text-neutral-700" wire:key="rating-{{ $value }}">
-                            <input type="radio" wire:model.live="rating" value="{{ $value }}" class="h-[15px] w-[15px] accent-teal-600">
+                            <input type="checkbox" wire:model.live="rating" value="{{ $value }}" class="h-[15px] w-[15px] accent-teal-600">
                             <span class="font-semibold text-red-500" aria-hidden="true">★</span>
                             {{ $label }}
                         </label>

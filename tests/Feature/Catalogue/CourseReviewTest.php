@@ -210,7 +210,7 @@ it('narrows the catalogue by minimum rating', function (): void {
     app(SubmitCourseReview::class)->handle(($this->enrol)(User::factory()->create(), $poor), 3);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('rating', '4.5')
+        ->set('rating', ['4.5'])
         ->assertSee($this->course->title)
         ->assertDontSee('Barely Rated Course');
 });
@@ -221,7 +221,7 @@ it('excludes an unrated course from every rating band', function (): void {
     Course::factory()->published()->create(['title' => 'Nobody Rated This']);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('rating', '3.0')
+        ->set('rating', ['3.0'])
         ->assertDontSee('Nobody Rated This');
 });
 
@@ -229,8 +229,22 @@ it('ignores a rating band that does not exist', function (): void {
     ($this->submit)(5);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('rating', '9.9')
+        ->set('rating', ['9.9'])
         ->assertSee($this->course->title);
+});
+
+it('takes the lowest band when several are ticked', function (): void {
+    // "4.5 & up" and "3.0 & up" together can only sensibly mean "3.0 and up" —
+    // the bands nest rather than sitting side by side.
+    ($this->submit)(5);
+
+    $middling = Course::factory()->published()->create(['title' => 'Middling Course']);
+    app(SubmitCourseReview::class)->handle(($this->enrol)(User::factory()->create(), $middling), 3);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('rating', ['4.5', '3.0'])
+        ->assertSee($this->course->title)
+        ->assertSee('Middling Course');
 });
 
 /*
