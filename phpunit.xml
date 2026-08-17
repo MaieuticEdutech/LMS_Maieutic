@@ -51,6 +51,25 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
 
         <!--
+          The suite always tests against the LOCAL content disk, whatever the
+          developer's .env says.
+
+          Same reasoning as DB_DATABASE above, and found the same way: pointing
+          LMS_CONTENT_DISK at S3/Backblaze to try cloud storage locally turned
+          two tests red — one asserting uploads land on `content`, one
+          asserting that disk is private — and neither was a real regression.
+
+          The worse half is what would happen if they had not failed: the suite
+          would upload test fixtures to a REAL bucket on every run, costing
+          money, taking network time, and leaving debris in the same bucket
+          that serves students.
+
+          Cloud storage is verified deliberately, not incidentally by every
+          developer who happens to have credentials in .env.
+        -->
+        <env name="LMS_CONTENT_DISK" value="content" force="true"/>
+
+        <!--
           Mail previews are OFF for the suite, pinned here rather than left to
           the ambient environment.
 

@@ -177,6 +177,18 @@ final class QuestionList extends Component
     {
         return view('livewire.admin.assessments.question-list', [
             'questions' => $this->questions(),
+            /*
+             * questionTypes() existed and was never passed to the view, which
+             * reads it as `$questionTypes`. The markup that uses it sits
+             * inside `@if ($showForm)` — false on first paint — so the page
+             * rendered fine and the 500 arrived only when somebody clicked
+             * "Add question". Dead until the branch is taken, then broken.
+             *
+             * The list comes from QuestionTypeRegistry rather than from the
+             * enum, so a type registered without a handler cannot be offered
+             * to an author (ADR-003's rule, applied to questions).
+             */
+            'questionTypes' => $this->questionTypes(),
         ]);
     }
 }

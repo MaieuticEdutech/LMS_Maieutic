@@ -76,10 +76,37 @@ final class MediaStorageService
 
         // Streamed, not read into memory: a 2 GB video must not require 2 GB
         // of PHP memory (FR-FILE-13).
-        Storage::disk($disk)->put($path, $stream);
+        $stored = Storage::disk($disk)->put($path, $stream);
 
         if (is_resource($stream)) {
             fclose($stream);
+        }
+
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * THE RETURN VALUE IS CHECKED, BECAUSE THE DISK DOES NOT THROW.
+         *
+         * Both the `content` and `s3` disks are configured `throw => false`,
+         * so a failed write returns FALSE and execution simply carries on.
+         * Unchecked, the next lines happily created the media row, the
+         * uploader reported success, and no file existed anywhere.
+         *
+         * On the local disk that needed something exotic — a full volume, a
+         * permissions change. Once the content disk moved to Backblaze it
+         * became ordinary: a dropped connection, an expired application key,
+         * a bucket quota, a revoked permission. Every one of those returns
+         * false rather than raising.
+         *
+         * A missing video that the system believes it has is worse than a
+         * failed upload, because nobody goes looking for it until a student
+         * opens the lesson.
+         * ═════════════════════════════════════════════════════════════════
+         */
+        if ($stored === false) {
+            throw new \App\Exceptions\MediaValidationException(
+                'The file could not be saved to storage. Nothing was recorded — please try again, '
+                .'and if it keeps happening the storage service may be unreachable.',
+            );
         }
 
         try {
