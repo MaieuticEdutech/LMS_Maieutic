@@ -18,7 +18,7 @@ use RuntimeException;
  * covers both the owning student and admin/instructor read access — see
  * that policy's docblock for the deferred instructor-scope note.
  */
-#[Layout('layouts.app')]
+#[Layout('layouts.student')]
 final class AttemptResult extends Component
 {
     public AssessmentAttempt $attempt;

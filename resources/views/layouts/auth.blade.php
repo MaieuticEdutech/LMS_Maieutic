@@ -78,6 +78,14 @@
                     >
                 </a>
 
+                {{-- Optional, and only the login screen defines it today. The
+                     brand's type signature is a wide-tracked mono eyebrow set
+                     against a serif headline; a screen that wants that contrast
+                     can have it without every auth screen gaining one. --}}
+                @hasSection('eyebrow')
+                    <p class="eyebrow mb-3 text-teal-600">@yield('eyebrow')</p>
+                @endif
+
                 @hasSection('heading')
                     <h1 class="text-[1.95rem]">@yield('heading')</h1>
                 @endif

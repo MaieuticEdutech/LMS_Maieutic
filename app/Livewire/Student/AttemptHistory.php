@@ -21,7 +21,7 @@ use Livewire\Component;
  * retained in full even where only the highest counts as official, so a
  * student can see their own improvement across attempts.
  */
-#[Layout('layouts.app')]
+#[Layout('layouts.student')]
 final class AttemptHistory extends Component
 {
     public Assessment $assessment;

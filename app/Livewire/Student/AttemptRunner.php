@@ -36,7 +36,7 @@ use RuntimeException;
  * public state round-trips through the page and must never carry
  * `question_options.is_correct` or `questions.meta.accepted_answers`.
  */
-#[Layout('layouts.app')]
+#[Layout('layouts.student')]
 final class AttemptRunner extends Component
 {
     public string $attemptUlid;

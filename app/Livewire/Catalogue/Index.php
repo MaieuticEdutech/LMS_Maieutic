@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Catalogue;
 
+use App\Enums\CourseLevel;
 use App\Models\Category;
 use App\Models\Course;
 use Illuminate\Contracts\View\View;
@@ -32,6 +33,19 @@ final class Index extends Component
     #[Url(as: 'category')]
     public string $category = '';
 
+    /**
+     * Difficulty filter — one of CourseLevel's values, or '' for any.
+     *
+     * The mockup's sidebar offers CATEGORY, LEVEL, DURATION and RATING. Only
+     * the first two are filterable against something this system records:
+     * `level` is a column with a CHECK constraint behind it, and categories are
+     * real rows. Duration is stored in seconds but has no agreed banding, and
+     * there is no rating anywhere in the schema — offering either would be a
+     * control that quietly does nothing, which is worse than its absence.
+     */
+    #[Url(as: 'level')]
+    public string $level = '';
+
     #[Url]
     public string $sort = 'newest';
 
@@ -41,6 +55,11 @@ final class Index extends Component
     }
 
     public function updatingCategory(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingLevel(): void
     {
         $this->resetPage();
     }
@@ -58,6 +77,13 @@ final class Index extends Component
 
         if ($this->category !== '') {
             $query->whereHas('category', fn (Builder $q) => $q->where('slug', $this->category));
+        }
+
+        // Matched against the enum rather than passed through: a hand-typed
+        // ?level=anything must narrow to nothing recognised rather than reach
+        // the query. CourseLevel::tryFrom returns null for junk.
+        if ($this->level !== '' && CourseLevel::tryFrom($this->level) instanceof CourseLevel) {
+            $query->where('level', $this->level);
         }
 
         match ($this->sort) {

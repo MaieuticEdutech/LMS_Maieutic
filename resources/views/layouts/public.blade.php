@@ -35,6 +35,21 @@
         Skip to content
     </a>
 
+    {{--
+        A SIGNED-IN STUDENT KEEPS THEIR OWN HEADER HERE.
+
+        The catalogue is a public page, but it is also the "Explore" tab of the
+        student shell. Swapping a student back to the guest header the moment
+        they browse would drop their navigation and their profile disc mid-session
+        — it would read as having been signed out.
+
+        Guests, instructors and administrators get the public header below:
+        none of them has a My Learning list, so the student nav would be three
+        links to somewhere they cannot go.
+    --}}
+    @if (auth()->user()?->isStudent())
+        @include('partials.student-header')
+    @else
     <header class="border-b border-neutral-200 bg-neutral-0">
         <nav class="mx-auto flex max-w-content items-center justify-between gap-6 px-6 py-4" aria-label="Primary">
             <a href="{{ route('home') }}" class="shrink-0">
@@ -62,6 +77,7 @@
             </div>
         </nav>
     </header>
+    @endif
 
     <main id="main" class="flex-1">
         @yield('content')

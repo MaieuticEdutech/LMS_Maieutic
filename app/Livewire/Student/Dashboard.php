@@ -26,7 +26,7 @@ use Livewire\Component;
  * StudentDashboardService, so even if the route guard were removed this could
  * not show one user another's enrolments.
  */
-#[Layout('layouts.app')]
+#[Layout('layouts.student')]
 #[Title('Dashboard')]
 final class Dashboard extends Component
 {

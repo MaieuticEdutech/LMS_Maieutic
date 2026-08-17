@@ -250,6 +250,32 @@ class User extends Authenticatable implements MustVerifyEmailContract
     }
 
     /**
+     * One or two letters for the avatar disc.
+     *
+     * Built from the same parts the profile form edits, so the disc changes
+     * when the learner corrects their name rather than staying stuck on
+     * whatever registration captured.
+     *
+     * Falls back to the first letter of the display name, and to "?" for the
+     * pathological case of a name that is entirely punctuation — an empty disc
+     * looks like a rendering failure, and this is the one place a placeholder
+     * is better than nothing.
+     */
+    public function initials(): string
+    {
+        $parts = $this->editableNameParts();
+
+        $initials = mb_substr($parts['first'], 0, 1).mb_substr($parts['last'], 0, 1);
+        $initials = trim($initials);
+
+        if ($initials === '') {
+            $initials = mb_substr(trim($this->name), 0, 1);
+        }
+
+        return $initials !== '' ? mb_strtoupper($initials) : '?';
+    }
+
+    /**
      * Read one of the optional name columns: trimmed, or null if it holds
      * nothing useful.
      *
