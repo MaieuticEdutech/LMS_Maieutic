@@ -1,8 +1,16 @@
 @section('title', 'History — '.$assessment->title.' — '.config('app.name'))
 
-<div class="mx-auto max-w-3xl">
+{{--
+    The 760px column and page gutters the assessment runner uses, so the three
+    assessment screens read as one family.
+
+    The gutters are the view's own because `layouts.student` gives `main` no
+    padding — the player is full-bleed by design, so each screen states its own
+    measure rather than inheriting one that would be wrong for the player.
+--}}
+<div class="mx-auto w-full max-w-[760px] px-5 pb-24 pt-12 lg:px-10">
     <p class="eyebrow text-teal-600">{{ $assessment->title }}</p>
-    <h1 class="mt-1 text-2xl">Attempt history</h1>
+    <h1 class="mt-2 font-serif text-[30px] font-medium tracking-[-0.01em]">Attempt history</h1>
 
     @if ($attempts->isEmpty())
         <x-empty-state
