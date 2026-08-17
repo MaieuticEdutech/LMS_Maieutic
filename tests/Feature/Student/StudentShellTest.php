@@ -232,6 +232,89 @@ it('combines level with a search term', function (): void {
 });
 
 /*
+| ═══════════════ DURATION BANDS (design handoff §2) ═══════════════
+*/
+it('narrows the catalogue by duration band', function (): void {
+    Course::factory()->published()->create(['title' => 'Short Course', 'total_duration_seconds' => 5 * 3600]);
+    Course::factory()->published()->create(['title' => 'Middling Course', 'total_duration_seconds' => 15 * 3600]);
+    Course::factory()->published()->create(['title' => 'Epic Course', 'total_duration_seconds' => 30 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', 'short')
+        ->assertSee('Short Course')
+        ->assertDontSee('Middling Course')
+        ->assertDontSee('Epic Course')
+        ->set('duration', 'long')
+        ->assertSee('Epic Course')
+        ->assertDontSee('Short Course');
+});
+
+it('puts a course on a band boundary in exactly one band', function (): void {
+    // Exactly 10 hours. An inclusive upper bound would show it in both "under
+    // 10" and "10-20", and a student would count it twice.
+    Course::factory()->published()->create(['title' => 'Boundary Course', 'total_duration_seconds' => 10 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', 'short')
+        ->assertDontSee('Boundary Course')
+        ->set('duration', 'medium')
+        ->assertSee('Boundary Course');
+});
+
+it('ignores a duration band that does not exist', function (): void {
+    Course::factory()->published()->create(['title' => 'Some Course', 'total_duration_seconds' => 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', 'forever')
+        ->assertSee('Some Course');
+});
+
+/*
+| ═══════════════ RECOMMENDED FOR YOU (design handoff §1) ═══════════════
+*/
+it('recommends published courses the student is not in', function (): void {
+    Course::factory()->published()->create(['title' => 'Fresh Course']);
+
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee('Recommended for you')
+        ->assertSee('Fresh Course');
+});
+
+it('never recommends a course they are already enrolled in', function (): void {
+    $mine = Course::factory()->published()->create(['title' => 'Already Mine']);
+    ($this->enrol)($this->student, $mine);
+
+    // It appears once, as one of THEIR courses — never a second time as a
+    // suggestion. Recommending what someone already owns reads as the product
+    // not knowing them at all.
+    $response = $this->actingAs($this->student)->get(route('student.home'))->assertOk();
+
+    expect(substr_count($response->content(), 'Already Mine'))->toBe(1);
+});
+
+it('never recommends an unpublished course', function (): void {
+    Course::factory()->create(['title' => 'Draft Course']);
+
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertDontSee('Draft Course');
+});
+
+it('shows recommendations to a brand-new account with nothing else to do', function (): void {
+    Course::factory()->published()->create(['title' => 'Fresh Course']);
+
+    // On day one this is the only thing on the page worth doing.
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee('not enrolled in any courses')
+        ->assertSee('Fresh Course');
+});
+
+/*
 | ═══════════════ NO INVENTED FIGURES ═══════════════
 */
 it('never prints a rating or a learner count', function (): void {

@@ -53,7 +53,6 @@
         />
     @endif
 
-    @if ($lesson->summary)
-        <p class="max-w-[68ch] leading-relaxed text-neutral-700">{{ $lesson->summary }}</p>
-    @endif
+    {{-- The summary is drawn once by the player, below the lesson title
+         (design handoff §4) — see video.blade.php. --}}
 </div>

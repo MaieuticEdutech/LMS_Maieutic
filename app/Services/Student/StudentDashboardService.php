@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Student;
 
 use App\Enums\EnrollmentStatus;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * What a student sees on their dashboard and My Courses (FR-STU-05, FR-STU-06).
@@ -45,8 +47,15 @@ final class StudentDashboardService
      */
     public function activeEnrollments(User $student): Collection
     {
+        /*
+         * `instructors` is eager-loaded because the course card names one
+         * (design handoff §2 — "instructor 13px"). Without it,
+         * preventLazyLoading throws outside production and, in production, a
+         * library of twenty courses would fire twenty extra queries to render
+         * twenty names.
+         */
         return $this->accessibleQuery($student)
-            ->with(['course' => static fn (Relation $q) => $q->with('category')])
+            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'instructors'])])
             ->orderByRaw('COALESCE(last_accessed_at, enrolled_at) DESC')
             ->get();
     }
@@ -67,6 +76,39 @@ final class StudentDashboardService
             ->with('course')
             ->orderByDesc('last_accessed_at')
             ->first();
+    }
+
+    /**
+     * Courses to suggest next (design handoff §1, "Recommended for you").
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * NOT A RECOMMENDER. NEWEST PUBLISHED COURSES THEY ARE NOT ALREADY IN.
+     *
+     * There is no signal in this system to recommend from — no ratings, no
+     * completion correlations, no topic affinity. Dressing "newest three" up as
+     * personalised would be a claim the data cannot support, and the honest
+     * version is useful anyway: a student's own courses are already on the
+     * screen above, so anything here is new to them.
+     *
+     * Their own enrolments are excluded with a subquery rather than by loading
+     * ids into PHP, so the cost does not grow with the size of their library.
+     * ═════════════════════════════════════════════════════════════════════
+     *
+     * @return Collection<int, Course>
+     */
+    public function recommended(User $student, int $limit = 3): Collection
+    {
+        return Course::published()
+            ->with(['category', 'instructors'])
+            ->whereNotExists(static function (QueryBuilder $query) use ($student): void {
+                $query->selectRaw('1')
+                    ->from('enrollments')
+                    ->whereColumn('enrollments.course_id', 'courses.id')
+                    ->where('enrollments.user_id', $student->getKey());
+            })
+            ->orderByDesc('published_at')
+            ->limit($limit)
+            ->get();
     }
 
     /**

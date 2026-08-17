@@ -94,10 +94,10 @@
         </div>
     @endif
 
-    @if ($lesson->summary)
-        <p class="max-w-[68ch] leading-relaxed text-neutral-700">{{ $lesson->summary }}</p>
-    @endif
-
+    {{-- The summary is NOT rendered here. It is chrome, not content, and the
+         player draws it once below the lesson title (design handoff §4). All
+         five type partials used to render their own, which meant two summaries
+         on every lesson the moment the player gained one. --}}
     @if ($lesson->body)
         {{-- Sanitised on save, not on render (NFR-SEC-06) — what is in the
              database is already safe, so this is the one place {!! !!} is

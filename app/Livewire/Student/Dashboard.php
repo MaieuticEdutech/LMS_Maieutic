@@ -42,6 +42,10 @@ final class Dashboard extends Component
             'continue' => $dashboard->continueLearning($student),
             'enrollments' => $dashboard->activeEnrollments($student),
             'stats' => $dashboard->stats($student),
+            // "Recommended for you" (design handoff §1). Newest published
+            // courses they are not already in — see the service for why that is
+            // not dressed up as personalisation.
+            'recommended' => $dashboard->recommended($student),
             /*
              * Overall progress (FR-PROG-07).
              *

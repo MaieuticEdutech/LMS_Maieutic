@@ -35,16 +35,39 @@ final class Index extends Component
 
     /**
      * Difficulty filter — one of CourseLevel's values, or '' for any.
-     *
-     * The mockup's sidebar offers CATEGORY, LEVEL, DURATION and RATING. Only
-     * the first two are filterable against something this system records:
-     * `level` is a column with a CHECK constraint behind it, and categories are
-     * real rows. Duration is stored in seconds but has no agreed banding, and
-     * there is no rating anywhere in the schema — offering either would be a
-     * control that quietly does nothing, which is worse than its absence.
      */
     #[Url(as: 'level')]
     public string $level = '';
+
+    /**
+     * Duration band — 'short', 'medium', 'long', or '' for any.
+     *
+     * The handoff's rail offers CATEGORY, LEVEL, DURATION and RATING. Three are
+     * filterable against something this system records; RATING is not, because
+     * there is no rating table anywhere in the schema. A facet that quietly
+     * does nothing is worse than its absence, so it is omitted rather than
+     * drawn inert.
+     *
+     * The bands match the labels in the prototype's own data — under 10 hours,
+     * 10–20, 20+ — measured against `total_duration_seconds`, which the course
+     * row already caches.
+     */
+    #[Url(as: 'duration')]
+    public string $duration = '';
+
+    /**
+     * Boundaries in seconds, so the query and the labels cannot drift apart.
+     *
+     * @return array<string, array{label: string, min: int, max: int|null}>
+     */
+    public function durationBands(): array
+    {
+        return [
+            'short' => ['label' => 'Under 10 hours', 'min' => 0, 'max' => 10 * 3600],
+            'medium' => ['label' => '10–20 hours', 'min' => 10 * 3600, 'max' => 20 * 3600],
+            'long' => ['label' => '20+ hours', 'min' => 20 * 3600, 'max' => null],
+        ];
+    }
 
     #[Url]
     public string $sort = 'newest';
@@ -60,6 +83,11 @@ final class Index extends Component
     }
 
     public function updatingLevel(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDuration(): void
     {
         $this->resetPage();
     }
@@ -84,6 +112,20 @@ final class Index extends Component
         // the query. CourseLevel::tryFrom returns null for junk.
         if ($this->level !== '' && CourseLevel::tryFrom($this->level) instanceof CourseLevel) {
             $query->where('level', $this->level);
+        }
+
+        // Bands are looked up rather than parsed, so an unrecognised ?duration=
+        // narrows to nothing recognised instead of reaching the query. The upper
+        // bound is exclusive so a course of exactly 10 hours lands in one band
+        // and not two.
+        $band = $this->durationBands()[$this->duration] ?? null;
+
+        if ($band !== null) {
+            $query->where('total_duration_seconds', '>=', $band['min']);
+
+            if ($band['max'] !== null) {
+                $query->where('total_duration_seconds', '<', $band['max']);
+            }
         }
 
         match ($this->sort) {
