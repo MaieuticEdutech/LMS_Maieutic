@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Fortify;
 
 /**
@@ -26,13 +27,17 @@ use Laravel\Fortify\Fortify;
  *   2. Replace Fortify's credential check so ACCOUNT STATUS is asserted in the
  *      same step, before any session exists.
  *   3. Configure rate limiters.
- *   4. Route users to their role's home after login.
+ *   4. Route users to their role's home after login, and back to the login
+ *      screen after logout.
  */
 class FortifyServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Both ends of a session, bound together so there is one place to look
+        // for "where does auth send people".
         $this->app->singleton(LoginResponseContract::class, \App\Http\Responses\LoginResponse::class);
+        $this->app->singleton(LogoutResponseContract::class, \App\Http\Responses\LogoutResponse::class);
     }
 
     public function boot(): void
