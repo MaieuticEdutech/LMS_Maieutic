@@ -36,6 +36,14 @@ final class AssessmentsTable extends Component
         $this->authorize('viewAny', Assessment::class);
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['typeFilter'];
+    }
+
     public function updatingTypeFilter(): void
     {
         $this->resetPage();

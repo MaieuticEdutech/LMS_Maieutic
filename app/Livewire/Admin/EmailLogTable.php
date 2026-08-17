@@ -58,6 +58,14 @@ final class EmailLogTable extends Component
         $this->authorize('viewAny', EmailLog::class);
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['statusFilter'];
+    }
+
     public function updatingStatusFilter(): void
     {
         $this->resetPage();

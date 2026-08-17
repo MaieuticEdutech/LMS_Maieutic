@@ -44,6 +44,14 @@ final class CoursesTable extends Component
         $this->authorize('viewAny', Course::class);
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['statusFilter'];
+    }
+
     public function updatingStatusFilter(): void
     {
         $this->resetPage();

@@ -40,17 +40,7 @@ trait WithAdminTable
 
     public int $perPage = 15;
 
-    /**
-     * @var array<string, mixed>
-     */
-    public array $filters = [];
-
     public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFilters(): void
     {
         $this->resetPage();
     }
@@ -71,9 +61,39 @@ trait WithAdminTable
         $this->resetPage();
     }
 
+    /**
+     * The names of this table's own filter properties.
+     *
+     * Filters are declared as typed properties on each table rather than
+     * shared through one untyped array here, because no two admin tables
+     * filter on the same thing — status, source, course, type, action — and a
+     * generic `array $filters` would give up both the type and the ability to
+     * bind an individual filter to the URL. This hook is what lets the shared
+     * reset still know what to clear.
+     *
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return [];
+    }
+
+    /**
+     * Clear search, sort AND the table's own filters.
+     *
+     * The filter names come from filterProperties() because this used to reset
+     * a `$filters` array that no table ever populated: the Enrolments screen's
+     * "Clear filters" button cleared the search box and left status, source
+     * and course exactly as they were. A reset that visibly resets nothing is
+     * worse than no button at all.
+     */
     public function resetTableFilters(): void
     {
-        $this->reset(['search', 'filters', 'sortField', 'sortDirection']);
+        $this->reset(array_merge(
+            ['search', 'sortField', 'sortDirection'],
+            $this->filterProperties(),
+        ));
+
         $this->resetPage();
     }
 
