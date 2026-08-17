@@ -56,6 +56,28 @@ final class Index extends Component
     public string $duration = '';
 
     /**
+     * Minimum mean rating — '4.5', '4.0', or '' for any.
+     *
+     * The handoff's fourth facet, real now that course_reviews exists. Compared
+     * against the cached sum and count rather than a stored average, because
+     * there is no stored average — see the migration for why.
+     */
+    #[Url(as: 'rating')]
+    public string $rating = '';
+
+    /**
+     * @return array<string, string>
+     */
+    public function ratingBands(): array
+    {
+        return [
+            '4.5' => '4.5 & up',
+            '4.0' => '4.0 & up',
+            '3.0' => '3.0 & up',
+        ];
+    }
+
+    /**
      * Boundaries in seconds, so the query and the labels cannot drift apart.
      *
      * @return array<string, array{label: string, min: int, max: int|null}>
@@ -88,6 +110,11 @@ final class Index extends Component
     }
 
     public function updatingDuration(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRating(): void
     {
         $this->resetPage();
     }
@@ -126,6 +153,33 @@ final class Index extends Component
             if ($band['max'] !== null) {
                 $query->where('total_duration_seconds', '<', $band['max']);
             }
+        }
+
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * INTEGER ARITHMETIC ONLY — NO FLOAT REACHES THE QUERY.
+         *
+         * "4.5 and up" is `sum / count >= 4.5`, which becomes
+         * `sum * 10 >= 45 * count` once both sides are multiplied by ten. The
+         * threshold is carried in TENTHS, so the comparison is exact and the
+         * database never divides.
+         *
+         * The obvious version — binding 4.5 against `rating_sum >= ? * count`
+         * — is rejected outright by PostgreSQL, which infers the parameter type
+         * from the integer column beside it. Which is the database being right:
+         * this schema deliberately holds no floats (see the migration), and the
+         * query should not introduce one.
+         *
+         * An unrated course is excluded explicitly. Without that, `0 >= 45 * 0`
+         * is TRUE and every brand-new course would appear under "4.5 & up" —
+         * unrated is not a high rating.
+         * ═════════════════════════════════════════════════════════════════
+         */
+        if (isset($this->ratingBands()[$this->rating])) {
+            $tenths = (int) round(((float) $this->rating) * 10);
+
+            $query->where('rating_count', '>', 0)
+                ->whereRaw('rating_sum * 10 >= ? * rating_count', [$tenths]);
         }
 
         match ($this->sort) {
