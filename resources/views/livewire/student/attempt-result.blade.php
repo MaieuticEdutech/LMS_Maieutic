@@ -1,4 +1,4 @@
-@section('title', 'Result — '.$assessment->title.' — '.config('app.name'))
+@section('title', 'Result — '.$assessment->title.' — '.app(\App\Services\Settings\BrandingService::class)->organisationName())
 
 {{-- Same 760px column and gutters as the runner and the history screen — see
      attempt-history.blade.php for why each states its own. --}}

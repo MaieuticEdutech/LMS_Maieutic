@@ -1,4 +1,4 @@
-@section('title', 'History — '.$assessment->title.' — '.config('app.name'))
+@section('title', 'History — '.$assessment->title.' — '.app(\App\Services\Settings\BrandingService::class)->organisationName())
 
 {{--
     The 760px column and page gutters the assessment runner uses, so the three
