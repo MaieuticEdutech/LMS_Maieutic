@@ -7,6 +7,8 @@ use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\HealthController;
 use App\Livewire\Catalogue\Index as CatalogueIndex;
 use App\Livewire\Catalogue\Show as CatalogueShow;
+use App\Services\Settings\BrandingService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,7 +32,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', static fn () => view('welcome'))->name('home');
+/*
+ * The landing page. Organisation identity comes from BrandingService, which
+ * reads the `settings` table — never from config('app.name') and never from a
+ * literal in the template (rule S-1, FR-SYS-01). Renaming the organisation is
+ * an administrator changing a setting, not a developer editing a view.
+ */
+Route::get('/', static fn (): View => view('welcome', [
+    'organisation' => app(BrandingService::class)->organisationName(),
+]))->name('home');
 
 /*
 |--------------------------------------------------------------------------
