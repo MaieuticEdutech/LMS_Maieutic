@@ -1,6 +1,8 @@
 @section('title', 'Result — '.$assessment->title.' — '.config('app.name'))
 
-<div class="mx-auto max-w-3xl">
+{{-- Same 760px column and gutters as the runner and the history screen — see
+     attempt-history.blade.php for why each states its own. --}}
+<div class="mx-auto w-full max-w-[760px] px-5 pb-24 pt-12 lg:px-10">
     <a href="{{ route('student.assessments.history', $assessment) }}" wire:navigate class="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-700 hover:text-teal-700">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
         Attempt history
@@ -24,7 +26,7 @@
     </div>
 
     @if ($mayReveal)
-        <h2 class="mt-8 text-xl">Review</h2>
+        <h2 class="mt-8 font-serif text-[26px] font-medium tracking-[-0.01em]">Review</h2>
         <div class="mt-3 space-y-3">
             @foreach ($review as $item)
                 <div class="rounded-card border border-neutral-200 bg-white p-5">
