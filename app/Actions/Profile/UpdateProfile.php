@@ -37,20 +37,64 @@ final class UpdateProfile
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * @param  array{name?: string, phone?: string|null}  $input
+     * @param  array{name?: string, first_name?: string|null, last_name?: string|null, certificate_name?: string|null, phone?: string|null}  $input
      */
     public function handle(User $user, array $input): User
     {
         // Only the fields this action owns. Anything else in the payload is
         // ignored rather than trusted — email in particular, which has its
         // own action and its own verification flow.
-        $changes = array_intersect_key($input, array_flip(['name', 'phone']));
+        $changes = array_intersect_key($input, array_flip([
+            'name', 'first_name', 'last_name', 'certificate_name', 'phone',
+        ]));
 
         if ($changes === []) {
             return $user;
         }
 
-        $before = $user->only(array_keys($changes));
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * `name` IS DERIVED FROM THE PARTS HERE, AND ONLY HERE.
+         *
+         * The learner edits first and last name; the rest of the system reads
+         * `name` — every transactional email greeting, the admin tables, the
+         * instructor's student lists. If the two were allowed to drift, a
+         * person could rename themselves on this screen and still be greeted
+         * by the old name in their next email, which reads as the system not
+         * having listened.
+         *
+         * One writer, so there is never a question of which is authoritative.
+         * The parts are the input; `name` is the projection.
+         *
+         * Guarded by assembledName() returning null when both parts are blank:
+         * a payload carrying empty strings must not wipe a display name that
+         * is currently correct.
+         * ═════════════════════════════════════════════════════════════════
+         */
+        if (array_key_exists('first_name', $changes) || array_key_exists('last_name', $changes)) {
+            $projected = (clone $user)->fill($changes)->assembledName();
+
+            if ($projected !== null) {
+                $changes['name'] = $projected;
+            }
+        }
+
+        /*
+         * Deliberately NOT $user->only(). These columns can be absent rather
+         * than null on a model whose row was just inserted (see
+         * User::nameField), and only() reads each one through getAttribute,
+         * which throws under preventAccessingMissingAttributes.
+         *
+         * Absent is recorded as null so the before/after pair in the audit
+         * entry always carries the same keys — a diff missing a key on one side
+         * is unreadable to whoever is investigating.
+         */
+        $attributes = $user->getAttributes();
+        $before = [];
+
+        foreach (array_keys($changes) as $column) {
+            $before[$column] = $attributes[$column] ?? null;
+        }
 
         DB::transaction(static function () use ($user, $changes): void {
             $user->fill($changes)->save();

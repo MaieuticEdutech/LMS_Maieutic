@@ -41,10 +41,34 @@ use Livewire\Component;
 final class ProfileForm extends Component
 {
     #[Validate('required|string|max:255')]
-    public string $name = '';
+    public string $firstName = '';
 
-    #[Validate('nullable|string|max:32')]
-    public ?string $phone = null;
+    #[Validate('required|string|max:255')]
+    public string $lastName = '';
+
+    /*
+     * REQUIRED HERE, NULLABLE IN THE DATABASE, AND THAT IS DELIBERATE.
+     *
+     * A learner must give a contact number before they can save their profile
+     * — asked for explicitly. But the column stays nullable, because accounts
+     * also arrive by administrator creation and (from Phase 12) by purchase,
+     * neither of which involves anybody filling in this form. A NOT NULL
+     * constraint would stop an administrator adding a student on a phone call
+     * and would break every account that predates the rule.
+     *
+     * "Must be supplied before this form will save" is a product rule. It
+     * belongs in validation, not in the schema.
+     */
+    #[Validate('required|string|min:6|max:32|regex:/^[0-9 +()\-]+$/')]
+    public string $phone = '';
+
+    /*
+     * Optional on purpose. A blank answer means "no preference", and
+     * User::certificateName() then falls back to the display name — a
+     * certificate should never print an empty line where a name belongs.
+     */
+    #[Validate('nullable|string|max:255')]
+    public ?string $certificateName = null;
 
     public string $email = '';
 
@@ -55,22 +79,38 @@ final class ProfileForm extends Component
     {
         $user = $this->user();
 
-        $this->name = $user->name;
-        $this->phone = $user->phone;
+        // Both name reads live on the model: the fallback that splits a legacy
+        // display name is a rule about names, not about this screen, and the
+        // model is where it can be tested without a component.
+        $parts = $user->editableNameParts();
+
+        $this->firstName = $parts['first'];
+        $this->lastName = $parts['last'];
+        $this->certificateName = $user->statedCertificateName();
+        $this->phone = (string) $user->phone;
         $this->email = $user->email;
     }
 
     /**
-     * Name and phone. No password required — see the class docblock.
+     * Name, phone and certificate name. No password required — see the class
+     * docblock.
      */
     public function saveDetails(): void
     {
-        $this->validateOnly('name');
+        $this->validateOnly('firstName');
+        $this->validateOnly('lastName');
         $this->validateOnly('phone');
+        $this->validateOnly('certificateName');
 
         app(UpdateProfile::class)->handle($this->user(), [
-            'name' => $this->name,
-            'phone' => $this->phone,
+            'first_name' => trim($this->firstName),
+            'last_name' => trim($this->lastName),
+            // Empty means "no preference" and must be stored as null, not as
+            // an empty string, so certificateName()'s fallback triggers.
+            'certificate_name' => $this->certificateName === null || trim($this->certificateName) === ''
+                ? null
+                : trim($this->certificateName),
+            'phone' => trim($this->phone),
         ]);
 
         session()->flash('status', 'Your details have been updated.');

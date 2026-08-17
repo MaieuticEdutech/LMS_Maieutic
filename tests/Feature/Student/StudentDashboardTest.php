@@ -114,8 +114,12 @@ it('hides a course whose expiry has passed before the scheduler has run', functi
 it('updates name and phone without asking for a password', function (): void {
     $this->actingAs($this->student);
 
+    // The name is edited as two parts now; `name` is projected from them.
+    // ProfileDetailsTest covers that projection in detail — what matters here is
+    // that this edit still needs no password, unlike an email change.
     Livewire::test(ProfileForm::class)
-        ->set('name', 'Updated Name')
+        ->set('firstName', 'Updated')
+        ->set('lastName', 'Name')
         ->set('phone', '+91 90000 00000')
         ->call('saveDetails')
         ->assertHasNoErrors();
