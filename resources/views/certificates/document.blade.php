@@ -68,8 +68,30 @@
 
         /* ───────── frame ───────── */
 
-        .frame-outer { left: 28px; top: 28px; width: 1344px; height: 934px; border: 3px solid #024e4a; }
-        .frame-inner { left: 36px; top: 36px; width: 1328px; height: 918px; border: 1px solid #024e4a; }
+        /* ═══════════════════════════════════════════════════════════════
+           THE FRAMES ARE FILLED BARS, NOT BORDERS, AND THAT IS DELIBERATE.
+
+           dompdf does not implement `box-sizing: border-box`, so a border is
+           added OUTSIDE the declared width. The outer frame came out 1350px
+           wide instead of 1344 and the inner one 1330 instead of 1328 — enough
+           that neither met the corner ticks any more, while both looked
+           perfect in a browser.
+
+           Four bars per frame have no box model to disagree about: a filled
+           rectangle is a filled rectangle in every renderer. The numbers are
+           the deck's own edges.
+           ═══════════════════════════════════════════════════════════════ */
+        .rule { background: #024e4a; }
+
+        .frame-outer-top { left: 28px; top: 28px; width: 1344px; height: 3px; }
+        .frame-outer-bottom { left: 28px; top: 959px; width: 1344px; height: 3px; }
+        .frame-outer-left { left: 28px; top: 28px; width: 3px; height: 934px; }
+        .frame-outer-right { left: 1369px; top: 28px; width: 3px; height: 934px; }
+
+        .frame-inner-top { left: 36px; top: 36px; width: 1328px; height: 1px; }
+        .frame-inner-bottom { left: 36px; top: 953px; width: 1328px; height: 1px; }
+        .frame-inner-left { left: 36px; top: 36px; width: 1px; height: 918px; }
+        .frame-inner-right { left: 1363px; top: 36px; width: 1px; height: 918px; }
 
         /* The eight corner ticks: 80px long, 3px thick, laid over the frame. */
         .tick { background: #800d07; }
@@ -398,9 +420,17 @@
             <div class="sheet">
     @endif
 
-            <div class="frame-outer"></div>
-            <div class="frame-inner"></div>
+            <div class="rule frame-outer-top"></div>
+            <div class="rule frame-outer-bottom"></div>
+            <div class="rule frame-outer-left"></div>
+            <div class="rule frame-outer-right"></div>
 
+            <div class="rule frame-inner-top"></div>
+            <div class="rule frame-inner-bottom"></div>
+            <div class="rule frame-inner-left"></div>
+            <div class="rule frame-inner-right"></div>
+
+            {{-- The ticks paint over the frame corners, as the deck draws them. --}}
             <div class="tick tick-h" style="left: 28px;   top: 28px;"></div>
             <div class="tick tick-v" style="left: 28px;   top: 28px;"></div>
             <div class="tick tick-h" style="left: 1292px; top: 28px;"></div>

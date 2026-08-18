@@ -74,19 +74,32 @@ final class QrSvg
          */
         $matrix = Encoder::encode($data, ErrorCorrectionLevel::Q())->getMatrix();
 
-        $modules = $matrix->getWidth();
-        $span = $modules + (self::QUIET_ZONE * 2);
+        $span = $matrix->getWidth() + (self::QUIET_ZONE * 2);
 
+        /*
+         * THE viewBox IS MEASURED IN PIXELS, NOT IN MODULES, AND THAT IS LOAD
+         * BEARING.
+         *
+         * dompdf's SVG renderer draws one viewBox unit as one CSS pixel and
+         * ignores both the width/height attributes and the CSS box it sits in.
+         * A viewBox of "0 0 45 45" therefore came out as a 45px code inside a
+         * 190px hole — correct, scannable in principle, and far too small to
+         * scan in practice. It looked right in every browser, because browsers
+         * honour the attributes.
+         *
+         * So the module grid is scaled into pixel coordinates here rather than
+         * left for the renderer to scale. Then one unit IS one pixel and every
+         * renderer agrees.
+         */
         return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="%1$d" height="%1$d" viewBox="0 0 %2$d %2$d" '
+            '<svg xmlns="http://www.w3.org/2000/svg" width="%1$d" height="%1$d" viewBox="0 0 %1$d %1$d" '
                 .'shape-rendering="crispEdges">'
-                .'<rect width="%2$d" height="%2$d" fill="%3$s"/>'
-                .'<path d="%4$s" fill="%5$s"/>'
+                .'<rect width="%1$d" height="%1$d" fill="%2$s"/>'
+                .'<path d="%3$s" fill="%4$s"/>'
                 .'</svg>',
             $size,
-            $span,
             self::LIGHT,
-            $this->path($matrix),
+            $this->path($matrix, $size / $span),
             self::DARK,
         );
     }
@@ -100,10 +113,13 @@ final class QrSvg
      * three quarters and produces identical output — the modules in a run are
      * contiguous by definition.
      */
-    private function path(ByteMatrix $matrix): string
+    private function path(ByteMatrix $matrix, float $unit): string
     {
         $width = $matrix->getWidth();
         $segments = [];
+
+        // Where the code starts once the quiet zone is allowed for, in pixels.
+        $origin = self::QUIET_ZONE * $unit;
 
         for ($y = 0; $y < $matrix->getHeight(); $y++) {
             $runStart = null;
@@ -125,14 +141,15 @@ final class QrSvg
                 }
 
                 if (! $isDark && $runStart !== null) {
-                    $length = $x - $runStart;
+                    $length = ($x - $runStart) * $unit;
 
                     $segments[] = sprintf(
-                        'M%d %dh%dv1h-%dz',
-                        $runStart + self::QUIET_ZONE,
-                        $y + self::QUIET_ZONE,
-                        $length,
-                        $length,
+                        'M%s %sh%sv%sh-%sz',
+                        $this->coord($origin + ($runStart * $unit)),
+                        $this->coord($origin + ($y * $unit)),
+                        $this->coord($length),
+                        $this->coord($unit),
+                        $this->coord($length),
                     );
 
                     $runStart = null;
@@ -141,5 +158,15 @@ final class QrSvg
         }
 
         return implode('', $segments);
+    }
+
+    /**
+     * A coordinate, at the shortest length that still lands within a thousandth
+     * of a pixel — trailing zeroes on several hundred path segments are pure
+     * document weight.
+     */
+    private function coord(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 3, '.', ''), '0'), '.');
     }
 }

@@ -25,11 +25,17 @@ use BaconQrCode\Encoder\Encoder;
 */
 
 /**
- * Every dark cell the rendered path actually paints, in matrix coordinates.
+ * Every dark cell the rendered path actually paints, back in matrix
+ * coordinates.
  *
+ * The path is written in PIXELS, not modules — see QrSvg for why — so this
+ * divides by the module size to get there, which also proves the scaling is
+ * self-consistent.
+ *
+ * @param  int  $modules  the code's own width, quiet zone excluded
  * @return list<string> "y:x", sorted
  */
-function paintedCells(string $svg): array
+function paintedCells(string $svg, int $modules): array
 {
     // Not a formality: an SVG with no path at all would otherwise compare
     // equal to an empty expectation and pass every test in this file.
@@ -37,17 +43,31 @@ function paintedCells(string $svg): array
         throw new RuntimeException('The rendered SVG contains no path — nothing was drawn.');
     }
 
-    preg_match_all('/M(\d+) (\d+)h(\d+)v1h-(\d+)z/', $path[1], $runs, PREG_SET_ORDER);
+    if (preg_match('/width="(\d+)"/', $svg, $size) !== 1) {
+        throw new RuntimeException('The rendered SVG declares no width.');
+    }
+
+    $unit = (int) $size[1] / ($modules + (QrSvg::QUIET_ZONE * 2));
+    $origin = QrSvg::QUIET_ZONE * $unit;
+
+    preg_match_all('/M([\d.]+) ([\d.]+)h([\d.]+)v([\d.]+)h-([\d.]+)z/', $path[1], $runs, PREG_SET_ORDER);
 
     $cells = [];
 
-    foreach ($runs as [, $x, $y, $width, $closes]) {
+    foreach ($runs as [, $x, $y, $width, $height, $closes]) {
         // A run that does not return to where it started leaves an open
         // subpath, which fills as a wedge rather than a row of modules.
         expect($closes)->toBe($width);
 
-        for ($i = 0; $i < (int) $width; $i++) {
-            $cells[] = ((int) $y - QrSvg::QUIET_ZONE).':'.((int) $x + $i - QrSvg::QUIET_ZONE);
+        // Every run is exactly one module tall.
+        expect(round((float) $height / $unit))->toBe(1.0);
+
+        $col = (int) round(((float) $x - $origin) / $unit);
+        $row = (int) round(((float) $y - $origin) / $unit);
+        $span = (int) round((float) $width / $unit);
+
+        for ($i = 0; $i < $span; $i++) {
+            $cells[] = "{$row}:".($col + $i);
         }
     }
 
@@ -89,7 +109,9 @@ it('paints exactly the modules the encoder produced', function (string $data): v
      * column of rows 0 to 6 of EVERY QR code, so a renderer that only closed a
      * run when it met a light module would drop them here.
      */
-    expect(paintedCells((new QrSvg)->render($data, 139)))->toBe(encodedCells($data));
+    $modules = Encoder::encode($data, ErrorCorrectionLevel::Q())->getMatrix()->getWidth();
+
+    expect(paintedCells((new QrSvg)->render($data, 190), $modules))->toBe(encodedCells($data));
 })->with([
     'a verification URL' => 'https://lms.example.test/verify/MAI-CERT-A2C4-9KFP',
     'a local URL' => 'http://localhost:8000/verify/MAI-CERT-TVWX-2367',
@@ -119,16 +141,11 @@ it('merges horizontal runs rather than emitting one node per module', function (
 it('surrounds the code with a quiet zone on all four sides', function (): void {
     $data = 'https://lms.example.test/verify/MAI-CERT-A2C4-9KFP';
 
-    $svg = (new QrSvg)->render($data, 139);
+    $svg = (new QrSvg)->render($data, 190);
     $modules = Encoder::encode($data, ErrorCorrectionLevel::Q())->getMatrix()->getWidth();
-    $span = $modules + (QrSvg::QUIET_ZONE * 2);
-
-    // The viewBox, not the pixel size, is what carries the border — the code
-    // has to keep it at every rendered size.
-    expect($svg)->toContain("viewBox=\"0 0 {$span} {$span}\"");
 
     // Nothing painted inside the border on any edge.
-    foreach (paintedCells($svg) as $cell) {
+    foreach (paintedCells($svg, $modules) as $cell) {
         [$y, $x] = array_map(intval(...), explode(':', $cell));
 
         expect($x)->toBeGreaterThanOrEqual(0)
@@ -145,6 +162,48 @@ it('renders square at the requested size', function (): void {
 
     expect($svg)->toContain('width="220"')
         ->and($svg)->toContain('height="220"');
+});
+
+it('measures its viewBox in pixels, not in modules', function (int $size): void {
+    /*
+     * THE REGRESSION THIS FILE EXISTS FOR, SECOND EDITION.
+     *
+     * dompdf's SVG renderer draws one viewBox unit as one CSS pixel and ignores
+     * the width/height attributes and the CSS box entirely. When the viewBox
+     * was in module units, a 190px code rendered as a 45px one sitting in the
+     * bottom-left of its hole — perfect in every browser, useless on the PDF a
+     * student actually downloads.
+     *
+     * If the viewBox extent equals the pixel size, the two interpretations
+     * cannot disagree.
+     */
+    $svg = (new QrSvg)->render('https://lms.example.test/verify/MAI-CERT-A2C4-9KFP', $size);
+
+    expect($svg)->toContain("width=\"{$size}\" height=\"{$size}\" viewBox=\"0 0 {$size} {$size}\"");
+
+    // The light field behind the code has to fill it too, or the quiet zone is
+    // only as big as whatever happens to be underneath.
+    expect($svg)->toContain("<rect width=\"{$size}\" height=\"{$size}\"");
+})->with([139, 190, 220, 512]);
+
+it('keeps every drawn module inside the declared box', function (): void {
+    // A path coordinate beyond the viewBox is clipped, and a clipped QR code is
+    // an unreadable one.
+    $size = 190;
+    $svg = (new QrSvg)->render('https://lms.example.test/verify/MAI-CERT-A2C4-9KFP', $size);
+
+    if (preg_match('/<path d="([^"]*)"/', $svg, $path) !== 1) {
+        throw new RuntimeException('The rendered SVG contains no path — nothing was drawn.');
+    }
+
+    preg_match_all('/M([\d.]+) ([\d.]+)h([\d.]+)v([\d.]+)/', $path[1], $runs, PREG_SET_ORDER);
+
+    expect($runs)->not->toBeEmpty();
+
+    foreach ($runs as [, $x, $y, $width, $height]) {
+        expect((float) $x + (float) $width)->toBeLessThanOrEqual((float) $size)
+            ->and((float) $y + (float) $height)->toBeLessThanOrEqual((float) $size);
+    }
 });
 
 /*
