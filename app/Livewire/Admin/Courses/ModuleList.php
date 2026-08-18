@@ -156,7 +156,7 @@ final class ModuleList extends Component
         try {
             app(ReorderModules::class)->handle($this->course, $orderedIds, $actor);
         } catch (ReorderException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
 
         $this->course->refresh();

@@ -9,6 +9,17 @@
         $wire.reorder(reordered);
     },
 }">
+
+    {{-- A refusal the component itself has to show.
+
+         These actions flashed to the session, and both layouts do render
+         session('error') — but Livewire re-renders the COMPONENT, not the
+         surrounding layout, so the message landed in a region that was never
+         redrawn. The row simply stayed put and the control looked broken. --}}
+    @error('action')
+        <x-alert variant="danger" class="mb-4">{{ $message }}</x-alert>
+    @enderror
+
     @php $lessonIds = $lessons->pluck('id')->all(); @endphp
 
     @foreach ($lessons as $li => $lesson)

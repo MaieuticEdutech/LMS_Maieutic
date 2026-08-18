@@ -125,7 +125,7 @@ final class QuestionList extends Component
         try {
             $delete->handle($question, $actor);
         } catch (AssessmentDeletionException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
 
         $this->assessment->refresh();
@@ -166,7 +166,7 @@ final class QuestionList extends Component
         try {
             app(ReorderQuestions::class)->handle($this->assessment, $orderedIds, $actor);
         } catch (ReorderException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
 
         $this->assessment->refresh();

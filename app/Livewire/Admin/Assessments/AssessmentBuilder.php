@@ -122,7 +122,7 @@ final class AssessmentBuilder extends Component
             $this->assessment->refresh();
             session()->flash('status', "Assessment \"{$this->assessment->title}\" published.");
         } catch (AssessmentPublishException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
     }
 
@@ -150,7 +150,7 @@ final class AssessmentBuilder extends Component
 
             return redirect()->route($this->indexRouteName());
         } catch (AssessmentDeletionException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
 
             return null;
         }
