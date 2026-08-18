@@ -89,7 +89,7 @@ it('paints exactly the modules the encoder produced', function (string $data): v
      * column of rows 0 to 6 of EVERY QR code, so a renderer that only closed a
      * run when it met a light module would drop them here.
      */
-    expect(paintedCells((new QrSvg)->render($data, 139, 'test')))->toBe(encodedCells($data));
+    expect(paintedCells((new QrSvg)->render($data, 139)))->toBe(encodedCells($data));
 })->with([
     'a verification URL' => 'https://lms.example.test/verify/MAI-CERT-A2C4-9KFP',
     'a local URL' => 'http://localhost:8000/verify/MAI-CERT-TVWX-2367',
@@ -100,7 +100,7 @@ it('paints exactly the modules the encoder produced', function (string $data): v
 it('merges horizontal runs rather than emitting one node per module', function (): void {
     $data = 'https://lms.example.test/verify/MAI-CERT-A2C4-9KFP';
 
-    $svg = (new QrSvg)->render($data, 139, 'test');
+    $svg = (new QrSvg)->render($data, 139);
     $runs = substr_count($svg, 'M');
     $modules = count(encodedCells($data));
 
@@ -119,7 +119,7 @@ it('merges horizontal runs rather than emitting one node per module', function (
 it('surrounds the code with a quiet zone on all four sides', function (): void {
     $data = 'https://lms.example.test/verify/MAI-CERT-A2C4-9KFP';
 
-    $svg = (new QrSvg)->render($data, 139, 'test');
+    $svg = (new QrSvg)->render($data, 139);
     $modules = Encoder::encode($data, ErrorCorrectionLevel::Q())->getMatrix()->getWidth();
     $span = $modules + (QrSvg::QUIET_ZONE * 2);
 
@@ -141,28 +141,34 @@ it('surrounds the code with a quiet zone on all four sides', function (): void {
 it('renders square at the requested size', function (): void {
     // A stretched QR code does not scan. The certificate's own frame for it is
     // slightly wider than tall, so this is a real risk and not a hypothetical.
-    $svg = (new QrSvg)->render('https://lms.example.test/verify/MAI-CERT-A2C4-9KFP', 220, 'test');
+    $svg = (new QrSvg)->render('https://lms.example.test/verify/MAI-CERT-A2C4-9KFP', 220);
 
     expect($svg)->toContain('width="220"')
         ->and($svg)->toContain('height="220"');
 });
 
 /*
-| ═══════════════ IT IS EMBEDDED UNESCAPED ═══════════════
+| ═══════════════ NOTHING BUT GEOMETRY GOES IN ═══════════════
 */
-it('escapes the accessible label', function (): void {
-    // The SVG is printed with {!! !!}, so anything interpolated into it has to
-    // be safe at the point it is built rather than at the point it is used.
-    $svg = (new QrSvg)->render('https://lms.example.test/v/1', 139, 'Verify "A" & <B>');
+it('never reproduces the encoded data as markup', function (): void {
+    /*
+     * The payload is turned into a module grid and nothing else — it is not
+     * echoed into a title, a label or a comment. That is what makes the SVG
+     * safe to embed as a data URI without escaping anything: there is no path
+     * by which a URL could carry markup into the document.
+     */
+    $svg = (new QrSvg)->render('https://lms.example.test/v/"><script>alert(1)</script>', 139);
 
-    expect($svg)->toContain('aria-label="Verify &quot;A&quot; &amp; &lt;B&gt;"')
-        ->and($svg)->not->toContain('<B>');
+    expect($svg)->not->toContain('script')
+        ->and($svg)->not->toContain('lms.example.test')
+        ->and($svg)->toStartWith('<svg ')
+        ->and($svg)->toEndWith('</svg>');
 });
 
 it('keeps dark modules on a light field', function (): void {
     // Fixed, not configurable: teal-on-cream would sit in the certificate's
     // palette beautifully and fail to scan.
-    $svg = (new QrSvg)->render('https://lms.example.test/v/1', 139, 'test');
+    $svg = (new QrSvg)->render('https://lms.example.test/v/1', 139);
 
     expect($svg)->toContain('fill="#ffffff"')
         ->and($svg)->toContain('fill="#1a1815"');

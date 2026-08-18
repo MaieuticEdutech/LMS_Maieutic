@@ -56,9 +56,13 @@ final class QrSvg
     /**
      * @param  string  $data  what a scanner receives — for a certificate, its public verification URL
      * @param  int  $size  rendered edge length in CSS pixels, quiet zone included
-     * @param  string  $label  accessible name; the SVG is decorative to a screen reader otherwise
+     *
+     * Carries no accessible name of its own: this is embedded as the src of an
+     * <img>, which is what dompdf understands — it skips inline <svg> silently,
+     * producing a page with no code on it and no error anywhere. The alt text
+     * belongs on that element.
      */
-    public function render(string $data, int $size, string $label): string
+    public function render(string $data, int $size): string
     {
         /*
          * Error correction Q (~25%) rather than the usual M (~15%).
@@ -75,13 +79,12 @@ final class QrSvg
 
         return sprintf(
             '<svg xmlns="http://www.w3.org/2000/svg" width="%1$d" height="%1$d" viewBox="0 0 %2$d %2$d" '
-                .'shape-rendering="crispEdges" role="img" aria-label="%3$s">'
-                .'<rect width="%2$d" height="%2$d" fill="%4$s"/>'
-                .'<path d="%5$s" fill="%6$s"/>'
+                .'shape-rendering="crispEdges">'
+                .'<rect width="%2$d" height="%2$d" fill="%3$s"/>'
+                .'<path d="%4$s" fill="%5$s"/>'
                 .'</svg>',
             $size,
             $span,
-            htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
             self::LIGHT,
             $this->path($matrix),
             self::DARK,

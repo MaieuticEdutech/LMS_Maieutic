@@ -9,6 +9,7 @@ use App\Enums\EnrollmentStatus;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\User;
+use App\Services\Certificate\CertificateDocument;
 use App\Services\Settings\SettingsRepository;
 use App\Support\Qr\QrSvg;
 
@@ -59,19 +60,22 @@ beforeEach(function (): void {
     };
 
     /**
-     * The path data a QR code for $data would produce — the payload, without
-     * pinning the accessible label or the rendered size.
+     * The exact <img> src a QR code for $data produces.
+     *
+     * The SVG carries nothing but the module grid, so this string is a pure
+     * function of the payload — which makes it a precise way to assert what a
+     * code on the page encodes, and what it does not.
      */
-    $this->qrPathFor = static function (string $data): string {
-        $svg = app(QrSvg::class)->render($data, 139, 'x');
+    $this->qrSrcFor = static function (string $data): string {
+        $svg = app(QrSvg::class)->render($data, CertificateDocument::QR_SIZE);
 
         // An empty needle would make assertSee pass and assertDontSee fail for
         // reasons that have nothing to do with what the code encodes.
-        if (preg_match('/<path d="([^"]*)"/', $svg, $matches) !== 1) {
+        if (! str_contains($svg, '<path d="')) {
             throw new RuntimeException('The rendered SVG contains no path — nothing was drawn.');
         }
 
-        return $matches[1];
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     };
 });
 
@@ -144,8 +148,8 @@ it('encodes the public verification URL, not this page', function (): void {
     $response = $this->actingAs($this->student)->get(route('certificates.show', $certificate));
 
     $response->assertOk()
-        ->assertSee(($this->qrPathFor)(route('certificates.verify', $certificate)), false)
-        ->assertDontSee(($this->qrPathFor)(route('certificates.show', $certificate)), false);
+        ->assertSee(($this->qrSrcFor)(route('certificates.verify', $certificate)), false)
+        ->assertDontSee(($this->qrSrcFor)(route('certificates.show', $certificate)), false);
 });
 
 it('prints the verification URL beside the code for anyone typing it by hand', function (): void {
@@ -157,15 +161,21 @@ it('prints the verification URL beside the code for anyone typing it by hand', f
         ->assertSee((string) preg_replace('#^https?://#', '', route('certificates.verify', $certificate)));
 });
 
-it('renders the code square', function (): void {
-    // The design's frame for the code is 152.5 x 139.1. Filling it would
-    // stretch the code, and a stretched code does not scan.
+it('embeds the code as an image rather than inline markup', function (): void {
+    /*
+     * Not cosmetic. dompdf skips an inline <svg> element in silence — no
+     * shape, no warning — so the first version of the PDF came out with the
+     * brand mark, the divider and THE QR CODE simply missing, while the same
+     * template looked perfect in a browser. SVG reaches the PDF only through
+     * an <img> src.
+     */
     $certificate = ($this->award)($this->student);
 
     $this->actingAs($this->student)
         ->get(route('certificates.show', $certificate))
         ->assertOk()
-        ->assertSee('width="139" height="139"', false);
+        ->assertSee('<img class="qr" src="data:image/svg+xml;base64,', false)
+        ->assertDontSee('<svg', false);
 });
 
 /*
@@ -242,34 +252,66 @@ it('hides the signature block rather than inventing a signatory', function (): v
 /*
 | ═══════════════ IT HAS TO PRINT ═══════════════
 */
-it('is sized to exactly one A4 landscape page', function (): void {
+/*
+| ═══════════════ THE DOWNLOAD ═══════════════
+|
+| Download used to open the document and call window.print(). That left the
+| student to notice their print Destination was still whatever they last
+| printed to, and to untick "Headers and footers" — which overrides
+| `@page { margin: 0 }` and stamps a URL and a page number across the artwork.
+| A credential should not require its holder to configure a print dialog.
+*/
+it('returns a PDF file as an attachment', function (): void {
+    $certificate = ($this->award)($this->student);
+
+    $response = $this->actingAs($this->student)->get(route('certificates.download', $certificate));
+
+    $response->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf')
+        // `attachment`, not `inline`: inline opens the browser's PDF viewer and
+        // leaves them hunting for a save button, which is the whole problem.
+        ->assertHeader('Content-Disposition', 'attachment; filename="'.$certificate->number.'.pdf"');
+
+    expect((string) $response->getContent())->toStartWith('%PDF');
+});
+
+it('produces exactly one page', function (): void {
     /*
-     * The deck's slide is 1400 x 990 px, which is the A-series ratio — so it
-     * fits A4 landscape with nothing cropped and no letterboxing. Zero margins
-     * is also what suppresses the browser's own header and footer, without
-     * which every printed certificate carries a URL across the artwork.
+     * The sheet is 1400 x 990 px, which is the A-series ratio, and dompdf's DPI
+     * is tuned so that lands a hair INSIDE A4 landscape. Landing exactly on the
+     * boundary is how a one-page document silently becomes two with the second
+     * page blank — and nobody looks at page two of a certificate before sending
+     * it to an employer.
      */
     $certificate = ($this->award)($this->student);
 
-    $this->actingAs($this->student)
-        ->get(route('certificates.show', $certificate))
-        ->assertOk()
-        ->assertSee('size: A4 landscape', false)
-        ->assertSee('print-color-adjust: exact', false);
+    $pdf = app(CertificateDocument::class)->pdf($certificate);
+
+    expect(preg_match_all('#/Type\s*/Page[^s]#', $pdf))->toBe(1);
 });
 
-it('opens the print dialog only when asked', function (): void {
-    // Asserted on the body attribute rather than on "window.print()", which is
-    // always present — the toolbar button calls it too.
+it('names the file after the certificate number', function (): void {
+    // "certificate.pdf" collides with every other certificate they have ever
+    // been sent; the number is what they will search their downloads for.
     $certificate = ($this->award)($this->student);
 
-    $this->actingAs($this->student)
-        ->get(route('certificates.show', $certificate))
-        ->assertOk()
-        ->assertDontSee('data-print-on-load', false);
+    expect(app(CertificateDocument::class)->filename($certificate))
+        ->toBe($certificate->number.'.pdf');
+});
+
+it('refuses one student another student\'s download', function (): void {
+    // The document and the file it renders must never differ in who may have
+    // them — this is the surface that actually hands the artefact over.
+    $other = ($this->award)(User::factory()->create(), 'Someone Else\'s Course');
 
     $this->actingAs($this->student)
-        ->get(route('certificates.show', $certificate).'?print=1')
-        ->assertOk()
-        ->assertSee('data-print-on-load', false);
+        ->get(route('certificates.download', $other))
+        ->assertForbidden();
+});
+
+it('sends a guest asking for the file to sign in', function (): void {
+    $certificate = ($this->award)($this->student);
+
+    $this->get(route('certificates.download', $certificate))
+        ->assertRedirect(route('login'));
 });

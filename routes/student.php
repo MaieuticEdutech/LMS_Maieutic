@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CertificateDocumentController;
+use App\Http\Controllers\CertificateDownloadController;
 use App\Livewire\Student\AttemptHistory;
 use App\Livewire\Student\AttemptResult;
 use App\Livewire\Student\AttemptRunner;
@@ -117,4 +118,17 @@ Route::middleware(['auth', 'active'])->group(static function (): void {
     */
     Route::get('/certificates/{certificate}', CertificateDocumentController::class)
         ->name('certificates.show');
+
+    /*
+    | The same certificate as a PDF file.
+    |
+    | Rate-limited because it is the one authenticated route here that does
+    | real work per request — dompdf lays out the whole document each time.
+    | Nothing is cached on disk deliberately (see the controller), so the
+    | throttle is what stops a held-down key turning a download button into a
+    | way to spend the server's CPU.
+    */
+    Route::get('/certificates/{certificate}/download', CertificateDownloadController::class)
+        ->middleware('throttle:20,1')
+        ->name('certificates.download');
 });
