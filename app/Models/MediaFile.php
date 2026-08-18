@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * One uploaded file — video, PDF, presentation, resource or thumbnail
@@ -159,6 +160,34 @@ class MediaFile extends Model
     public function isStreamed(): bool
     {
         return $this->purpose->isStreamed();
+    }
+
+    /**
+     * A URL an <img> can use, or null.
+     *
+     * ONLY THUMBNAILS QUALIFY, AND THAT IS A SECURITY BOUNDARY RATHER THAN A
+     * CONVENIENCE. Thumbnails are the one PUBLIC medium in the system; every
+     * other upload lives on the private content disk and is reached through an
+     * authorised controller. Returning a plain URL for a lesson video would be
+     * handing out an unauthenticated link to protected content, so the purpose
+     * is checked rather than the mime type alone.
+     *
+     * Exists so the admin uploader can SHOW a thumbnail rather than describe
+     * it. Uploading an image and getting back a filename and a file icon gives
+     * an author no way to tell a correct upload from a broken one — which is
+     * how a missing storage symlink went unnoticed.
+     */
+    public function previewUrl(): ?string
+    {
+        if ($this->purpose !== MediaPurpose::Thumbnail) {
+            return null;
+        }
+
+        if (! str_starts_with($this->mime_type, 'image/')) {
+            return null;
+        }
+
+        return Storage::disk($this->disk)->url($this->path);
     }
 
     public function humanSize(): string

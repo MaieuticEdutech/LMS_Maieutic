@@ -81,7 +81,15 @@ createdb lms_test
 # 5. Migrate
 php artisan migrate
 
-# 6. Run
+# 6. Link public storage — REQUIRED, not optional
+#    Course thumbnails are the one public medium in the system and are served
+#    from /storage/... . Without this link the upload still succeeds, the row
+#    is written and the bytes land on disk — and every thumbnail 404s, so the
+#    card falls back to its gradient and the whole thing looks like a feature
+#    that was never built.
+php artisan storage:link
+
+# 7. Run
 npm run dev          # Vite dev server with HMR
 php artisan serve    # http://localhost:8000
 ```

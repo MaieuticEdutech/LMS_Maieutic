@@ -95,7 +95,30 @@
 >
     @forelse ($media as $file)
         <div wire:key="media-{{ $file->id }}" class="mb-2 flex items-center gap-3 rounded-control border border-neutral-200 bg-neutral-50 px-3.5 py-2.5">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-teal-600" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v5h5"></path></svg>
+            {{--
+                A thumbnail is SHOWN, not described.
+
+                Everything else here is a generic file row, which is right for
+                a video or a PDF — there is nothing to look at, and those live
+                on the private disk with no plain URL anyway. An image is
+                different: the author picked it for how it looks, and a row
+                reading "cover.png · 240 KB" beside a paper icon proves only
+                that a file arrived.
+
+                It also makes a broken pipeline visible. A missing storage
+                symlink leaves the record perfect, the bytes on disk, and every
+                URL 404 — which showed up as "I uploaded a thumbnail and
+                nothing changed" and could not be diagnosed from this screen,
+                because this screen never tried to load the image.
+            --}}
+            @php($preview = $file->previewUrl())
+
+            @if ($preview)
+                <img src="{{ $preview }}" alt="{{ $file->original_name }}"
+                     class="h-10 w-16 shrink-0 rounded-sm border border-neutral-200 bg-white object-cover">
+            @else
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-teal-600" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v5h5"></path></svg>
+            @endif
             <div class="min-w-0 flex-1">
                 <div class="truncate text-sm font-semibold text-neutral-900">{{ $file->original_name }}</div>
                 <div class="text-xs text-neutral-500">{{ $file->humanSize() }}</div>
