@@ -60,7 +60,7 @@
 {{-- ══ HERO — full-bleed dark teal ══ --}}
 <div style="background:var(--teal-900)">
 <section class="l-section" style="max-width:1240px;margin:0 auto;padding:96px 24px 96px">
-  <div class="l-split" style="display:grid;grid-template-columns:7fr 5fr;gap:64px;align-items:center">
+  <div class="l-split" style="display:grid;grid-template-columns:6fr 5fr;gap:56px;align-items:center">
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:28px">
       <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--teal-200)">{{ $organisation }}</div>
       <h1 class="l-hero-h1" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:74px;line-height:var(--lh-tight);letter-spacing:var(--ls-tight);color:var(--text-inverse);text-wrap:balance">Learn skills that stay — by <em style="color:var(--teal-200);font-style:normal">questioning, not cramming</em>.</h1>
@@ -76,11 +76,19 @@
       <div style="font-size:var(--fs-sm);color:var(--teal-300)">Browse every course free — enrol when you're ready.</div>
     </div>
     <div style="position:relative">
-      <div class="l-media" style="position:relative;height:520px;border-radius:var(--radius-lg);overflow:hidden">
+      {{-- 4/3 is the photograph's own ratio, not a guess. The slot was
+                 built for a tall crop (a fixed 520px), but this image is
+                 landscape and its subject runs the full width — the student on
+                 the left, the product on the laptop centre-right. Forcing it
+                 into a portrait box with object-fit:cover cut off one or the
+                 other. Matching the ratio shows all of it and never distorts. --}}
+            <div class="l-media l-media-hero" style="position:relative;aspect-ratio:4/3;border-radius:var(--radius-lg);overflow:hidden">
         @include('partials.landing-image-slot', [
-          'src' => 'images/landing/hero.png',
-          'alt' => 'A study desk with philosophy, psychology and sociology books, an open notebook of questions, and a note reading "Keep questioning. Keep growing."',
-          'caption' => 'Students learning — natural light, hands and devices',
+          'src' => 'images/landing/hero.jpg',
+          'alt' => 'A student in headphones taking handwritten notes on a tablet while a laptop beside her shows her Maieutic dashboard: course progress, the next lesson, and her enrolled courses.',
+          'caption' => 'A student learning with the Maieutic dashboard open',
+          'width' => 1448,
+          'height' => 1086,
         ])
       </div>
       <div style="position:absolute;left:-14px;bottom:26px;width:120px;height:14px;background:var(--teal-600);transform:skewX(-32deg)"></div>
@@ -109,7 +117,13 @@
                   'Find courses by subject and level',
               ],
               'image' => 'Course builder UI — screenshot',
-              'src' => 'images/landing/feature-courses.png',
+              'src' => 'images/landing/feature-courses.jpg',
+              'alt' => 'A course dashboard: the lesson playing at the top, bookmarked moments beneath it, course categories, and a right-hand rail showing path progress at 65% with each module ticked off.',
+              // A SCREENSHOT, NOT A PHOTOGRAPH, and square. Cropping a photo
+              // loses scenery; cropping a screenshot loses the interface being
+              // shown — here the header and the whole recent-videos list. The
+              // row takes the image's own ratio so all of it is legible.
+              'ratio' => '1 / 1',
               'padding' => '72px 24px',
               'flip' => false,
           ],
@@ -123,7 +137,9 @@
                   'Results delivered to you instantly, every time',
               ],
               'image' => 'Assessment screen — screenshot',
-              'src' => 'images/landing/feature-assessment.png',
+              'src' => 'images/landing/feature-assessment.jpg',
+              'alt' => 'An assessments screen: counts of total, completed, in-progress and upcoming assessments, a list of quizzes and assignments each with a progress bar and a Continue button, and a weekly progress ring at 70% beside recent results.',
+              'ratio' => '4 / 3',
               'padding' => '0 24px 72px',
               'flip' => true,
           ],
@@ -137,7 +153,9 @@
                   'Your learning history, always in one place',
               ],
               'image' => 'Progress dashboard — screenshot',
-              'src' => 'images/landing/feature-progress.png',
+              'src' => 'images/landing/feature-progress.jpg',
+              'alt' => 'A progress dashboard: lessons completed, course progress, time spent and current streak across the top, a course-completion chart climbing week by week, and a recent-activity list of finished lessons and passed quizzes.',
+              'ratio' => '3 / 2',
               'padding' => '0 24px 96px',
               'flip' => false,
           ],
@@ -147,8 +165,8 @@
   @foreach ($features as $feature)
     <div class="l-split" style="max-width:1240px;margin:0 auto;padding:{{ $feature['padding'] }};display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center">
       @if ($feature['flip'])
-        <div class="l-media l-flip" style="position:relative;height:400px;border-radius:var(--radius-lg);overflow:hidden;order:0">
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src']])
+        <div class="l-media l-flip" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden;order:0', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
+          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
         </div>
       @endif
 
@@ -164,8 +182,8 @@
       </div>
 
       @unless ($feature['flip'])
-        <div class="l-media" style="position:relative;height:400px;border-radius:var(--radius-lg);overflow:hidden">
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src']])
+        <div class="l-media" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
+          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
         </div>
       @endunless
     </div>

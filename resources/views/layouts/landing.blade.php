@@ -174,6 +174,13 @@
             .landing .l-nav { display: none !important; }
             .landing .l-section { padding-top: 56px !important; padding-bottom: 56px !important; }
             .landing .l-media { height: 260px !important; }
+
+            /* The hero photograph keeps its own 4:3 ratio at every width.
+               The 260px above is right for the feature rows, whose art is
+               decorative and can be cropped — but the hero image carries the
+               product itself on a laptop screen, and squeezing it into a wide
+               260px band on a phone crops that away entirely. */
+            .landing .l-media-hero { height: auto !important; aspect-ratio: 4 / 3; }
             .landing .l-flip { order: 0 !important; }
         }
 
