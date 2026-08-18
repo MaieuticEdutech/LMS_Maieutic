@@ -1,4 +1,15 @@
 <div>
+
+    {{-- A refusal the component itself has to show.
+
+         These actions flashed to the session, and both layouts do render
+         session('error') — but Livewire re-renders the COMPONENT, not the
+         surrounding layout, so the message landed in a region that was never
+         redrawn. The row simply stayed put and the control looked broken. --}}
+    @error('action')
+        <x-alert variant="danger" class="mb-4">{{ $message }}</x-alert>
+    @enderror
+
     <div class="mb-6 flex flex-wrap items-center gap-3">
         <a href="{{ route($indexRoute) }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-700 hover:text-teal-700">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>

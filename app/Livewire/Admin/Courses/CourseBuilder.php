@@ -198,7 +198,7 @@ final class CourseBuilder extends Component
             $this->course->refresh();
             session()->flash('status', "Course \"{$this->course->title}\" published.");
         } catch (CoursePublishException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
     }
 
@@ -250,7 +250,7 @@ final class CourseBuilder extends Component
 
             return redirect()->route('admin.courses.index');
         } catch (CourseDeletionException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
             $this->confirmingDelete = false;
 
             return null;
