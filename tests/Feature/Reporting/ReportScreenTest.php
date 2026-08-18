@@ -112,3 +112,46 @@ it('shows an instructor only their own course in the rendered report', function 
         ->assertSee('Assigned Course')
         ->assertDontSee('Unassigned Course');
 });
+
+/*
+| ═══════════ REACHABILITY ═══════════
+|
+| The four reports shipped with every route registered and only one of them
+| linked from anywhere, so three were unreachable by clicking and only the
+| first could be exported. Routes existing is not the same as a feature being
+| delivered — these assert the navigation, not the routing.
+*/
+
+it('links to every other report from each report', function (string $report): void {
+    $response = $this->actingAs($this->admin)
+        ->get(route("admin.reports.{$report}"))
+        ->assertOk();
+
+    foreach (['enrollments', 'course-progress', 'assessments', 'students'] as $other) {
+        $response->assertSee(route("admin.reports.{$other}"), escape: false);
+    }
+})->with(['enrollments', 'course-progress', 'assessments', 'students']);
+
+it('keeps an instructors report tabs inside the instructor area', function (): void {
+    $response = $this->actingAs($this->instructor)
+        ->get(route('instructor.reports.enrollments'))
+        ->assertOk();
+
+    // Linking an instructor at an /admin URL would hand them a 403 on click.
+    $response->assertSee(route('instructor.reports.students'), escape: false)
+        ->assertDontSee(route('admin.reports.students'), escape: false);
+});
+
+it('carries the date range across a tab switch', function (): void {
+    // Switching report must not silently reset the period, or the next screen
+    // quietly answers a different question than the one being asked.
+    // Compared against the ESCAPED url: a multi-parameter query string is
+    // rendered with &amp; in the href, which is correct HTML — asserting the
+    // raw route() string would fail on markup that is right.
+    $expected = e(route('admin.reports.students', ['from' => '2026-03-01', 'to' => '2026-03-31']));
+
+    $this->actingAs($this->admin)
+        ->get(route('admin.reports.enrollments', ['from' => '2026-03-01', 'to' => '2026-03-31']))
+        ->assertOk()
+        ->assertSee($expected, escape: false);
+});

@@ -1,6 +1,8 @@
 {{-- Student report (FR-RPT-05). "Last activity" is the actionable column —
      the rest is context for the conversation it prompts. --}}
 <div>
+    @include('livewire.reports.partials.tabs')
+
     @include('livewire.reports.partials.filter-bar')
 
     <div class="mb-6 -mt-2">

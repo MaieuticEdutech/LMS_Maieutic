@@ -1,6 +1,8 @@
 {{-- Course progress report (FR-RPT-03). A funnel: the gaps between the
      columns are the diagnostic, not any single figure. --}}
 <div>
+    @include('livewire.reports.partials.tabs')
+
     @include('livewire.reports.partials.filter-bar')
 
     @if ($rows->isEmpty())
