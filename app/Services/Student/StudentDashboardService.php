@@ -57,7 +57,7 @@ final class StudentDashboardService
          * twenty names.
          */
         return $this->accessibleQuery($student)
-            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'instructors'])])
+            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'instructors', 'thumbnail'])])
             ->orderByRaw('COALESCE(last_accessed_at, enrolled_at) DESC')
             ->get();
     }
@@ -81,7 +81,7 @@ final class StudentDashboardService
         return $this->accessibleQuery($student)
             ->where('status', EnrollmentStatus::Active)
             ->whereNotNull('last_accessed_at')
-            ->with(['course.category', 'lastLesson'])
+            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'thumbnail']), 'lastLesson'])
             ->orderByDesc('last_accessed_at')
             ->first();
     }
@@ -106,8 +106,13 @@ final class StudentDashboardService
      */
     public function recommended(User $student, int $limit = 3): Collection
     {
+        // thumbnail joins category and instructors here because the card partial
+        // reads all three, and preventLazyLoading() rejects anything it has to
+        // fetch per row. Added when the thumbnail fix landed on main: that
+        // change taught the card to render an uploaded image, and this is the
+        // one query feeding it that did not come with the change.
         return Course::published()
-            ->with(['category', 'instructors'])
+            ->with(['category', 'instructors', 'thumbnail'])
             ->whereNotExists(static function (QueryBuilder $query) use ($student): void {
                 $query->selectRaw('1')
                     ->from('enrollments')

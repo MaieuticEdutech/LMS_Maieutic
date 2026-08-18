@@ -41,13 +41,41 @@
     ];
 
     [$deep, $light] = $palettes[$course->getKey() % count($palettes)];
+
+    /*
+     * A REAL UPLOADED THUMBNAIL WINS; THE GRADIENT IS THE FALLBACK.
+     *
+     * Thumbnails are the one PUBLIC medium in the system (FR-STU-04) — stored
+     * on the `public` disk rather than the private content disk, precisely so
+     * they can be rendered with a plain URL to a guest browsing the catalogue.
+     * Until now nothing ever rendered them: an admin uploaded a thumbnail, it
+     * was stored correctly, and every card still drew the gradient.
+     *
+     * Read ONLY from an already-loaded relation. Model::preventLazyLoading()
+     * is active outside production, so touching $course->thumbnail from a card
+     * inside a grid would throw — and in production it would quietly fire one
+     * query per card. A caller that has not eager-loaded `thumbnail` gets the
+     * gradient, exactly as before.
+     */
+    $thumbnail = $course->relationLoaded('thumbnail') ? $course->thumbnail->first() : null;
+
+    $thumbnailUrl = $thumbnail !== null
+        ? Storage::disk($thumbnail->disk)->url($thumbnail->path)
+        : null;
 @endphp
 
 <div
-    class="{{ $variant === 'side' ? 'w-[200px] flex-none' : 'aspect-video' }} flex items-end justify-between p-[14px]"
+    class="relative {{ $variant === 'side' ? 'w-[200px] flex-none' : 'aspect-video' }} flex items-end justify-between overflow-hidden p-[14px]"
     style="background:linear-gradient(118deg,{{ $deep }} 0%,{{ $deep }} 62%,{{ $light }} 62%)"
     aria-hidden="true"
 >
+
+    @if ($thumbnailUrl)
+        {{-- The gradient stays underneath as the loading and broken-image
+             state, so a card never collapses to a blank rectangle. --}}
+        <img src="{{ $thumbnailUrl }}" alt="" loading="lazy"
+             class="absolute inset-0 h-full w-full object-cover">
+    @endif
     {{-- Hidden from screen readers: the category is already in the card's text
          below, and hearing it twice is noise. --}}
     <span class="font-mono text-[10px] font-semibold tracking-[0.12em] text-white/85">
