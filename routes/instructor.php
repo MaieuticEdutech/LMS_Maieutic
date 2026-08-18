@@ -9,6 +9,10 @@ use App\Livewire\Instructor\CourseDetail;
 use App\Livewire\Instructor\CoursesList;
 use App\Livewire\Instructor\Dashboard;
 use App\Livewire\Instructor\StudentProgressDetail;
+use App\Livewire\Reports\AssessmentReportScreen;
+use App\Livewire\Reports\CourseProgressReportScreen;
+use App\Livewire\Reports\EnrollmentReportScreen;
+use App\Livewire\Reports\StudentReportScreen;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -55,6 +59,19 @@ Route::prefix('instructor')
         Route::get('/courses', CoursesList::class)->name('courses.index');
         Route::get('/courses/{course}', CourseDetail::class)->name('courses.show');
         Route::get('/courses/{course}/students/{enrollment}', StudentProgressDetail::class)->name('courses.students.progress');
+
+        /*
+         * Phase 13 — reports, scoped to assigned courses.
+         *
+         * The same four components the admin area routes to. ReportScope
+         * narrows every query to Course::assignedTo($user), so the screen is
+         * shared and the data is not. No revenue route exists here and none
+         * may be added (FR-RPT-07, FR-INS-10).
+         */
+        Route::get('/reports/enrollments', EnrollmentReportScreen::class)->name('reports.enrollments');
+        Route::get('/reports/course-progress', CourseProgressReportScreen::class)->name('reports.course-progress');
+        Route::get('/reports/assessments', AssessmentReportScreen::class)->name('reports.assessments');
+        Route::get('/reports/students', StudentReportScreen::class)->name('reports.students');
 
         Route::get('/assessments', AssessmentsTable::class)->name('assessments.index');
         Route::get('/assessments/{assessment}', AssessmentBuilder::class)->name('assessments.builder');

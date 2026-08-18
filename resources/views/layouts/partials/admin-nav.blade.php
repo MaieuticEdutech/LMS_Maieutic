@@ -33,6 +33,7 @@
         // or a student.
         ['route' => 'admin.email-log.index', 'label' => 'Email log', 'icon' => 'mail'],
         ['route' => 'admin.queue-health.index', 'label' => 'Queue health', 'icon' => 'queue'],
+        ['route' => 'admin.reports.enrollments', 'label' => 'Reports', 'icon' => 'reports'],
     ];
 
     // Inline SVGs (Lucide-shaped path data, hand-copied — no icon package;
@@ -50,6 +51,7 @@
         'audit' => '<path d="M9 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M9 3v0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v0"></path><path d="M9 12h6"></path><path d="M9 16h6"></path>',
         'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>',
         'queue' => '<path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>',
+        'reports' => '<path d="M3 3v18h18"></path><path d="m7 14 3-4 3 3 5-6"></path>',
     ];
 @endphp
 
