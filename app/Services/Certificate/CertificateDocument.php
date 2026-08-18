@@ -28,16 +28,25 @@ use RuntimeException;
 final class CertificateDocument
 {
     /**
-     * Edge length of the QR block in the design, in sheet pixels.
+     * Edge length of the QR block, in sheet pixels.
      *
-     * The design's own frame is 152.5 x 139.1 — very slightly wider than tall.
-     * A QR code rendered to those bounds would be stretched, and a stretched
-     * code is a code that does not scan, so it is drawn SQUARE at the smaller
-     * dimension. This is the one place the document deliberately departs from
-     * the source design, because the alternative is a graphic that looks
-     * correct and fails at the only job it has.
+     * BIGGER THAN THE DECK'S FRAME, DELIBERATELY.
+     *
+     * The design draws it at 152.5 x 139.1 — very slightly wider than tall,
+     * which would stretch the code, and a stretched code does not scan. Drawn
+     * square that gave 139px, and at 139px it read as an afterthought in the
+     * corner of a 1400px sheet.
+     *
+     * 190 is the largest square that fits the space without moving anything
+     * else: its left edge stays where the deck puts it, and its right edge
+     * lands 10px short of the inner frame, matching the URL line beneath it.
+     *
+     * It is not only presentation. The symbol is 45 modules across including
+     * the quiet zone, so this takes each module from 3.1px to 4.2px — about
+     * 1.1mm on paper, which is the difference between a phone that reads it
+     * first time and one that has to be nudged.
      */
-    public const QR_SIZE = 139;
+    public const QR_SIZE = 190;
 
     private const LOGO = 'images/logo-maieutic-wordmark.png';
 

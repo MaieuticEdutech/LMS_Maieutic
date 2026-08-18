@@ -174,13 +174,17 @@
            QrSvg builds the quiet zone into the graphic itself. A code that
            matched the mockup exactly would not scan, which defeats the point of
            putting one on a certificate. */
-        .qr { left: 1163.5px; top: 676.3px; width: 139px; height: 139px; line-height: 0; }
+        /* Enlarged from the deck's 139 to 190 — see CertificateDocument::QR_SIZE.
+           The left edge is still the deck's; it grows up and to the right, into
+           space nothing else occupies. Raised to 615 so the URL and the date
+           block below it keep their positions. */
+        .qr { left: 1163.5px; top: 615px; width: 190px; height: 190px; line-height: 0; }
 
         /* 195px, not more: the inner frame's right edge is at 1364 and this
            box starts at 1163.5, so anything wider prints the URL over the
            rule. It wraps instead — the QR carries the real link. */
         .verify-url {
-            left: 1163.5px; top: 819.2px; width: 195px;
+            left: 1163.5px; top: 811px; width: 195px;
             font-family: 'Courier New', Courier, 'Liberation Mono', monospace;
             font-size: 10.2px;
             line-height: 1.32;
@@ -224,10 +228,12 @@
         /* ───────── dated and numbered ───────── */
 
         /* The deck anchors these to a box running off the right edge of the
-           slide; centred, that puts them at x=1241. Re-expressed as a box that
-           fits, with the same centre, so nothing overflows the sheet. */
+           slide; centred, that lands at x=1241. Re-expressed as a box that
+           fits, and moved 17px right onto 1258.5 — the centre of the enlarged
+           QR — so the code, the URL and the date read as one block rather than
+           three things that nearly line up. */
         .completed-label {
-            left: 1041px; top: 849.3px; width: 400px;
+            left: 1058.5px; top: 849.3px; width: 400px;
             text-align: center;
             font-family: 'Courier New', Courier, 'Liberation Mono', monospace;
             font-size: 10.2px;
@@ -237,7 +243,7 @@
         }
 
         .completed-date {
-            left: 1041px; top: 867.8px; width: 400px;
+            left: 1058.5px; top: 867.8px; width: 400px;
             text-align: center;
             font-family: 'Courier New', Courier, 'Liberation Mono', monospace;
             font-size: 10.2px;
