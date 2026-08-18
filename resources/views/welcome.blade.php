@@ -117,7 +117,13 @@
                   'Find courses by subject and level',
               ],
               'image' => 'Course builder UI — screenshot',
-              'src' => 'images/landing/feature-courses.png',
+              'src' => 'images/landing/feature-courses.jpg',
+              'alt' => 'A course dashboard: the lesson playing at the top, bookmarked moments beneath it, course categories, and a right-hand rail showing path progress at 65% with each module ticked off.',
+              // A SCREENSHOT, NOT A PHOTOGRAPH, and square. Cropping a photo
+              // loses scenery; cropping a screenshot loses the interface being
+              // shown — here the header and the whole recent-videos list. The
+              // row takes the image's own ratio so all of it is legible.
+              'ratio' => '1 / 1',
               'padding' => '72px 24px',
               'flip' => false,
           ],
@@ -155,8 +161,8 @@
   @foreach ($features as $feature)
     <div class="l-split" style="max-width:1240px;margin:0 auto;padding:{{ $feature['padding'] }};display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center">
       @if ($feature['flip'])
-        <div class="l-media l-flip" style="position:relative;height:400px;border-radius:var(--radius-lg);overflow:hidden;order:0">
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src']])
+        <div class="l-media l-flip" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden;order:0', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
+          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
         </div>
       @endif
 
@@ -172,8 +178,8 @@
       </div>
 
       @unless ($feature['flip'])
-        <div class="l-media" style="position:relative;height:400px;border-radius:var(--radius-lg);overflow:hidden">
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src']])
+        <div class="l-media" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
+          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
         </div>
       @endunless
     </div>
