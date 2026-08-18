@@ -44,6 +44,14 @@ final class AuditLogTable extends Component
         $this->authorize('viewAny', AuditLog::class);
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function filterProperties(): array
+    {
+        return ['actionFilter'];
+    }
+
     public function updatingActionFilter(): void
     {
         $this->resetPage();

@@ -22,6 +22,7 @@ use App\Listeners\SendEnrollmentRevokedNotification;
 use App\Listeners\SendPasswordChangedNotification;
 use App\Models\AssessmentAttempt;
 use App\Policies\AttemptPolicy;
+use App\Policies\ReportPolicy;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
@@ -274,5 +275,19 @@ class AppServiceProvider extends ServiceProvider
     private function configureAuthorization(): void
     {
         Gate::policy(AssessmentAttempt::class, AttemptPolicy::class);
+
+        /*
+         * Reports have no model of their own — a report is a query, not a
+         * record — so ReportPolicy is registered as named abilities rather
+         * than against a class. Authorising `viewOperational` on User::class
+         * would resolve to UserPolicy and silently ask the wrong question.
+         *
+         * The rules still live in ReportPolicy (phases.md Phase 13) rather
+         * than as closures here, so the financial boundary is stated in one
+         * readable place (FR-RPT-07).
+         */
+        Gate::define('reports.view', [ReportPolicy::class, 'viewAny']);
+        Gate::define('reports.operational', [ReportPolicy::class, 'viewOperational']);
+        Gate::define('reports.financial', [ReportPolicy::class, 'viewFinancial']);
     }
 }

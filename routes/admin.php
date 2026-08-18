@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Livewire\Admin\Assessments\AssessmentBuilder;
 use App\Livewire\Admin\Assessments\AssessmentsTable;
 use App\Livewire\Admin\AuditLogTable;
+use App\Livewire\Admin\Courses\CategoriesTable;
 use App\Livewire\Admin\Courses\CourseBuilder;
 use App\Livewire\Admin\Courses\CoursesTable;
 use App\Livewire\Admin\Dashboard;
@@ -20,6 +21,10 @@ use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
 use App\Livewire\Admin\StudentsTable;
 use App\Livewire\Instructor\Assessments\Results;
+use App\Livewire\Reports\AssessmentReportScreen;
+use App\Livewire\Reports\CourseProgressReportScreen;
+use App\Livewire\Reports\EnrollmentReportScreen;
+use App\Livewire\Reports\StudentReportScreen;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -82,9 +87,33 @@ Route::prefix('admin')
         // and the Course Builder. CourseBuilder is a single combined
         // meta + structure screen (architecture.md §9.3) — there is no
         // separate edit route, "editing" a course always means the builder.
+        /*
+         * Categories. The table, model, policy and factory shipped in Phase 3
+         * and the Course Builder has always offered the field, but nothing
+         * could populate the list — so the dropdown was permanently empty on
+         * a fresh database. This is the screen that was missing.
+         */
+        Route::get('/categories', CategoriesTable::class)->name('categories.index');
+
         Route::get('/courses', CoursesTable::class)->name('courses.index');
         Route::get('/courses/create', CourseBuilder::class)->name('courses.create');
         Route::get('/courses/{course}/builder', CourseBuilder::class)->name('courses.builder');
+        /*
+         * Phase 13 — reports. Four of the five: the revenue report
+         * (FR-RPT-02) waits on Phase 12, because writing it against a
+         * payments system that does not exist yet would mean writing it
+         * twice.
+         *
+         * Shared with routes/instructor.php — one screen per report, the
+         * figures narrowed by ReportScope rather than a second implementation
+         * per audience. There is deliberately NO instructor revenue route:
+         * an absent screen cannot leak (FR-RPT-07, FR-INS-10).
+         */
+        Route::get('/reports/enrollments', EnrollmentReportScreen::class)->name('reports.enrollments');
+        Route::get('/reports/course-progress', CourseProgressReportScreen::class)->name('reports.course-progress');
+        Route::get('/reports/assessments', AssessmentReportScreen::class)->name('reports.assessments');
+        Route::get('/reports/students', StudentReportScreen::class)->name('reports.students');
+
         Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
 
         /*

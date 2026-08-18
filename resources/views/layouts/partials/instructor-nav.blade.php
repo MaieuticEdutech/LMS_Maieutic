@@ -5,10 +5,18 @@
     once for the sticky desktop aside and once inside the mobile drawer.
 --}}
 @php
+    // Organisation identity from BrandingService, never a literal (rule S-1).
+    // Assigned inside this existing block rather than via a second @php
+    // directive: a further raw php block in this file stops every directive
+    // after it from compiling, and the error points at an @endforeach nowhere
+    // near the cause (the same trap layouts/app.blade.php documents).
+    $branding = app(\App\Services\Settings\BrandingService::class);
+
     $navItems = [
         ['route' => 'instructor.home', 'label' => 'Dashboard', 'icon' => 'dashboard'],
         ['route' => 'instructor.courses.index', 'label' => 'My courses', 'icon' => 'courses'],
         ['route' => 'instructor.assessments.index', 'label' => 'Assessments', 'icon' => 'assessments'],
+        ['route' => 'instructor.reports.enrollments', 'label' => 'Reports', 'icon' => 'reports'],
     ];
 
     // Same inline-SVG approach as the admin nav — no icon package.
@@ -16,11 +24,12 @@
         'dashboard' => '<rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect>',
         'courses' => '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
         'assessments' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path>',
+        'reports' => '<path d="M3 3v18h18"></path><path d="m7 14 3-4 3 3 5-6"></path>',
     ];
 @endphp
 
 <div class="border-b border-white/12 px-5 py-5">
-    <div class="font-serif text-2xl font-semibold tracking-tight text-white">Maieutic</div>
+    <div class="font-serif text-2xl font-semibold tracking-tight text-white">{{ $branding->organisationName() }}</div>
     <div class="eyebrow mt-1.5 text-white/55">Instructor</div>
 </div>
 

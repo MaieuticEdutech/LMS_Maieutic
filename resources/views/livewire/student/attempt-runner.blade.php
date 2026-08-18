@@ -1,4 +1,4 @@
-@section('title', $assessment->title.' — '.config('app.name'))
+@section('title', $assessment->title.' — '.app(\App\Services\Settings\BrandingService::class)->organisationName())
 
 {{--
     Sitting an assessment (design handoff §5).

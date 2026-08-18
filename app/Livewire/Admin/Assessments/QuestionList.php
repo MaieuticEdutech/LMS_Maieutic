@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Assessment\QuestionTypeRegistry;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -36,6 +37,23 @@ final class QuestionList extends Component
     public function mount(Assessment $assessment): void
     {
         $this->assessment = $assessment;
+    }
+
+    /**
+     * Redraw after a bulk import.
+     *
+     * QuestionImport is a sibling component with its own state, so nothing
+     * here knows the question set changed. Without this the author imports
+     * forty questions and the list still shows none — which reads as the
+     * import having silently failed.
+     *
+     * An empty method is enough: receiving a Livewire event re-renders the
+     * component, and render() re-runs the query.
+     */
+    #[On('questions-imported')]
+    public function refreshAfterImport(): void
+    {
+        //
     }
 
     public function openCreate(): void
