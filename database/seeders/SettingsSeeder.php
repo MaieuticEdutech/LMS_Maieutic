@@ -32,6 +32,18 @@ class SettingsSeeder extends Seeder
             ['branding.mail_from_name', 'LMS', 'branding', 'string', false],
             ['branding.email_footer', '', 'branding', 'string', true],
 
+            /*
+             * Certificate identity. Both are seeded EMPTY on purpose.
+             *
+             * legal_name falls back to the display name, so a certificate still
+             * reads correctly before anyone fills this in. The signatory does
+             * not fall back to anything: a made-up default would be printed,
+             * signed and handed to an employer as a claim about a real person.
+             * An unset signatory hides the signature block instead.
+             */
+            ['branding.legal_name', '', 'branding', 'string', true],
+            ['branding.certificate_signatory', '', 'branding', 'string', true],
+
             // Learning defaults. Authoritative from Phase 9 (FR-PROG-03);
             // seeded now so the key exists and the settings screen has
             // something to show in Phase 4.

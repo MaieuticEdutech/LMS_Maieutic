@@ -39,6 +39,35 @@ final class BrandingService
         return $name !== '' ? $name : config()->string('app.name');
     }
 
+    /**
+     * The registered entity name, as it appears at the foot of a certificate.
+     *
+     * Distinct from organisationName() because they are genuinely different
+     * strings: a certificate is signed by "Maieutic Edutech Pvt. Ltd.", while
+     * the page header says "Maieutic Edutech". Falls back to the display name,
+     * so an organisation that has not recorded a legal form still renders.
+     */
+    public function legalName(): string
+    {
+        $name = $this->settings->string('branding.legal_name');
+
+        return $name !== '' ? $name : $this->organisationName();
+    }
+
+    /**
+     * Who signs a certificate on the organisation's behalf.
+     *
+     * This is HERE, and not hardcoded in the certificate view, for the same
+     * reason as every other identity string (rule S-1): in V2 it resolves per
+     * organisation, and a name baked into a Blade file would have to be found
+     * and unpicked first. It is also simply going to change — signatories
+     * leave, and reprinting a certificate should not need a deployment.
+     */
+    public function certificateSignatory(): string
+    {
+        return $this->settings->string('branding.certificate_signatory');
+    }
+
     public function supportEmail(): string
     {
         $email = $this->settings->string('branding.support_email');

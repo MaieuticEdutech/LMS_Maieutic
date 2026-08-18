@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\CertificateDocumentController;
 use App\Livewire\Student\AttemptHistory;
 use App\Livewire\Student\AttemptResult;
 use App\Livewire\Student\AttemptRunner;
@@ -99,4 +100,21 @@ Route::name('student.')
 */
 Route::middleware(['auth', 'active'])->group(static function (): void {
     Route::view('/profile', 'profile.show')->name('profile.show');
+
+    /*
+    | The certificate DOCUMENT — the printable sheet, bound by `number`.
+    |
+    | Outside the student-only group above, and named without the `student.`
+    | prefix, because it is not a student screen: CertificatePolicy::view lets a
+    | super admin open any certificate, and `role:student` would lock them out
+    | of a record they are explicitly authorised to see. The role middleware
+    | says who an AREA is for; the policy says who a RECORD is for, and this
+    | route is about a record (Rule 20).
+    |
+    | Not public, unlike /verify/{number}. That page answers "is this real?" for
+    | a stranger; this one hands over a print-ready certificate, and those need
+    | different doors — see CertificateDocumentController.
+    */
+    Route::get('/certificates/{certificate}', CertificateDocumentController::class)
+        ->name('certificates.show');
 });

@@ -75,14 +75,11 @@
             has not been issued by {{ $branding->organisationName() }}.
         </p>
 
-        {{-- "Download" links here with ?print=1. Print-to-PDF is built into
-             every browser and produces the same document as a server-rendered
-             PDF would, without adding a Composer dependency to another track's
-             file. The @media print rules in app.css drop the site chrome. --}}
-        @if (request()->boolean('print'))
-            <script>
-                window.addEventListener('load', () => window.print());
-            </script>
-        @endif
+        {{-- No print affordance here, deliberately. This page is a RECEIPT —
+             it answers "is this claim real?" for someone who was handed a
+             number. The printable certificate is a different surface with a
+             different door (certificates.show), because printing this one and
+             passing it off as the credential is exactly what a verification
+             page should not make easy. --}}
     </div>
 @endsection

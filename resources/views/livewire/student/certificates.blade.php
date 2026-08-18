@@ -61,21 +61,26 @@
                             <div class="mt-[3px] font-mono text-xs text-neutral-400">{{ $certificate->number }}</div>
                         </div>
 
+                        {{-- Both buttons open the DOCUMENT — the designed sheet
+                             with the QR code on it — not the public verification
+                             page, which answers a stranger's question and is
+                             linked from the document itself.
+
+                             "Download" is the same page with ?print=1, which
+                             fires the browser's print dialog on load; the sheet
+                             is sized to exactly one A4 landscape page, so
+                             "Save as PDF" produces the certificate and nothing
+                             else. A server-generated PDF would need a Composer
+                             package, and composer.json belongs to another track
+                             — a dependency there needs a recorded justification
+                             rather than being slipped in with a UI change. --}}
                         <div class="flex gap-2">
-                            <a href="{{ route('certificates.verify', $certificate) }}"
+                            <a href="{{ route('certificates.show', $certificate) }}"
                                class="rounded-sm border border-neutral-300 bg-white px-3.5 py-[9px] text-[13px] font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
                                 View
                             </a>
 
-                            {{-- "Download" opens the certificate and asks the
-                                 browser to print it. NOT a server-generated PDF:
-                                 that needs a new Composer dependency, and
-                                 composer.json belongs to another track — a new
-                                 package there needs a recorded justification
-                                 rather than being slipped in with a UI change.
-                                 Print-to-PDF is built into every browser and
-                                 produces the same document. --}}
-                            <a href="{{ route('certificates.verify', $certificate) }}?print=1"
+                            <a href="{{ route('certificates.show', $certificate) }}?print=1"
                                class="rounded-sm bg-teal-600 px-3.5 py-[9px] text-[13px] font-semibold text-white transition-colors hover:bg-teal-700">
                                 Download
                             </a>
