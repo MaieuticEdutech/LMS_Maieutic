@@ -69,7 +69,7 @@ final class Index extends Component
      */
     public function courses(): LengthAwarePaginator
     {
-        $query = Course::published()->with('category');
+        $query = Course::published()->with(['category', 'thumbnail']);
 
         if ($this->search !== '') {
             $query->where('title', 'like', '%'.$this->search.'%');
