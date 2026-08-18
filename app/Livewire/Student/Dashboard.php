@@ -80,7 +80,7 @@ final class Dashboard extends Component
         return Course::query()
             ->where('status', CourseStatus::Published)
             ->whereDoesntHave('enrollments', fn ($q) => $q->where('user_id', $student->getKey()))
-            ->with(['category', 'instructors'])
+            ->with(['category', 'instructors', 'thumbnail'])
             ->latest('published_at')
             ->limit(3)
             ->get();

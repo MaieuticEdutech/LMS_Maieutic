@@ -29,7 +29,9 @@ final class Show extends Component
     {
         $this->authorize('view', $course);
 
-        $this->course = $course;
+        // thumbnail and category are read by the hero and the card partial;
+        // preventLazyLoading() throws on either if they are left unloaded.
+        $this->course = $course->loadMissing(['category', 'thumbnail']);
     }
 
     /**

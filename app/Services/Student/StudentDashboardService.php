@@ -46,7 +46,7 @@ final class StudentDashboardService
     public function activeEnrollments(User $student): Collection
     {
         return $this->accessibleQuery($student)
-            ->with(['course' => static fn (Relation $q) => $q->with('category')])
+            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'thumbnail'])])
             ->orderByRaw('COALESCE(last_accessed_at, enrolled_at) DESC')
             ->get();
     }
@@ -64,7 +64,7 @@ final class StudentDashboardService
         return $this->accessibleQuery($student)
             ->where('status', EnrollmentStatus::Active)
             ->whereNotNull('last_accessed_at')
-            ->with('course')
+            ->with(['course' => static fn (Relation $q) => $q->with('thumbnail')])
             ->orderByDesc('last_accessed_at')
             ->first();
     }
