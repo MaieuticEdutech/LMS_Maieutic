@@ -40,6 +40,16 @@
                 @endif
 
                 <div class="mt-6 flex flex-wrap gap-6 text-sm text-white/75">
+                    @include('partials.course-rating', ['course' => $course, 'tone' => 'inverse'])
+
+                    {{-- Every enrolment ever granted, not currently-active
+                         access — see Show::learnerCount(). Absent entirely
+                         until somebody has enrolled: "0 learners" on a sales
+                         page is an argument against buying. --}}
+                    @if ($learners > 0)
+                        <span>{{ number_format($learners) }} {{ Str::plural('learner', $learners) }}</span>
+                    @endif
+
                     <span>{{ $course->level->label() }}</span>
 
                     @if ($course->total_duration_seconds > 0)
@@ -156,26 +166,28 @@
                     @endif
                 </div>
 
-                <div class="overflow-hidden rounded-md border border-neutral-200 bg-white">
+                {{-- ONE SECTION OPEN AT A TIME (design handoff, Interactions).
+                     The shared index lives on the container, so opening a
+                     section closes the previous one; clicking the open section
+                     collapses it. The first is open on arrival, because an
+                     accordion that starts entirely shut hides the thing the
+                     reader came for. --}}
+                <div x-data="{ open: 0 }" class="overflow-hidden rounded-md border border-neutral-200 bg-white">
                     @forelse ($curriculum as $module)
-                        {{-- Alpine per section rather than one shared index: each
-                             row owns its own open state, so no section can be
-                             closed by opening another, and the first is open on
-                             arrival because an accordion that starts entirely
-                             shut hides the thing the reader came for. --}}
-                        <div x-data="{ open: {{ $loop->first ? 'true' : 'false' }} }"
-                             class="border-t border-neutral-200 first:border-t-0"
+                        <div class="border-t border-neutral-200 first:border-t-0"
                              wire:key="module-{{ $module->id }}">
 
+                            @php($i = $loop->index)
+
                             <button type="button"
-                                    x-on:click="open = !open"
-                                    x-bind:aria-expanded="open ? 'true' : 'false'"
+                                    x-on:click="open = (open === {{ $i }} ? null : {{ $i }})"
+                                    x-bind:aria-expanded="open === {{ $i }} ? 'true' : 'false'"
                                     class="flex w-full cursor-pointer items-center gap-3 bg-white px-5 py-4 text-left transition-colors hover:bg-neutral-50">
 
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                      class="shrink-0 text-neutral-600 transition-transform duration-[180ms]"
-                                     x-bind:class="open ? 'rotate-180' : ''" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                                     x-bind:class="open === {{ $i }} ? 'rotate-180' : ''" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
 
                                 <span class="flex-1 font-sans text-[15px] font-semibold tracking-normal text-neutral-900">
                                     {{ $module->title }}
@@ -186,7 +198,7 @@
                                 </span>
                             </button>
 
-                            <div x-show="open" x-cloak class="border-t border-neutral-100">
+                            <div x-show="open === {{ $i }}" x-cloak class="border-t border-neutral-100">
                                 @foreach ($module->lessons as $lesson)
                                     <div class="flex items-center gap-3 py-3 pl-[47px] pr-5 text-sm text-neutral-700">
                                         {{-- Locked for everyone on this page, enrolled
@@ -215,6 +227,40 @@
                     @endforelse
                 </div>
             </section>
+
+            @if ($reviews->isNotEmpty())
+                <section>
+                    <h2 class="mb-5 font-serif text-[26px] font-medium">What learners say</h2>
+
+                    <div class="flex flex-col gap-4">
+                        @foreach ($reviews as $review)
+                            <div class="rounded-card border border-neutral-200 bg-white p-6" wire:key="review-{{ $review->id }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-semibold text-white"
+                                         aria-hidden="true">
+                                        {{ $review->user?->initials() }}
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-sm font-semibold text-neutral-900">{{ $review->user?->name }}</div>
+                                        <div class="text-[12.5px] text-neutral-500">{{ $review->created_at?->format('F Y') }}</div>
+                                    </div>
+
+                                    {{-- This review's own stars, not the course
+                                         mean — so the partial is not reused
+                                         here. --}}
+                                    <div class="font-semibold text-red-500" aria-hidden="true">
+                                        {{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}
+                                    </div>
+                                    <span class="sr-only">Rated {{ $review->rating }} out of 5</span>
+                                </div>
+
+                                <p class="mt-3 text-[14.5px]/[1.6] text-neutral-700">{{ $review->body }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
 
             @if ($course->instructors->isNotEmpty())
                 <section>

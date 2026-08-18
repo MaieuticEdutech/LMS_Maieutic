@@ -44,66 +44,54 @@
             />
         </div>
     @else
-        {{-- ══ STATS ══ four tiles, serif figure over a small label.
-
-             THE DESIGN'S FOUR LABELS, BUT ONLY TWO REAL FIGURES.
-
-             "Courses in progress" and the progress percentage come from
-             StudentDashboardService and ProgressCalculator. "Hours learned",
-             "Lessons this month" and "Certificates earned" have no source in
-             this system — no watch-time aggregate, no certificates domain —
-             so they come from DemoMetrics and are marked as placeholders on
-             the tile itself. Production falls back to the honest figure.
-             See App\Support\DemoMetrics. --}}
-        @php($demo = \App\Support\DemoMetrics::enabled() ? \App\Support\DemoMetrics::dashboardStats() : null)
-
+        {{-- ══ STATS ══ the handoff's four tiles, serif figure over a small
+             label. Every one is measured: hours and lessons-this-month come
+             from lesson_progress, certificates from the certificates table. --}}
         <div class="mb-14 mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="flex items-start justify-between gap-2">
-                    <div class="font-serif text-[32px]/none font-medium text-neutral-900">
-                        {{ $demo['hours_learned'] ?? $stats['enrolled'] }}
-                    </div>
-                    <x-sample-data-badge />
-                </div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">
-                    {{ $demo ? 'Hours learned' : 'Courses enrolled' }}
-                </div>
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['hours'] }}h</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Hours learned</div>
             </div>
 
-            {{-- Real, in every environment. --}}
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
                 <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['in_progress'] }}</div>
                 <div class="mt-2 text-[13px] font-medium text-neutral-500">Courses in progress</div>
             </div>
 
             <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="flex items-start justify-between gap-2">
-                    <div class="font-serif text-[32px]/none font-medium text-neutral-900">
-                        {{ $demo['lessons_this_month'] ?? $stats['completed'] }}
-                    </div>
-                    <x-sample-data-badge />
-                </div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">
-                    {{ $demo ? 'Lessons this month' : 'Courses completed' }}
-                </div>
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['lessons_this_month'] }}</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Lessons this month</div>
             </div>
 
-            {{-- Overall progress (FR-PROG-07) when real. A MEAN OF COURSE
-                 PERCENTAGES, not of lessons: someone halfway through two
-                 courses is 50% whether one has ten lessons and the other a
-                 hundred, which is how a person actually thinks about their
-                 own progress. --}}
-            <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="flex items-start justify-between gap-2">
-                    <div class="font-serif text-[32px]/none font-medium text-neutral-900">
-                        {{ $demo['certificates'] ?? $overall['percentage'].'%' }}
-                    </div>
-                    <x-sample-data-badge />
-                </div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">
-                    {{ $demo ? 'Certificates earned' : 'Overall progress' }}
-                </div>
-            </div>
+            {{-- Counted from the certificates table, not from completed
+                 courses — see StudentDashboardService for why those two are
+                 allowed to differ. --}}
+            <a href="{{ route('student.certificates.index') }}"
+               class="rounded-card border border-neutral-200 bg-white px-[22px] py-5 transition-colors hover:border-neutral-300">
+                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['certificates'] }}</div>
+                <div class="mt-2 text-[13px] font-medium text-neutral-500">Certificates earned</div>
+            </a>
+        </div>
+
+        {{-- ══ OVERALL PROGRESS ══
+             THE ONE ADDITION TO THE DESIGN'S DASHBOARD, AND IT IS REQUIRED.
+
+             FR-PROG-07 puts a student's overall progress on this screen; the
+             prototype's four tiles do not include it. Rather than drop a
+             committed requirement to match a mockup, it sits here as a single
+             slim row — it states the figure without competing with the tiles
+             above or the cards below.
+
+             A MEAN OF COURSE PERCENTAGES, not of lessons: someone halfway
+             through two courses is 50% whether one has ten lessons and the
+             other a hundred, which is how a person thinks about their own
+             progress. --}}
+        <div class="mb-14 flex flex-wrap items-center gap-4">
+            <p class="eyebrow shrink-0 text-neutral-500">Overall progress</p>
+
+            <x-progress-bar :value="$overall['percentage']" label="Overall progress" class="min-w-40 flex-1" />
+
+            <p class="shrink-0 font-mono text-xs font-semibold text-neutral-700">{{ $overall['percentage'] }}%</p>
         </div>
 
         {{-- ══ CONTINUE LEARNING ══ the single most useful control on the page
@@ -129,8 +117,16 @@
                             {{ $continueCourse->title }}
                         </h3>
 
+                        {{-- The lesson they will land on, named — the handoff's
+                             "Lesson 6: Data cleaning". It is the resume pointer
+                             the player itself maintains, so the two cannot
+                             disagree about where they left off. --}}
                         <p class="text-[13.5px] text-neutral-500">
-                            {{ $continueCourse->lessons_count }} {{ Str::plural('lesson', $continueCourse->lessons_count) }} · {{ $continueCourse->level->label() }}
+                            @if ($continue->lastLesson)
+                                Next: {{ $continue->lastLesson->title }}
+                            @else
+                                {{ $continueCourse->lessons_count }} {{ Str::plural('lesson', $continueCourse->lessons_count) }} · {{ $continueCourse->level->label() }}
+                            @endif
                         </p>
 
                         <div class="mt-auto flex flex-col gap-[10px]">
@@ -167,12 +163,11 @@
         </div>
     @endif
 
-    {{-- ══ RECOMMENDED FOR YOU ══ (design §1, three-up).
-
-         Published courses this student is not enrolled in. Shown to everyone,
-         including the brand-new account above, because a dashboard with
-         nothing to do on it is the worst first impression the product can
-         make — and this is the one section that always has something. --}}
+    {{-- ══ RECOMMENDED FOR YOU ══ (design handoff §1)
+         Shown to a brand-new account too — on day one it is the only thing on
+         the page worth doing, and an empty dashboard with nowhere to go is a
+         poor first impression. Absent only when there is genuinely nothing
+         published they are not already in. --}}
     @if ($recommended->isNotEmpty())
         <div class="mb-5 mt-14 flex items-baseline justify-between">
             <h2 class="font-serif text-[26px] font-medium tracking-[-0.01em]">Recommended for you</h2>
@@ -185,31 +180,28 @@
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($recommended as $course)
                 <a href="{{ route('catalogue.show', $course) }}"
+                   wire:key="recommended-{{ $course->id }}"
                    class="group flex flex-col overflow-hidden rounded-card border border-neutral-200 bg-white transition-all duration-[180ms] ease-standard hover:-translate-y-px hover:border-neutral-300 hover:shadow-[0_2px_8px_rgba(26,24,21,0.06)]">
+
                     @include('partials.course-thumb', ['course' => $course])
 
                     <div class="flex flex-1 flex-col gap-1.5 px-5 pb-5 pt-[18px]">
-                        <h3 class="font-sans text-base/[1.35] font-semibold tracking-normal text-neutral-900">
+                        <h3 class="font-sans text-base/[1.35] font-semibold tracking-normal text-neutral-900 group-hover:text-teal-700">
                             {{ $course->title }}
                         </h3>
 
                         <p class="text-[13px] text-neutral-500">
-                            {{ $course->instructors->first()?->name ?? 'Maieutic' }}
+                            @if ($course->instructors->isNotEmpty())
+                                {{ $course->instructors->first()->name }}
+                            @else
+                                {{ $course->category?->name ?? 'General' }}
+                            @endif
                         </p>
 
-                        {{-- The design's meta row. The rating is a placeholder
-                             — there is no rating or review domain — so it
-                             carries the marker beside it. Level and duration
-                             are real columns on the row. --}}
-                        <div class="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2 text-[13px] text-neutral-500">
-                            @if (\App\Support\DemoMetrics::enabled())
-                                <span class="font-semibold text-[#a31009]">★ {{ \App\Support\DemoMetrics::rating($course->id) }}</span>
-                                <span aria-hidden="true">·</span>
-                            @endif
+                        <div class="mt-auto flex items-center gap-2 pt-2 text-[13px] text-neutral-600">
                             <span>{{ $course->level->label() }}</span>
-                            <span aria-hidden="true">·</span>
+                            <span class="text-neutral-300">·</span>
                             <span>{{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }}</span>
-                            <x-sample-data-badge class="ml-auto" />
                         </div>
                     </div>
                 </a>

@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\CertificateDocumentController;
+use App\Http\Controllers\CertificateDownloadController;
 use App\Livewire\Student\AttemptHistory;
 use App\Livewire\Student\AttemptResult;
 use App\Livewire\Student\AttemptRunner;
+use App\Livewire\Student\Certificates;
 use App\Livewire\Student\CoursePlayer;
 use App\Livewire\Student\Dashboard;
 use App\Livewire\Student\MyCourses;
@@ -72,6 +75,19 @@ Route::name('student.')
         Route::get('/assessments/{assessment}/attempt', AttemptRunner::class)->name('assessments.attempt');
         Route::get('/assessments/{assessment}/history', AttemptHistory::class)->name('assessments.history');
         Route::get('/attempts/{attempt}/result', AttemptResult::class)->name('assessments.result');
+
+        /*
+        | Certificates (design handoff §7).
+        |
+        | The LIST is student-only and self-scoped by its query. The single
+        | certificate view is authorised per record by CertificatePolicy — a
+        | super admin may open any, a student only their own.
+        |
+        | Note what is NOT here: the public verification route. It lives in
+        | web.php with no auth at all, because a credential a stranger cannot
+        | check is not a credential. See CertificatePolicy for why that is safe.
+        */
+        Route::get('/certificates', Certificates::class)->name('certificates.index');
     });
 
 /*
@@ -85,4 +101,34 @@ Route::name('student.')
 */
 Route::middleware(['auth', 'active'])->group(static function (): void {
     Route::view('/profile', 'profile.show')->name('profile.show');
+
+    /*
+    | The certificate DOCUMENT — the printable sheet, bound by `number`.
+    |
+    | Outside the student-only group above, and named without the `student.`
+    | prefix, because it is not a student screen: CertificatePolicy::view lets a
+    | super admin open any certificate, and `role:student` would lock them out
+    | of a record they are explicitly authorised to see. The role middleware
+    | says who an AREA is for; the policy says who a RECORD is for, and this
+    | route is about a record (Rule 20).
+    |
+    | Not public, unlike /verify/{number}. That page answers "is this real?" for
+    | a stranger; this one hands over a print-ready certificate, and those need
+    | different doors — see CertificateDocumentController.
+    */
+    Route::get('/certificates/{certificate}', CertificateDocumentController::class)
+        ->name('certificates.show');
+
+    /*
+    | The same certificate as a PDF file.
+    |
+    | Rate-limited because it is the one authenticated route here that does
+    | real work per request — dompdf lays out the whole document each time.
+    | Nothing is cached on disk deliberately (see the controller), so the
+    | throttle is what stops a held-down key turning a download button into a
+    | way to spend the server's CPU.
+    */
+    Route::get('/certificates/{certificate}/download', CertificateDownloadController::class)
+        ->middleware('throttle:20,1')
+        ->name('certificates.download');
 });

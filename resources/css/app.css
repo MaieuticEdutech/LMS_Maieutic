@@ -267,10 +267,48 @@
     | removes the default outline, so the ring is restored here once rather
     | than relying on every component to remember it.
     */
+    /*
+    | The student design handoff specifies a 3px teal ring at 22% rather than a
+    | hard 2px outline. A translucent ring reads as a halo around the control
+    | instead of a box drawn on top of it, which matters most on the warm paper
+    | background where a solid outline looks like a border the element gained.
+    |
+    | Kept as `outline` rather than `box-shadow`: an outline is not clipped by
+    | overflow:hidden, and several of these controls sit inside cards that clip.
+    */
     :focus-visible {
-        outline: 2px solid var(--color-teal-600);
+        outline: 3px solid rgb(0 97 92 / 0.22);
         outline-offset: 2px;
         border-radius: var(--radius-sm);
+    }
+
+    /*
+    | Printing.
+    |
+    | One page in this product is genuinely meant to be printed — the
+    | certificate — and "Download" is a link to it with ?print=1 rather than a
+    | server-generated PDF, so the printed result has to look deliberate.
+    |
+    | Site chrome goes; the document keeps its colours. `print-color-adjust`
+    | matters here: browsers strip backgrounds by default, and a certificate
+    | whose dark banner printed as white would lose the thing that makes it look
+    | like a certificate.
+    */
+    @media print {
+        header,
+        footer,
+        nav {
+            display: none !important;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
     }
 
     /* Respect users who have asked for reduced motion. */

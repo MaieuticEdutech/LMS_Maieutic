@@ -13,6 +13,7 @@ use App\Jobs\Progress\RecalculateProgressForCourseEnrollments;
 use App\Listeners\ActivateUserAfterEmailVerification;
 use App\Listeners\AlertOnFailedJob;
 use App\Listeners\CompleteLessonOnPassedAttempt;
+use App\Listeners\IssueCertificateOnCourseCompletion;
 use App\Listeners\LogOutboundEmail;
 use App\Listeners\SendAssessmentResultNotification;
 use App\Listeners\SendCourseCompletedNotification;
@@ -180,6 +181,13 @@ class AppServiceProvider extends ServiceProvider
          */
         Event::listen(AttemptGraded::class, SendAssessmentResultNotification::class);
         Event::listen(CourseCompleted::class, SendCourseCompletedNotification::class);
+
+        /*
+         * Two listeners on CourseCompleted now, and separate for the same reason
+         * as the pair above: a certificate that fails to issue must not stop the
+         * completion email, and a failing template must not stop the award.
+         */
+        Event::listen(CourseCompleted::class, IssueCertificateOnCourseCompletion::class);
 
         Event::listen(
             CourseStructureChanged::class,

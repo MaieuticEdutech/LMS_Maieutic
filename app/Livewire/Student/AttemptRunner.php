@@ -50,6 +50,27 @@ final class AttemptRunner extends Component
      */
     public array $answers = [];
 
+    /**
+     * Which question is on screen, zero-based (design handoff §5).
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * PAGING IS PRESENTATION ONLY. IT CHANGES NOTHING ABOUT THE ATTEMPT.
+     *
+     * Every answer is already persisted the moment it is given, by
+     * saveAnswer() through the SaveAnswer action — so moving between
+     * questions cannot lose work, and closing the tab on question 7 loses
+     * nothing either. The index is deliberately NOT stored on the attempt:
+     * "where the student had got to" is not a fact about the attempt, and a
+     * column for it would be one more thing that could disagree with the
+     * answers actually saved.
+     *
+     * Not in the URL, either. A shareable link to question 4 of someone
+     * else's attempt is meaningless, and #[Url] would put the student's
+     * position in their browser history for no gain.
+     * ═════════════════════════════════════════════════════════════════════
+     */
+    public int $index = 0;
+
     public function mount(Assessment $assessment): void
     {
         $this->authorize('start', [AssessmentAttempt::class, $assessment]);
@@ -100,6 +121,39 @@ final class AttemptRunner extends Component
         }
     }
 
+    /**
+     * Move through the questions (design handoff §5).
+     *
+     * Clamped rather than trusted: `$index` is public Livewire state, so it
+     * arrives from the browser and a forged value must land on a real question
+     * instead of rendering nothing. Clamping in one place means neither button
+     * needs to know the bounds.
+     */
+    public function goToQuestion(int $index): void
+    {
+        $this->index = max(0, min($index, $this->questionCount() - 1));
+    }
+
+    /**
+     * "Save & exit" — leave without submitting (design handoff §5).
+     *
+     * Nothing to save: every answer was persisted as it was given. The attempt
+     * stays IN PROGRESS, which is the point — the student is stepping away, not
+     * finishing, and mount() will resume this same attempt when they return.
+     *
+     * Deliberately does NOT submit. A control labelled "save" that graded the
+     * attempt would be the most expensive mislabelled button in the product.
+     */
+    public function saveAndExit(): mixed
+    {
+        $attempt = $this->attempt();
+        $this->authorize('answer', $attempt);
+
+        session()->flash('status', 'Your answers are saved. You can pick this up where you left off.');
+
+        return redirect()->route('student.assessments.history', $this->assessmentOf($attempt));
+    }
+
     public function submit(SubmitAttempt $submit): mixed
     {
         $attempt = $this->attempt();
@@ -147,11 +201,30 @@ final class AttemptRunner extends Component
             ->map(fn (Question $q): array => $presenter->forAttempt($q))
             ->values();
 
+        // Clamped here too, not only in goToQuestion: a question removed from
+        // the assessment mid-attempt could leave a stored index past the end.
+        $current = $questions->isEmpty()
+            ? null
+            : $questions[max(0, min($this->index, $questions->count() - 1))];
+
         return view('livewire.student.attempt-runner', [
             'assessment' => $assessment,
             'attempt' => $attempt,
             'questions' => $questions,
+            'current' => $current,
+            // The number of questions ANSWERED, which is the fact a student
+            // wants before they submit — not their position on screen.
+            'answeredCount' => $questions->filter(function (array $question): bool {
+                $given = $this->answers[$question['id']] ?? null;
+
+                return is_array($given) ? $given !== [] : ($given !== null && $given !== '');
+            })->count(),
         ]);
+    }
+
+    private function questionCount(): int
+    {
+        return count($this->attempt()->question_order ?? []);
     }
 
     private function attempt(): AssessmentAttempt

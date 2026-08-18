@@ -84,7 +84,10 @@ it('keeps a signed-in student on their own header while browsing the catalogue',
         ->get(route('catalogue.index'))
         ->assertOk()
         ->assertSee('My Learning')
-        ->assertSee('Your profile')
+        // The avatar's accessible name. "Your account" rather than "Your
+        // profile" because the disc opens a menu now instead of navigating —
+        // see partials/student-header.blade.php for why it had to.
+        ->assertSee('Your account')
         // And NOT the guest header's way in.
         ->assertDontSee('Sign in');
 });
@@ -105,20 +108,38 @@ it('does not put the student nav in front of an instructor', function (): void {
         ->assertDontSee('My Learning');
 });
 
-it('omits the features that do not exist yet', function (): void {
+it('carries the Certificates tab now that the feature exists', function (): void {
+    // It was deliberately absent while nothing stood behind it. The feature
+    // landed, so the nav item did too.
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee(route('student.certificates.index'));
+});
+
+it('keeps the Certificates tab away from an instructor', function (): void {
+    // The route is behind role:student, so showing the link to an instructor
+    // would be a link to a 403. Hiding it is presentation; the middleware is
+    // the control (Rule 20).
+    $this->actingAs(User::factory()->instructor()->create())
+        ->get(route('catalogue.index'))
+        ->assertOk()
+        ->assertDontSee(route('student.certificates.index'));
+});
+
+it('still omits the notifications bell', function (): void {
     /*
-     * The mockup's header carries a Certificates tab and a notifications bell.
-     * Neither feature exists — no certificate model, migration or issuing rule
-     * anywhere, and no notification centre. A tab leading to an empty screen
-     * promises something the product cannot do (Rule 5 — do not build ahead).
+     * The one thing from the mockup's header with nothing behind it. There is
+     * no notification centre, and a bell that never rings promises something
+     * the product cannot do (Rule 5 — do not build ahead).
      *
-     * Pinned as a test because "add the missing nav item" is a tempting and
-     * wrong five-second fix for someone comparing the screen to the mockup.
+     * Pinned because "add the missing icon" is a tempting and wrong five-second
+     * fix for someone comparing the screen to the mockup.
      */
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Certificates');
+        ->assertDontSee('Notifications');
 });
 
 /*
@@ -203,19 +224,55 @@ it('narrows the catalogue by level', function (): void {
     Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('level', CourseLevel::Beginner->value)
+        ->set('level', [CourseLevel::Beginner->value])
         ->assertSee('Easy Course')
         ->assertDontSee('Hard Course');
 });
 
+it('accepts more than one level at once', function (): void {
+    /*
+     * The facets are checkboxes in the design, so they have to be genuinely
+     * multi-select. A learner who ticks Beginner and Intermediate and watches
+     * the first one clear concludes the page is broken.
+     */
+    Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
+    Course::factory()->published()->create(['title' => 'Middling Course', 'level' => CourseLevel::Intermediate]);
+    Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', [CourseLevel::Beginner->value, CourseLevel::Intermediate->value])
+        ->assertSee('Easy Course')
+        ->assertSee('Middling Course')
+        ->assertDontSee('Hard Course');
+});
+
+it('treats an empty group as no constraint rather than as matching nothing', function (): void {
+    Course::factory()->published()->create(['title' => 'Some Course']);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', [])
+        ->assertSee('Some Course');
+});
+
 it('ignores a level that is not a real one', function (): void {
-    // ?level=' OR 1=1 must narrow to nothing recognised rather than reach the
-    // query. CourseLevel::tryFrom returns null for junk.
+    // ?level[]=' OR 1=1 must be dropped rather than reach the query.
+    // CourseLevel::tryFrom returns null for junk, and an array of only junk
+    // therefore behaves like no selection at all.
     Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
 
     Livewire::test(CatalogueIndex::class)
-        ->set('level', "' OR 1=1")
+        ->set('level', ["' OR 1=1"])
         ->assertSee('Easy Course');
+});
+
+it('keeps the real levels when junk is mixed in', function (): void {
+    Course::factory()->published()->create(['title' => 'Easy Course', 'level' => CourseLevel::Beginner]);
+    Course::factory()->published()->create(['title' => 'Hard Course', 'level' => CourseLevel::Advanced]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('level', ['nonsense', CourseLevel::Beginner->value])
+        ->assertSee('Easy Course')
+        ->assertDontSee('Hard Course');
 });
 
 it('combines level with a search term', function (): void {
@@ -225,10 +282,115 @@ it('combines level with a search term', function (): void {
 
     Livewire::test(CatalogueIndex::class)
         ->set('search', 'Python')
-        ->set('level', CourseLevel::Beginner->value)
+        ->set('level', [CourseLevel::Beginner->value])
         ->assertSee('Python Basics')
         ->assertDontSee('Python Advanced')
         ->assertDontSee('Ruby Basics');
+});
+
+/*
+| ═══════════════ DURATION BANDS (design handoff §2) ═══════════════
+*/
+it('narrows the catalogue by duration band', function (): void {
+    Course::factory()->published()->create(['title' => 'Short Course', 'total_duration_seconds' => 5 * 3600]);
+    Course::factory()->published()->create(['title' => 'Middling Course', 'total_duration_seconds' => 15 * 3600]);
+    Course::factory()->published()->create(['title' => 'Epic Course', 'total_duration_seconds' => 30 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', ['short'])
+        ->assertSee('Short Course')
+        ->assertDontSee('Middling Course')
+        ->assertDontSee('Epic Course')
+        ->set('duration', ['long'])
+        ->assertSee('Epic Course')
+        ->assertDontSee('Short Course');
+});
+
+it('ORs several duration bands without widening the whole result set', function (): void {
+    /*
+     * The classic Eloquent filter bug: an orWhere that is not wrapped escapes
+     * its group and cancels every AND before it, so the page quietly shows
+     * MORE than it should rather than less. Combined with a search term here,
+     * because that is the condition the loose OR would destroy.
+     */
+    Course::factory()->published()->create(['title' => 'Python Short', 'total_duration_seconds' => 5 * 3600]);
+    Course::factory()->published()->create(['title' => 'Python Epic', 'total_duration_seconds' => 30 * 3600]);
+    Course::factory()->published()->create(['title' => 'Python Middling', 'total_duration_seconds' => 15 * 3600]);
+    Course::factory()->published()->create(['title' => 'Ruby Short', 'total_duration_seconds' => 5 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('search', 'Python')
+        ->set('duration', ['short', 'long'])
+        ->assertSee('Python Short')
+        ->assertSee('Python Epic')
+        ->assertDontSee('Python Middling')
+        // The one the escaped OR would have dragged back in.
+        ->assertDontSee('Ruby Short');
+});
+
+it('puts a course on a band boundary in exactly one band', function (): void {
+    // Exactly 10 hours. An inclusive upper bound would show it in both "under
+    // 10" and "10-20", and a student would count it twice.
+    Course::factory()->published()->create(['title' => 'Boundary Course', 'total_duration_seconds' => 10 * 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', ['short'])
+        ->assertDontSee('Boundary Course')
+        ->set('duration', ['medium'])
+        ->assertSee('Boundary Course');
+});
+
+it('ignores a duration band that does not exist', function (): void {
+    Course::factory()->published()->create(['title' => 'Some Course', 'total_duration_seconds' => 3600]);
+
+    Livewire::test(CatalogueIndex::class)
+        ->set('duration', ['forever'])
+        ->assertSee('Some Course');
+});
+
+/*
+| ═══════════════ RECOMMENDED FOR YOU (design handoff §1) ═══════════════
+*/
+it('recommends published courses the student is not in', function (): void {
+    Course::factory()->published()->create(['title' => 'Fresh Course']);
+
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee('Recommended for you')
+        ->assertSee('Fresh Course');
+});
+
+it('never recommends a course they are already enrolled in', function (): void {
+    $mine = Course::factory()->published()->create(['title' => 'Already Mine']);
+    ($this->enrol)($this->student, $mine);
+
+    // It appears once, as one of THEIR courses — never a second time as a
+    // suggestion. Recommending what someone already owns reads as the product
+    // not knowing them at all.
+    $response = $this->actingAs($this->student)->get(route('student.home'))->assertOk();
+
+    expect(substr_count($response->content(), 'Already Mine'))->toBe(1);
+});
+
+it('never recommends an unpublished course', function (): void {
+    Course::factory()->create(['title' => 'Draft Course']);
+
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertDontSee('Draft Course');
+});
+
+it('shows recommendations to a brand-new account with nothing else to do', function (): void {
+    Course::factory()->published()->create(['title' => 'Fresh Course']);
+
+    // On day one this is the only thing on the page worth doing.
+    $this->actingAs($this->student)
+        ->get(route('student.home'))
+        ->assertOk()
+        ->assertSee('not enrolled in any courses')
+        ->assertSee('Fresh Course');
 });
 
 /*
@@ -249,11 +411,20 @@ it('never prints a rating or a learner count', function (): void {
         ->assertDontSee('learners');
 });
 
-it('never claims a certificate the system cannot issue', function (): void {
-    ($this->enrol)($this->student, Course::factory()->published()->create());
+it('counts certificates from the table rather than from completed courses', function (): void {
+    /*
+     * The two are allowed to differ, and conflating them would promise a
+     * document that does not exist: a course completed before certificates
+     * existed has no award, and issuing is a queued listener that may not have
+     * run yet. The tile reads 0 here even though the course is finished.
+     */
+    $enrollment = ($this->enrol)($this->student, Course::factory()->published()->create());
+    $enrollment->forceFill(['completed_at' => now()])->save();
 
     $this->actingAs($this->student)
         ->get(route('student.home'))
         ->assertOk()
-        ->assertDontSee('Certificates earned');
+        ->assertSee('Certificates earned');
+
+    expect(App\Models\Certificate::query()->count())->toBe(0);
 });

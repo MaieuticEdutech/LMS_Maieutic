@@ -40,7 +40,7 @@ it('filters by category', function (): void {
     Course::factory()->published()->inCategory($science)->create(['title' => 'Chemistry basics']);
 
     Livewire::test(Index::class)
-        ->set('category', $maths->slug)
+        ->set('category', [$maths->slug])
         ->assertSee('Algebra basics')
         ->assertDontSee('Chemistry basics');
 });

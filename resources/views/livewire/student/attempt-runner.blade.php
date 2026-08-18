@@ -1,37 +1,31 @@
 @section('title', $assessment->title.' — '.app(\App\Services\Settings\BrandingService::class)->organisationName())
 
 {{--
-    Sitting an assessment.
+    Sitting an assessment (design handoff §5).
 
-    The mockup's quiz screen: a narrow 760px column, an eyebrow and serif title,
-    a progress bar over "Question 4 of 10", and answer options as large bordered
-    targets with a custom radio dot.
+    A 760px column: eyebrow, serif H1, progress bar over "Question N of M", one
+    question card at a time, and a footer with Previous on the left, Save & exit
+    and Next question on the right.
 
     ═════════════════════════════════════════════════════════════════════════
-    ONE DIFFERENCE FROM THE MOCKUP, DELIBERATELY: EVERY QUESTION IS ON THE PAGE.
+    PAGING IS SAFE HERE ONLY BECAUSE ANSWERS ALREADY PERSIST ON CHANGE.
 
-    The mockup pages one question at a time with Previous / Next. That is not a
-    styling choice — it is a different way to sit an exam, and this runner is
-    built around the other one: answers autosave per question, the timer submits
-    the whole attempt when it expires, and a student can review everything
-    before committing. Paging would also mean a server round trip between
-    questions, which is the last thing wanted on a timed test with a weak
-    connection.
+    Each input calls saveAnswer(), which writes through the SaveAnswer action
+    immediately. So moving between questions cannot lose work, the timer can
+    submit the whole attempt whenever it expires regardless of which question is
+    showing, and closing the tab on question 7 loses nothing.
 
-    So the mockup's LOOK is applied to each question, and the interaction model
-    is unchanged. Say the word if paging is genuinely wanted — it is a real
-    change to how assessments work, not a stylesheet.
+    The progress bar counts ANSWERED questions, not position. "Question 4 of 10"
+    tells a student where they are; the bar tells them what is left to do, and
+    those are different facts — someone who skipped two questions needs to know.
     ═════════════════════════════════════════════════════════════════════════
 
-    The bar counts ANSWERED questions rather than position on the page, which is
-    the fact a student actually wants before they submit.
+    The last question shows "Submit assessment" in place of "Next question",
+    which still opens the confirmation modal rather than submitting outright.
 --}}
 @php
-    $answered = collect($questions)->filter(function (array $question) {
-        $given = $answers[$question['id']] ?? null;
-
-        return is_array($given) ? $given !== [] : ($given !== null && $given !== '');
-    })->count();
+    $total = $questions->count();
+    $isLast = $current !== null && $index >= $total - 1;
 @endphp
 
 <div class="mx-auto w-full max-w-[760px] px-5 pb-24 pt-12 lg:px-10">
@@ -76,20 +70,6 @@
         @endif
     </div>
 
-    {{-- Progress across the whole attempt. Labelled, because it is the only
-         statement of the figure — nothing else on screen says how many are
-         answered. --}}
-    <div class="mb-8 flex items-center gap-3">
-        <x-progress-bar
-            :value="$questions->count() > 0 ? (int) round($answered / $questions->count() * 100) : 0"
-            label="Questions answered"
-            class="flex-1"
-        />
-        <span class="font-mono text-[12.5px] font-semibold text-neutral-700">
-            {{ $answered }} of {{ $questions->count() }} answered
-        </span>
-    </div>
-
     @if ($assessment->instructions)
         <x-alert variant="info" class="mb-6">{{ $assessment->instructions }}</x-alert>
     @endif
@@ -98,102 +78,162 @@
         <x-alert variant="danger" class="mb-6">{{ session('error') }}</x-alert>
     @endif
 
-    <div class="space-y-5">
-        @foreach ($questions as $i => $question)
-            <div class="rounded-card border border-neutral-200 bg-white p-8" wire:key="runner-question-{{ $question['id'] }}">
+    @if ($current === null)
+        <x-empty-state
+            title="This assessment has no questions yet"
+            description="Nothing can be answered until an instructor adds them."
+        />
+    @else
+        <div class="mb-8 flex items-center gap-3">
+            <x-progress-bar
+                :value="$total > 0 ? (int) round($answeredCount / $total * 100) : 0"
+                label="Questions answered"
+                class="flex-1"
+            />
+            <span class="font-mono text-[12.5px] font-semibold text-neutral-700">
+                Question {{ $index + 1 }} of {{ $total }}
+            </span>
+        </div>
 
-                <div class="mb-4 flex items-baseline justify-between gap-3">
-                    <span class="font-mono text-[12.5px] font-semibold text-neutral-700">
-                        Question {{ $i + 1 }} of {{ $questions->count() }}
-                    </span>
-                    <span class="text-xs text-neutral-500">
-                        {{ $question['marks'] }} {{ Str::plural('mark', $question['marks']) }}
-                    </span>
-                </div>
+        {{-- wire:key on the question id, not the index: keying on the index
+             would let Livewire reuse the previous question's DOM — and its
+             checked radio — for the next one. --}}
+        <div class="rounded-card border border-neutral-200 bg-white p-8" wire:key="runner-question-{{ $current['id'] }}">
 
-                <h2 class="mb-6 font-serif text-xl/[1.4] font-medium">{{ $question['body'] }}</h2>
+            <div class="mb-4 flex items-baseline justify-between gap-3">
+                <span class="font-mono text-[12.5px] font-semibold text-neutral-700">
+                    {{ $current['marks'] }} {{ Str::plural('mark', $current['marks']) }}
+                </span>
 
-                @if ($question['type'] === 'single_choice' || $question['type'] === 'true_false')
-                    <div class="flex flex-col gap-2.5">
-                        @foreach ($question['options'] as $option)
-                            {{-- A REAL radio, visually hidden, driving the styling
-                                 through `peer-checked`. Painting divs would mean
-                                 rebuilding keyboard support and the accessibility
-                                 tree by hand, and getting one of them wrong. --}}
-                            <label class="group flex cursor-pointer items-center gap-3.5 rounded-control border-[1.5px] border-neutral-200 bg-white px-[18px] py-[15px] transition-all duration-150 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50 hover:border-teal-200">
-                                <input
-                                    type="radio"
-                                    name="answer-{{ $question['id'] }}"
-                                    wire:model="answers.{{ $question['id'] }}"
-                                    value="{{ $option['id'] }}"
-                                    wire:change="saveAnswer({{ $question['id'] }})"
-                                    class="peer sr-only"
-                                >
-
-                                <span class="flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 border-neutral-400 transition-colors peer-checked:border-teal-600"
-                                      aria-hidden="true">
-                                    <span class="size-2 rounded-full bg-transparent transition-colors peer-checked:bg-teal-600"></span>
-                                </span>
-
-                                <span class="text-[15px] text-neutral-800">{{ $option['body'] }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                @elseif ($question['type'] === 'multiple_choice')
-                    <div class="flex flex-col gap-2.5">
-                        @foreach ($question['options'] as $option)
-                            {{-- Square, not round: the shape is the only thing
-                                 telling a student "more than one of these". --}}
-                            <label class="group flex cursor-pointer items-center gap-3.5 rounded-control border-[1.5px] border-neutral-200 bg-white px-[18px] py-[15px] transition-all duration-150 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50 hover:border-teal-200">
-                                <input
-                                    type="checkbox"
-                                    wire:model="answers.{{ $question['id'] }}"
-                                    value="{{ $option['id'] }}"
-                                    wire:change="saveAnswer({{ $question['id'] }})"
-                                    class="peer sr-only"
-                                >
-
-                                <span class="flex size-[18px] shrink-0 items-center justify-center rounded-xs border-2 border-neutral-400 transition-colors peer-checked:border-teal-600 peer-checked:bg-teal-600"
-                                      aria-hidden="true">
-                                    <svg class="size-2.5 text-white opacity-0 transition-opacity peer-checked:opacity-100"
-                                         viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M2 5.5L4 7.5L8 3" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </span>
-
-                                <span class="text-[15px] text-neutral-800">{{ $option['body'] }}</span>
-                            </label>
-                        @endforeach
-                    </div>
+                @if ($answeredCount < $total)
+                    <span class="text-xs text-neutral-500">{{ $total - $answeredCount }} still to answer</span>
                 @else
-                    <input
-                        type="text"
-                        wire:model="answers.{{ $question['id'] }}"
-                        wire:change="saveAnswer({{ $question['id'] }})"
-                        class="block h-11 w-full rounded-control border border-neutral-300 px-3.5 text-[15px] text-neutral-900 hover:border-neutral-400"
-                        placeholder="Your answer"
-                        aria-label="Your answer"
-                    >
+                    <span class="text-xs text-honeydew">All questions answered</span>
                 @endif
             </div>
-        @endforeach
-    </div>
 
-    <div class="mt-6 flex justify-end" x-data>
-        <button type="button"
-                x-on:click="$dispatch('open-modal', 'confirm-submit')"
-                class="rounded-sm bg-teal-600 px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-teal-700">
-            Submit assessment
-        </button>
-    </div>
+            <h2 class="mb-6 font-serif text-xl/[1.4] font-medium">{{ $current['body'] }}</h2>
 
-    <x-modal name="confirm-submit" title="Submit this assessment?">
-        <p class="text-sm text-neutral-600">
-            Once submitted you cannot change your answers. Unanswered questions score zero.
-        </p>
-        <x-slot:footer>
-            <x-button x-on:click="$dispatch('close-modal', 'confirm-submit')" variant="secondary" size="sm">Keep working</x-button>
-            <x-button wire:click="submit" variant="primary" size="sm">Submit</x-button>
-        </x-slot:footer>
-    </x-modal>
+            @if ($current['type'] === 'single_choice' || $current['type'] === 'true_false')
+                <div class="flex flex-col gap-2.5">
+                    @foreach ($current['options'] as $option)
+                        {{-- A REAL radio, visually hidden, driving the styling
+                             through `peer-checked`. Painting divs would mean
+                             rebuilding keyboard support and the accessibility
+                             tree by hand, and getting one of them wrong. --}}
+                        <label class="flex cursor-pointer items-center gap-3.5 rounded-control border-[1.5px] border-neutral-200 bg-white px-[18px] py-[15px] transition-all duration-150 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50 hover:border-teal-200">
+                            <input
+                                type="radio"
+                                name="answer-{{ $current['id'] }}"
+                                wire:model="answers.{{ $current['id'] }}"
+                                value="{{ $option['id'] }}"
+                                wire:change="saveAnswer({{ $current['id'] }})"
+                                class="peer sr-only"
+                            >
+
+                            <span class="flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 border-neutral-400 transition-colors peer-checked:border-teal-600"
+                                  aria-hidden="true">
+                                <span class="size-2 rounded-full bg-transparent transition-colors peer-checked:bg-teal-600"></span>
+                            </span>
+
+                            <span class="text-[15px] text-neutral-800">{{ $option['body'] }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            @elseif ($current['type'] === 'multiple_choice')
+                <div class="flex flex-col gap-2.5">
+                    @foreach ($current['options'] as $option)
+                        {{-- Square, not round: the shape is the only thing
+                             telling a student "more than one of these". --}}
+                        <label class="flex cursor-pointer items-center gap-3.5 rounded-control border-[1.5px] border-neutral-200 bg-white px-[18px] py-[15px] transition-all duration-150 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50 hover:border-teal-200">
+                            <input
+                                type="checkbox"
+                                wire:model="answers.{{ $current['id'] }}"
+                                value="{{ $option['id'] }}"
+                                wire:change="saveAnswer({{ $current['id'] }})"
+                                class="peer sr-only"
+                            >
+
+                            <span class="flex size-[18px] shrink-0 items-center justify-center rounded-xs border-2 border-neutral-400 transition-colors peer-checked:border-teal-600 peer-checked:bg-teal-600"
+                                  aria-hidden="true">
+                                <svg class="size-2.5 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+                                     viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 5.5L4 7.5L8 3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+
+                            <span class="text-[15px] text-neutral-800">{{ $option['body'] }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            @else
+                <input
+                    type="text"
+                    wire:model="answers.{{ $current['id'] }}"
+                    wire:change="saveAnswer({{ $current['id'] }})"
+                    class="block h-11 w-full rounded-control border border-neutral-300 px-3.5 text-[15px] text-neutral-900 hover:border-neutral-400"
+                    placeholder="Your answer"
+                    aria-label="Your answer"
+                >
+            @endif
+        </div>
+
+        {{-- ══ FOOTER ══ Previous left; Save & exit + Next/Submit right. --}}
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-3" x-data>
+            <div>
+                @if ($index > 0)
+                    <button type="button"
+                            wire:click="goToQuestion({{ $index - 1 }})"
+                            class="rounded-sm border border-neutral-300 bg-white px-5 py-[11px] text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                        Previous
+                    </button>
+                @endif
+            </div>
+
+            <div class="flex flex-wrap gap-2.5">
+                {{-- Saves nothing new — every answer is already persisted. It is
+                     a way OUT, and the attempt stays in progress. --}}
+                <button type="button"
+                        wire:click="saveAndExit"
+                        class="rounded-sm border border-neutral-300 bg-white px-5 py-[11px] text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                    Save &amp; exit
+                </button>
+
+                @if ($isLast)
+                    {{-- Still opens the confirmation rather than submitting
+                         outright: grading is irreversible. --}}
+                    <button type="button"
+                            x-on:click="$dispatch('open-modal', 'confirm-submit')"
+                            class="rounded-sm bg-teal-600 px-6 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                        Submit assessment
+                    </button>
+                @else
+                    <button type="button"
+                            wire:click="goToQuestion({{ $index + 1 }})"
+                            class="rounded-sm bg-teal-600 px-6 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                        Next question
+                    </button>
+                @endif
+            </div>
+        </div>
+
+        <x-modal name="confirm-submit" title="Submit this assessment?">
+            <p class="text-sm text-neutral-600">
+                Once submitted you cannot change your answers. Unanswered questions score zero.
+            </p>
+
+            @if ($answeredCount < $total)
+                {{-- Named before the point of no return. "Unanswered questions
+                     score zero" is abstract; "3 of 10 unanswered" is not. --}}
+                <p class="mt-3 text-sm font-semibold text-red-600">
+                    {{ $total - $answeredCount }} of {{ $total }} {{ Str::plural('question', $total) }} not yet answered.
+                </p>
+            @endif
+
+            <x-slot:footer>
+                <x-button x-on:click="$dispatch('close-modal', 'confirm-submit')" variant="secondary" size="sm">Keep working</x-button>
+                <x-button wire:click="submit" variant="primary" size="sm">Submit</x-button>
+            </x-slot:footer>
+        </x-modal>
+    @endif
 </div>
