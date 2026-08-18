@@ -30,6 +30,17 @@
 
 <div class="mx-auto w-full max-w-[760px] px-5 pb-24 pt-12 lg:px-10">
 
+    {{-- A refusal the component itself has to show.
+
+         These actions flashed to the session, and both layouts do render
+         session('error') — but Livewire re-renders the COMPONENT, not the
+         surrounding layout, so the message landed in a region that was never
+         redrawn. The row simply stayed put and the control looked broken. --}}
+    @error('action')
+        <x-alert variant="danger" class="mb-4">{{ $message }}</x-alert>
+    @enderror
+
+
     <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
             <p class="eyebrow text-teal-600">{{ ucfirst($assessment->type->value) }}</p>

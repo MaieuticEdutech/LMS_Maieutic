@@ -135,7 +135,7 @@ final class LessonList extends Component
         try {
             app(ReorderLessons::class)->handle($this->module, $orderedIds, $actor);
         } catch (ReorderException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
         }
 
         $this->module->refresh();

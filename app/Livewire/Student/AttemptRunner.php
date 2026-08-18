@@ -170,7 +170,7 @@ final class AttemptRunner extends Component
         $key = 'attempt-submit:user:'.$actor->getAuthIdentifier();
 
         if (RateLimiter::tooManyAttempts($key, 10)) {
-            session()->flash('error', 'Too many submit attempts. Wait a moment and try again.');
+            $this->addError('action', 'Too many submit attempts. Wait a moment and try again.');
 
             return null;
         }
@@ -180,7 +180,7 @@ final class AttemptRunner extends Component
         try {
             $graded = $submit->handle($attempt, $actor);
         } catch (AttemptNotAllowedException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->addError('action', $e->getMessage());
 
             return null;
         }
