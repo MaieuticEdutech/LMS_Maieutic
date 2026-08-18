@@ -21,6 +21,10 @@ use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
 use App\Livewire\Admin\StudentsTable;
 use App\Livewire\Instructor\Assessments\Results;
+use App\Livewire\Reports\AssessmentReportScreen;
+use App\Livewire\Reports\CourseProgressReportScreen;
+use App\Livewire\Reports\EnrollmentReportScreen;
+use App\Livewire\Reports\StudentReportScreen;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -94,6 +98,22 @@ Route::prefix('admin')
         Route::get('/courses', CoursesTable::class)->name('courses.index');
         Route::get('/courses/create', CourseBuilder::class)->name('courses.create');
         Route::get('/courses/{course}/builder', CourseBuilder::class)->name('courses.builder');
+        /*
+         * Phase 13 — reports. Four of the five: the revenue report
+         * (FR-RPT-02) waits on Phase 12, because writing it against a
+         * payments system that does not exist yet would mean writing it
+         * twice.
+         *
+         * Shared with routes/instructor.php — one screen per report, the
+         * figures narrowed by ReportScope rather than a second implementation
+         * per audience. There is deliberately NO instructor revenue route:
+         * an absent screen cannot leak (FR-RPT-07, FR-INS-10).
+         */
+        Route::get('/reports/enrollments', EnrollmentReportScreen::class)->name('reports.enrollments');
+        Route::get('/reports/course-progress', CourseProgressReportScreen::class)->name('reports.course-progress');
+        Route::get('/reports/assessments', AssessmentReportScreen::class)->name('reports.assessments');
+        Route::get('/reports/students', StudentReportScreen::class)->name('reports.students');
+
         Route::get('/audit-log', AuditLogTable::class)->name('audit-log.index');
 
         /*
