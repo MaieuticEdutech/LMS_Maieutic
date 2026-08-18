@@ -1,4 +1,4 @@
-@props(['caption' => 'Image', 'src' => null, 'alt' => null])
+@props(['caption' => 'Image', 'src' => null, 'alt' => null, 'width' => null, 'height' => null, 'fit' => 'cover'])
 
 {{--
     An image on the landing page, or an honest placeholder where the artwork
@@ -23,11 +23,33 @@
 --}}
 @php
     $file = $src !== null && $src !== '' && file_exists(public_path($src));
+
+    /*
+     * A .webp sibling is served in preference when one is present.
+     *
+     * Same one-step handoff as the file check above: drop hero.jpg and
+     * hero.webp side by side and the browser picks the smaller one, with no
+     * markup change at the call site. The hero photograph is 219 KB as JPEG
+     * and 135 KB as WebP — worth having on the one page every visitor loads
+     * before anything else.
+     */
+    $webp = $file ? preg_replace('/\.(png|jpe?g)$/i', '.webp', $src) : null;
+    $hasWebp = $webp !== null && $webp !== $src && file_exists(public_path($webp));
 @endphp
 
 @if ($file)
-    <img src="{{ asset($src) }}" alt="{{ $alt ?? $caption }}"
-         style="height:100%;width:100%;object-fit:cover;display:block">
+    {{-- width/height are the INTRINSIC pixel size, not the display size: they
+         give the browser the aspect ratio up front so the hero does not jump
+         once the photograph loads. --}}
+    <picture>
+        @if ($hasWebp)
+            <source srcset="{{ asset($webp) }}" type="image/webp">
+        @endif
+        <img src="{{ asset($src) }}" alt="{{ $alt ?? $caption }}"
+             @if ($width) width="{{ $width }}" @endif
+             @if ($height) height="{{ $height }}" @endif
+             style="height:100%;width:100%;object-fit:{{ $fit }};display:block">
+    </picture>
 @else
     <div style="height:100%;width:100%;display:flex;align-items:center;justify-content:center;background:var(--surface-sunken, #f2f1ec);border:1px solid var(--border)">
         <div style="padding:0 24px;text-align:center">
