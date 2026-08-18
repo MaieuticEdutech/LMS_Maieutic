@@ -239,8 +239,50 @@ final class AttemptRunner extends Component
         );
     }
 
+    /**
+     * Seed local working state for EVERY question, not only the answered ones.
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * THE SHAPE OF THE INITIAL VALUE IS LOAD-BEARING FOR MULTIPLE CHOICE.
+     *
+     * Every checkbox for a question binds to the same property,
+     * `answers.{id}`. Livewire accumulates several checked boxes into it as an
+     * ARRAY — but only if it already holds one. Previously a key was written
+     * only for questions that had been answered before, so on a fresh attempt
+     * the key was absent, the property resolved as a scalar, and checking any
+     * single box made it truthy — at which point EVERY checkbox bound to it
+     * rendered as checked. Choosing one option appeared to choose all of them.
+     *
+     * So each question is now seeded with the empty value of its own type:
+     * an array for multiple choice, a string for short answer, and null for
+     * the single-select types. Null matters as much as the array does — a
+     * radio group seeded with [] has nothing sensible to compare against and
+     * shows no selection at all.
+     * ═════════════════════════════════════════════════════════════════════
+     */
     private function seedAnswers(AssessmentAttempt $attempt): void
     {
+        $questions = $this->assessmentOf($attempt)
+            ->questions()
+            ->get(['id', 'type'])
+            ->keyBy('id');
+
+        foreach ($attempt->question_order ?? [] as $questionId) {
+            $question = $questions->get($questionId);
+
+            if ($question === null) {
+                continue;
+            }
+
+            $this->answers[$questionId] = match ($question->type) {
+                QuestionType::MultipleChoice => [],
+                QuestionType::ShortAnswer => '',
+                default => null,
+            };
+        }
+
+        // Work already saved wins over the empty defaults above, so a reload
+        // mid-attempt does not lose answers (FR-ASMT-11).
         foreach ($attempt->answers as $answer) {
             $this->answers[$answer->question_id] = $answer->answer_text ?? ($answer->selected_option_ids ?? []);
         }
