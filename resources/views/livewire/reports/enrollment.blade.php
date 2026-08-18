@@ -1,6 +1,8 @@
 {{-- Enrolment report (FR-RPT-01). The source split is the point — see
      EnrollmentReport's docblock. --}}
 <div>
+    @include('livewire.reports.partials.tabs')
+
     @include('livewire.reports.partials.filter-bar')
 
     <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">

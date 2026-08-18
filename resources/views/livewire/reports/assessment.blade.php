@@ -2,6 +2,8 @@
      correct rate, weakest first — the column that finds a broken question
      rather than a weak cohort. --}}
 <div>
+    @include('livewire.reports.partials.tabs')
+
     @include('livewire.reports.partials.filter-bar')
 
     @if ($rows->isEmpty())
