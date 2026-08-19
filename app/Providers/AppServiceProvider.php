@@ -26,6 +26,7 @@ use App\Policies\ReportPolicy;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
@@ -68,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDates();
         $this->configureEvents();
         $this->configureAuthorization();
+        $this->configureDevQueueWorker();
     }
 
     /**
@@ -289,5 +291,56 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('reports.view', [ReportPolicy::class, 'viewAny']);
         Gate::define('reports.operational', [ReportPolicy::class, 'viewOperational']);
         Gate::define('reports.financial', [ReportPolicy::class, 'viewFinancial']);
+    }
+
+    /**
+     * Make `composer dev`'s worker drain EVERY queue, in priority order.
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * THE DEFAULT DEV WORKER DRAINS ONE QUEUE OUT OF FOUR.
+     *
+     * Laravel's dev runner registers `queue:listen --tries=1 --timeout=0`
+     * with no --queue argument, so it processes `default` and nothing else.
+     * This application dispatches across four (config/lms.php): critical,
+     * mail, default and low.
+     *
+     * The practical effect was that in local development EVERY OUTBOUND EMAIL
+     * queued and never sent — activation links, enrolment confirmations,
+     * assessment results — because they all land on `mail`. Nothing failed and
+     * nothing appeared in failed_jobs; the rows simply accumulated, so the
+     * symptom was a feature that looked built and did nothing. Certificates
+     * happened to work only because issuing sits on `default`.
+     *
+     * The order comes from config('lms.queues.priority'), which that file
+     * already calls the single source of truth and which Phase 16 will read to
+     * build the supervisor's --queue argument. Reading it here too means local
+     * and production drain in the same order rather than drifting apart.
+     * ═════════════════════════════════════════════════════════════════════
+     *
+     * Console-only and inert in production: DevCommands no-ops unless the dev
+     * runner is what is executing.
+     */
+    private function configureDevQueueWorker(): void
+    {
+        if (! $this->app->runningInConsole() || $this->app->isProduction()) {
+            return;
+        }
+
+        /** @var list<string> $priority */
+        $priority = config()->array('lms.queues.priority', ['default']);
+
+        if ($priority === []) {
+            return;
+        }
+
+        // The stock 'queue' entry is dropped rather than left alongside ours:
+        // two listeners both polling `default` would process the same work
+        // twice over and make the runner's output impossible to read.
+        DevCommands::except('queue');
+
+        DevCommands::artisan(
+            sprintf('queue:listen --queue=%s --tries=1 --timeout=0', implode(',', $priority)),
+            'queues',
+        );
     }
 }
