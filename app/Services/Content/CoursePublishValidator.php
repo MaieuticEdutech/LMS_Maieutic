@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Content;
 
+use App\Enums\AssessmentType;
+use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Module;
@@ -39,6 +41,7 @@ final class CoursePublishValidator
         return [
             ...$this->metadataBlockers($course),
             ...$this->structureBlockers($course),
+            ...$this->finalTestBlockers($course),
         ];
     }
 
@@ -128,5 +131,48 @@ final class CoursePublishValidator
         }
 
         return $blockers;
+    }
+
+    /**
+     * A course that demands a final test must have one (AC-31, FR-PROG-08).
+     *
+     * ═════════════════════════════════════════════════════════════════════
+     * WITHOUT THIS, THE COURSE IS UNCOMPLETABLE AND NOBODY IS TOLD.
+     *
+     * ProgressCalculator's final-test gate is deliberately fail-safe: a course
+     * that requires a test it does not have returns "not complete", so every
+     * student sits at 100% of lessons and never finishes — and never earns the
+     * certificate the course exists to award. That is the honest answer at
+     * read time, but it surfaces days later, to the student, as a course that
+     * silently refuses to end.
+     *
+     * Publishing is the moment to catch it, because it is the last moment the
+     * author is still looking. Every other blocker in this class exists for
+     * the same reason: an unreachable state is cheaper to refuse than to
+     * explain.
+     *
+     * The test hangs off the COURSE, not a lesson — a quiz inside a module is
+     * a different thing and does not satisfy this (ADR-002).
+     * ═════════════════════════════════════════════════════════════════════
+     *
+     * @return list<string>
+     */
+    private function finalTestBlockers(Course $course): array
+    {
+        if (! $course->requires_final_test) {
+            return [];
+        }
+
+        $hasFinalTest = Assessment::query()
+            ->where('assessable_type', Course::class)
+            ->where('assessable_id', $course->getKey())
+            ->where('type', AssessmentType::Test)
+            ->exists();
+
+        if ($hasFinalTest) {
+            return [];
+        }
+
+        return ['This course requires a final test, but none has been created. Add the final test, or turn the requirement off — students cannot complete the course until one exists.'];
     }
 }
