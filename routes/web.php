@@ -8,6 +8,8 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\VerifyCertificateController;
 use App\Livewire\Catalogue\Index as CatalogueIndex;
 use App\Livewire\Catalogue\Show as CatalogueShow;
+use App\Livewire\Checkout\Start as CheckoutStart;
+use App\Livewire\Checkout\Status as CheckoutStatus;
 use App\Services\Settings\BrandingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +56,31 @@ Route::get('/', static fn (): View => view('welcome', [
 */
 Route::get('/courses', CatalogueIndex::class)->name('catalogue.index');
 Route::get('/courses/{course}', CatalogueShow::class)->name('catalogue.show');
+
+/*
+|--------------------------------------------------------------------------
+| Checkout — Phase 12 (architecture.md §11.2)
+|--------------------------------------------------------------------------
+|
+| GUEST-ACCESSIBLE, DELIBERATELY: architecture.md §11.2 step 1 is
+| "B->>APP: POST /checkout/{course} (name, email, phone)" from an
+| unauthenticated buyer browser — a purchase may be the first thing that
+| ever creates an account for this person (UserStatus::PendingActivation,
+| architecture.md §7.2). A signed-in student's name and email are prefilled
+| by CheckoutStart, but nobody is required to be signed in to reach either
+| route here.
+|
+| THESE ROUTES CREATE AN ORDER. THEY NEVER GRANT ACCESS. Every write here is
+| to `orders`, never to `enrollments` — see InitiateCheckout's own docblock.
+| Rate limited (`checkout`, PaymentServiceProvider) because, unlike the
+| webhook route, there is no signature here to fall back on; the limiter is
+| the only control against a script hammering this endpoint to spam Order
+| rows.
+*/
+Route::middleware('throttle:checkout')->group(static function (): void {
+    Route::get('/checkout/{course}', CheckoutStart::class)->name('checkout.start');
+    Route::get('/checkout/status/{order:order_number}', CheckoutStatus::class)->name('checkout.status');
+});
 
 /*
 |--------------------------------------------------------------------------
