@@ -7,6 +7,7 @@ use App\Providers\AssessmentServiceProvider;
 use App\Providers\ContentServiceProvider;
 use App\Providers\FortifyServiceProvider;
 use App\Providers\MediaServiceProvider;
+use App\Providers\PaymentServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -14,4 +15,5 @@ return [
     ContentServiceProvider::class,
     FortifyServiceProvider::class,
     MediaServiceProvider::class,
+    PaymentServiceProvider::class,
 ];
