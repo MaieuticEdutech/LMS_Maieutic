@@ -23,8 +23,6 @@ Artisan::command('inspire', function () {
 | architecture.md §13 lists eight recurring tasks. Most of them invoke
 | commands owned by phases that are not built yet:
 |
-|   orders:reconcile        every 10m  Phase 12 (payments)
-|   orders:cancel-abandoned hourly     Phase 12 (payments)
 |   attempts:expire         every 5m   Phase 8  (assessment)
 |   enrollments:expire      daily      Phase 6  — REGISTERED, see below
 |   media:prune-orphans     daily      Phase 5  (media) — DeleteOrphanedMedia
@@ -39,8 +37,8 @@ Artisan::command('inspire', function () {
 | Each phase registers its own task here when it builds its command; this
 | comment is the checklist for doing so.
 |
-| Registered below: queue and mail hygiene (Phase 11), and enrollment expiry
-| (Phase 6).
+| Registered below: queue and mail hygiene (Phase 11), enrollment expiry
+| (Phase 6), and order reconciliation / abandonment (Phase 12).
 |
 */
 
@@ -114,6 +112,31 @@ Schedule::command('lms:enrollments:expire')
  */
 Schedule::command('lms:attempts:expire')
     ->everyFifteenMinutes()
+    ->onOneServer()
+    ->withoutOverlapping();
+
+/*
+ * Order reconciliation — Phase 12, architecture.md §11.3 rule 8.
+ *
+ * "Missed webhooks are self-healing": a pending order older than 15 minutes
+ * is settled by asking the gateway directly, through the exact same
+ * SettleCapturedPayment Action the webhook itself calls. Every 10 minutes
+ * per architecture.md §13's job table.
+ */
+Schedule::command('lms:orders:reconcile')
+    ->everyTenMinutes()
+    ->onOneServer()
+    ->withoutOverlapping();
+
+/*
+ * Abandoned-checkout cleanup — Phase 12, architecture.md §11.4's
+ * `pending -> cancelled` transition. Deliberately far behind reconciliation's
+ * own 15-minute window (default 24 hours here) — see
+ * CancelAbandonedOrders's own docblock for why that ordering is what makes
+ * this safe to run unconditionally. Hourly per architecture.md §13.
+ */
+Schedule::command('lms:orders:cancel-abandoned')
+    ->hourly()
     ->onOneServer()
     ->withoutOverlapping();
 

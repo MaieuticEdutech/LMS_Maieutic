@@ -74,25 +74,16 @@ it('runs each scheduled task on only one server', function (): void {
     }
 });
 
-it('does not schedule commands that do not exist yet', function (): void {
-    /*
-     * The guard against stubbing ahead. Each of these belongs to an unbuilt
-     * phase; registering one now would create a task that fails silently every
-     * time the scheduler runs, which reads as "configured" while doing nothing.
-     *
-     * `enrollments:expire` was on this list until Phase 6 built the command.
-     * `attempts:expire` was on it until Phase 8 built this one. Each entry
-     * replaces itself: the guard flips from "must not exist" to "must exist"
-     * rather than simply disappearing, so the task cannot be quietly dropped
-     * later. Each phase does the same as it lands.
-     */
-    $commands = collect(scheduledCommands());
-
-    foreach (['orders:reconcile', 'orders:cancel-abandoned'] as $future) {
-        expect($commands->contains(fn (string $c): bool => str_contains($c, $future)))
-            ->toBeFalse("[{$future}] belongs to a later phase and must not be scheduled yet.");
-    }
-});
+/*
+| The "does not schedule commands that do not exist yet" guard test lived
+| here through Phases 6-11, tracking orders:reconcile and
+| orders:cancel-abandoned as not-yet-built. Phase 12 built both — see the two
+| tests below, which replace it — so the guard's list is now empty and the
+| test itself is retired rather than left as a permanent no-op loop. The next
+| phase that stubs ahead of a real command is exactly what the remaining
+| assertions in this file (registered, one-server, correct flags) would still
+| catch.
+*/
 
 it('schedules enrollment expiry now that Phase 6 has built it', function (): void {
     /*
@@ -119,5 +110,34 @@ it('schedules attempt expiry now that Phase 8 has built it', function (): void {
      */
     expect(collect(scheduledCommands())->contains(
         static fn (string $c): bool => str_contains($c, 'lms:attempts:expire'),
+    ))->toBeTrue();
+});
+
+it('schedules order reconciliation now that Phase 12 has built it', function (): void {
+    /*
+     * architecture.md §11.3 rule 8: "Missed webhooks are self-healing." A
+     * pending order older than 15 minutes is settled by asking the gateway
+     * directly, through the exact same SettleCapturedPayment Action the
+     * webhook itself calls (ReconcileOrders's own docblock).
+     *
+     * This test failing means a payment whose webhook never arrived stays
+     * unsettled until someone runs the command by hand — not that a captured
+     * payment is lost; the gateway still has it, this is only the sweep that
+     * finds it automatically.
+     */
+    expect(collect(scheduledCommands())->contains(
+        static fn (string $c): bool => str_contains($c, 'lms:orders:reconcile'),
+    ))->toBeTrue();
+});
+
+it('schedules abandoned-order cleanup now that Phase 12 has built it', function (): void {
+    /*
+     * architecture.md §11.4's `pending -> cancelled` transition. Deliberately
+     * far behind reconciliation's own window (CancelAbandonedOrders's own
+     * docblock) so it only ever retires a checkout genuinely walked away
+     * from, never one reconciliation would still catch.
+     */
+    expect(collect(scheduledCommands())->contains(
+        static fn (string $c): bool => str_contains($c, 'lms:orders:cancel-abandoned'),
     ))->toBeTrue();
 });
