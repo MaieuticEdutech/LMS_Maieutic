@@ -103,14 +103,16 @@
                         @endif
                     </ul>
 
-                    {{-- Deliberately disabled. Nothing here may grant access —
-                         enrolment comes only from a signature-verified webhook
-                         or an audited admin grant (Rules 21–22, ADR-006), and
-                         checkout is Phase 12. A button that looked live would
-                         be promising something no code behind it can do. --}}
-                    <x-button variant="primary" size="lg" class="mt-1.5 w-full" disabled>Purchase course</x-button>
+                    {{-- Leads to checkout, never grants anything itself —
+                         enrolment still comes only from a signature-verified
+                         webhook or an audited admin grant (Rules 21–22,
+                         ADR-006). Phase 12's InitiateCheckout is what this
+                         button reaches. --}}
+                    <x-button :href="route('checkout.start', ['course' => $course])" variant="primary" size="lg" class="mt-1.5 w-full" wire:navigate>
+                        Purchase course
+                    </x-button>
 
-                    <p class="text-center text-[12.5px] text-neutral-500">Enrolment opens soon.</p>
+                    <p class="text-center text-[12.5px] text-neutral-500">Secure checkout via Razorpay.</p>
                 </div>
             </div>
         </div>

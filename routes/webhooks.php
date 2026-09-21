@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Webhooks\ProcessRazorpayWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::name('razorpay')
+    ->middleware('throttle:webhook')
     ->group(static function (): void {
-        // Phase 12: Route::post('/razorpay', ProcessRazorpayWebhookController::class);
+        Route::post('/razorpay', ProcessRazorpayWebhookController::class);
     });
