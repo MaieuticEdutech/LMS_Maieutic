@@ -132,6 +132,12 @@
 
     /* LAYOUT */
     --spacing-sidebar: 248px;
+    /*
+    | The collapsed width of the admin/instructor sidebar. 84px holds a 44px
+    | icon target centred in a 20px gutter either side — the rail stays a
+    | usable pointer target rather than a decorative strip.
+    */
+    --spacing-sidebar-rail: 84px;
     --spacing-builder-aside: 360px;
     --spacing-detail-aside: 340px;
     --spacing-drawer: 520px;

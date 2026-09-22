@@ -7,6 +7,18 @@
     all at once: a nav link to a route that doesn't exist yet is a broken
     link waiting to happen. Add the entry (and its icon below) in the same
     checkpoint that registers its route.
+
+    $collapsible — true only for the desktop aside, which can collapse to an
+    84px icon rail. The mobile drawer is already an overlay the user dismisses,
+    so collapsing it would be a control with nothing to do; it passes false and
+    renders no toggle. The state itself (`navCollapsed`) lives on the body in
+    layouts/admin.blade.php, because the aside's width has to react to it.
+
+    WHY LABELS GO TO sr-only AND NOT x-show WHEN COLLAPSED:
+    x-show sets display:none, which takes the text out of the accessibility
+    tree — every nav link in the rail would lose its accessible name and be
+    announced as an unlabelled link. sr-only hides it from sight while leaving
+    it readable to a screen reader, so the rail stays navigable.
 --}}
 @php
     // Organisation identity from BrandingService, never a literal (rule S-1).
@@ -15,7 +27,10 @@
     // after it from compiling (the trap layouts/app.blade.php documents).
     $branding = app(\App\Services\Settings\BrandingService::class);
 
-    $navItems = [
+    $collapsible ??= false;
+
+    // The domain screens — what an administrator works on day to day.
+    $primaryItems = [
         ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'dashboard'],
         ['route' => 'admin.students.index', 'label' => 'Students', 'icon' => 'students'],
         ['route' => 'admin.instructors.index', 'label' => 'Instructors', 'icon' => 'instructors'],
@@ -26,14 +41,17 @@
         ['route' => 'admin.enrollments.index', 'label' => 'Enrolments', 'icon' => 'enrollments'],
         // Phase 8.
         ['route' => 'admin.assessments.index', 'label' => 'Assessments', 'icon' => 'assessments'],
-        ['route' => 'admin.settings.index', 'label' => 'Settings', 'icon' => 'settings'],
+        ['route' => 'admin.reports.enrollments', 'label' => 'Reports', 'icon' => 'reports'],
+    ];
+
+    // Operational screens — these answer questions about the system rather
+    // than about a course or a student, so they sit below a divider. Phase 11
+    // added most of them.
+    $operationalItems = [
         ['route' => 'admin.audit-log.index', 'label' => 'Audit log', 'icon' => 'audit'],
-        // Phase 11 — operations. Grouped after the domain screens because
-        // they answer questions about the system rather than about a course
-        // or a student.
         ['route' => 'admin.email-log.index', 'label' => 'Email log', 'icon' => 'mail'],
         ['route' => 'admin.queue-health.index', 'label' => 'Queue health', 'icon' => 'queue'],
-        ['route' => 'admin.reports.enrollments', 'label' => 'Reports', 'icon' => 'reports'],
+        ['route' => 'admin.settings.index', 'label' => 'Settings', 'icon' => 'settings'],
     ];
 
     // Inline SVGs (Lucide-shaped path data, hand-copied — no icon package;
@@ -52,37 +70,111 @@
         'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>',
         'queue' => '<path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>',
         'reports' => '<path d="M3 3v18h18"></path><path d="m7 14 3-4 3 3 5-6"></path>',
+        'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path>',
     ];
+
+    $linkBase = 'group flex items-center gap-3 rounded-control px-3.5 py-2.5 text-sm transition-colors';
+    $linkIdle = 'font-medium text-teal-200 hover:bg-white/8 hover:text-white';
+    $linkActive = 'bg-teal-500 font-semibold text-white';
 @endphp
 
-<div class="border-b border-white/12 px-5 py-5">
-    <div class="font-serif text-2xl font-semibold tracking-tight text-white">{{ $branding->organisationName() }}</div>
-    <div class="eyebrow mt-1.5 text-white/55">Admin console</div>
+{{-- Brand header. Centres to a single mark once the rail is collapsed. --}}
+<div
+    class="flex items-center gap-2.5 border-b border-white/12 px-4 py-4"
+    @if ($collapsible) x-bind:class="navCollapsed && 'flex-col gap-3 px-2'" @endif
+>
+    @if ($branding->logoUrl())
+        <img src="{{ $branding->logoUrl() }}" alt="" class="h-9 w-9 shrink-0 rounded-control object-contain">
+    @else
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-teal-400 font-serif text-lg font-semibold text-teal-900">
+            {{ \Illuminate\Support\Str::substr($branding->organisationName(), 0, 1) }}
+        </div>
+    @endif
+
+    <div class="min-w-0 flex-1" @if ($collapsible) x-bind:class="navCollapsed && 'sr-only'" @endif>
+        <div class="truncate font-serif text-xl font-semibold tracking-tight text-white">{{ $branding->organisationName() }}</div>
+        <div class="eyebrow mt-0.5 text-white/55">Admin console</div>
+    </div>
+
+    @if ($collapsible)
+        <button
+            type="button"
+            x-on:click="toggleNav()"
+            x-bind:aria-label="navCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+            x-bind:aria-expanded="(! navCollapsed).toString()"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-teal-200 transition-colors hover:bg-white/10 hover:text-white"
+        >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" x-bind:class="navCollapsed && 'rotate-180'">
+                <path d="m15 18-6-6 6-6"></path>
+            </svg>
+        </button>
+    @endif
 </div>
 
 <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-3.5" aria-label="Admin navigation">
-    @foreach ($navItems as $item)
+    @foreach ($primaryItems as $item)
         @continue(! Route::has($item['route']))
         @php $active = request()->routeIs($item['route'].'*'); @endphp
         <a href="{{ route($item['route']) }}"
            @if ($active) aria-current="page" @endif
-           class="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-medium text-white/92 transition-colors {{ $active ? 'bg-white/10' : 'hover:bg-white/6' }}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0">
+           @if ($collapsible) x-bind:class="navCollapsed && 'justify-center'" @endif
+           class="{{ $linkBase }} {{ $active ? $linkActive : $linkIdle }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0 {{ $active ? '' : 'text-teal-300 group-hover:text-teal-100' }}">
                 {!! $icons[$item['icon']] !!}
             </svg>
-            {{ $item['label'] }}
+            <span @if ($collapsible) x-bind:class="navCollapsed && 'sr-only'" @endif>{{ $item['label'] }}</span>
+        </a>
+    @endforeach
+
+    @php
+        $hasOperational = collect($operationalItems)->contains(fn (array $item): bool => Route::has($item['route']));
+    @endphp
+
+    @if ($hasOperational)
+        <div class="mx-3.5 my-2.5 h-px bg-white/12" role="presentation"></div>
+    @endif
+
+    @foreach ($operationalItems as $item)
+        @continue(! Route::has($item['route']))
+        @php $active = request()->routeIs($item['route'].'*'); @endphp
+        <a href="{{ route($item['route']) }}"
+           @if ($active) aria-current="page" @endif
+           @if ($collapsible) x-bind:class="navCollapsed && 'justify-center'" @endif
+           class="{{ $linkBase }} {{ $active ? $linkActive : $linkIdle }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0 {{ $active ? '' : 'text-teal-300 group-hover:text-teal-100' }}">
+                {!! $icons[$item['icon']] !!}
+            </svg>
+            <span @if ($collapsible) x-bind:class="navCollapsed && 'sr-only'" @endif>{{ $item['label'] }}</span>
         </a>
     @endforeach
 </nav>
 
 @auth
-    <div class="flex items-center gap-2.5 border-t border-white/12 px-4 py-3.5">
+    <div
+        class="flex items-center gap-2.5 border-t border-white/12 px-4 py-3.5"
+        @if ($collapsible) x-bind:class="navCollapsed && 'flex-col gap-3 px-2'" @endif
+    >
         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-800">
             {{ Str::of(auth()->user()->name)->explode(' ')->map(fn ($part) => Str::substr($part, 0, 1))->take(2)->join('') }}
         </div>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1" @if ($collapsible) x-bind:class="navCollapsed && 'sr-only'" @endif>
             <div class="truncate text-sm font-semibold text-white">{{ auth()->user()->name }}</div>
             <div class="text-xs text-white/55">{{ auth()->user()->role->label() }}</div>
         </div>
+
+        {{-- Logout stays a POST form: a GET link would let any cross-origin
+             image tag sign an administrator out. --}}
+        <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+            @csrf
+            <button
+                type="submit"
+                aria-label="Log out"
+                class="flex h-8 w-8 items-center justify-center rounded-sm text-teal-200 transition-colors hover:bg-white/10 hover:text-white"
+            >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    {!! $icons['logout'] !!}
+                </svg>
+            </button>
+        </form>
     </div>
 @endauth

@@ -29,16 +29,57 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-full bg-neutral-50 text-neutral-800 antialiased" x-data="{ drawerOpen: false }">
+{{--
+    `navCollapsed` drives the desktop aside's width and lives here rather than
+    in the partial, because the partial renders twice and the aside that has to
+    resize is outside it.
+
+    Every localStorage access is wrapped: it throws outright in a locked-down
+    browser profile, and an exception here would stop Alpine initialising the
+    whole page — taking the mobile drawer down with it over a cosmetic
+    preference.
+--}}
+<body
+    class="min-h-full bg-neutral-50 text-neutral-800 antialiased"
+    x-data="{
+        drawerOpen: false,
+        navCollapsed: false,
+        init() {
+            try {
+                this.navCollapsed = localStorage.getItem('admin.navCollapsed') === '1';
+            } catch (e) {
+                this.navCollapsed = false;
+            }
+        },
+        toggleNav() {
+            this.navCollapsed = ! this.navCollapsed;
+
+            try {
+                localStorage.setItem('admin.navCollapsed', this.navCollapsed ? '1' : '0');
+            } catch (e) {
+                // A preference that cannot be stored is still applied for this page.
+            }
+        },
+    }"
+>
     <a href="#main"
        class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white">
         Skip to content
     </a>
 
     <div class="flex min-h-full">
-        {{-- Desktop sidebar — sticky, always visible at lg+. --}}
-        <aside class="sticky top-0 hidden h-screen w-sidebar shrink-0 flex-col bg-teal-900 lg:flex">
-            @include('layouts.partials.admin-nav')
+        {{-- Desktop sidebar — sticky, always visible at lg+, collapsible to a rail.
+
+             The collapsed width is applied as an inline style rather than a
+             bound class: w-sidebar stays on the element so the aside has its
+             full width in the very first paint, before Alpine has run. Swapping
+             two width classes instead would leave the aside content-width for
+             that frame and visibly jump. --}}
+        <aside
+            class="sticky top-0 hidden h-screen w-sidebar shrink-0 flex-col bg-teal-900 transition-[width] duration-200 ease-standard lg:flex"
+            x-bind:style="navCollapsed ? 'width: var(--spacing-sidebar-rail)' : ''"
+        >
+            @include('layouts.partials.admin-nav', ['collapsible' => true])
         </aside>
 
         {{-- Mobile drawer — off-canvas below 1024px. Same nav content. --}}
@@ -71,7 +112,9 @@
                 tabindex="-1"
                 class="relative flex h-full w-sidebar flex-col bg-teal-900"
             >
-                @include('layouts.partials.admin-nav')
+                {{-- The drawer never collapses: it is already dismissible, so a
+                     rail toggle inside it would be a control with nothing to do. --}}
+                @include('layouts.partials.admin-nav', ['collapsible' => false])
             </div>
         </div>
 
