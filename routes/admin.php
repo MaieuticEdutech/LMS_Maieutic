@@ -15,11 +15,14 @@ use App\Livewire\Admin\Enrollments\GrantEnrollmentForm;
 use App\Livewire\Admin\InstructorDetail;
 use App\Livewire\Admin\InstructorForm;
 use App\Livewire\Admin\InstructorsTable;
+use App\Livewire\Admin\OrderDetail;
+use App\Livewire\Admin\OrdersTable;
 use App\Livewire\Admin\QueueHealth;
 use App\Livewire\Admin\SettingsForm;
 use App\Livewire\Admin\StudentDetail;
 use App\Livewire\Admin\StudentForm;
 use App\Livewire\Admin\StudentsTable;
+use App\Livewire\Admin\WebhookEventsTable;
 use App\Livewire\Instructor\Assessments\Results;
 use App\Livewire\Reports\AssessmentReportScreen;
 use App\Livewire\Reports\CourseProgressReportScreen;
@@ -167,4 +170,20 @@ Route::prefix('admin')
          */
         Route::get('/email-log', EmailLogTable::class)->name('email-log.index');
         Route::get('/queue-health', QueueHealth::class)->name('queue-health.index');
+
+        /*
+         * Phase 12 — orders, payments (embedded in the order detail — one
+         * order legitimately has several payment attempts, so there is no
+         * separate top-level payments list) and the webhook event log.
+         *
+         * No create/edit routes, matching OrderPolicy's own docblock: an
+         * order is never created or updated through a policy-gated user
+         * action, only through the checkout flow and webhook processing.
+         *
+         * The nav is guarded by Route::has(), so registering these is what
+         * makes their links appear.
+         */
+        Route::get('/orders', OrdersTable::class)->name('orders.index');
+        Route::get('/orders/{order}', OrderDetail::class)->name('orders.show');
+        Route::get('/webhook-events', WebhookEventsTable::class)->name('webhook-events.index');
     });

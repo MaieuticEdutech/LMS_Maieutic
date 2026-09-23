@@ -13,7 +13,8 @@
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/livewire": "^4.0",
-        "razorpay/razorpay": "^2.9"
+        "razorpay/razorpay": "^2.9",
+        "sentry/sentry-laravel": "^4.27"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
