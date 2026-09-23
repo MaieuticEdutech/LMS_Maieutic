@@ -41,10 +41,18 @@ final class AuditLogger
         'remember_token',
         'token',
         'api_token',
+        'api_key',
         'secret',
         'key_secret',
         'webhook_secret',
         'signature',
+        // Nothing in this app's domain collects card data today — Razorpay
+        // is tokenized and card details never reach this app (architecture.md
+        // §11) — but redacting these costs nothing and closes the gap the
+        // moment anything ever changes that.
+        'card',
+        'card_number',
+        'cvv',
     ];
 
     public function __construct(private readonly Request $request) {}

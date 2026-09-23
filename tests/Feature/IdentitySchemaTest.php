@@ -161,6 +161,26 @@ it('redacts secrets from audit changes', function (): void {
     ]);
 });
 
+it('redacts forward-looking secret keys even though nothing collects them today', function (): void {
+    // Phase 14: this app's domain never handles card data (Razorpay is
+    // tokenized — architecture.md §11), but redacting costs nothing and
+    // closes the gap the moment anything ever changes that.
+    $logger = app(App\Services\Audit\AuditLogger::class);
+
+    $entry = $logger->record(
+        action: 'test.event',
+        changes: ['after' => ['api_key' => 'sk_live_x', 'card_number' => '4111111111111111', 'cvv' => '123']],
+    );
+
+    expect($entry->changes)->toBe([
+        'after' => [
+            'api_key' => '[redacted]',
+            'card_number' => '[redacted]',
+            'cvv' => '[redacted]',
+        ],
+    ]);
+});
+
 /*
 | MULTI-TENANCY SEAMS (rules S-1, FR-SYS-01, FR-SYS-06).
 |
