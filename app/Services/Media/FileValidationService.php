@@ -80,10 +80,11 @@ final class FileValidationService
      * @var list<string>
      */
     private const ALWAYS_FORBIDDEN = [
-        'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps',
-        'exe', 'dll', 'so', 'bat', 'cmd', 'com', 'msi', 'scr',
-        'sh', 'bash', 'ps1', 'psm1', 'vbs', 'js', 'jar',
-        'html', 'htm', 'xhtml', 'shtml', 'svg', 'xml',
+        'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'phar',
+        'exe', 'dll', 'so', 'dylib', 'bat', 'cmd', 'com', 'msi', 'scr',
+        'sh', 'bash', 'ps1', 'psm1', 'vbs', 'js', 'mjs', 'jar', 'wasm',
+        'html', 'htm', 'xhtml', 'shtml', 'svg', 'svgz', 'xml',
+        'asp', 'aspx', 'jsp', 'cgi', 'pl', 'py',
         'htaccess', 'htpasswd',
     ];
 
@@ -227,8 +228,14 @@ final class FileValidationService
 
     /**
      * Magic-byte detection via finfo, never the client-supplied MIME type.
+     *
+     * Public so MediaStorageService can persist THIS value rather than
+     * `$file->getClientMimeType()` — the browser-supplied header this class
+     * exists to distrust. Storing the client's claim after validating the
+     * real content would defeat the point: that stored value later becomes
+     * the Content-Type header MediaStreamController serves back.
      */
-    private function detectMimeType(UploadedFile $file): ?string
+    public function detectMimeType(UploadedFile $file): ?string
     {
         $path = $file->getRealPath();
 

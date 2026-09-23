@@ -117,7 +117,12 @@ final class MediaStorageService
 
                 $media->fill([
                     'original_name' => $this->safeOriginalName($file),
-                    'mime_type' => (string) $file->getClientMimeType(),
+                    // The finfo-sniffed type validate() already verified,
+                    // never the client-supplied header — this value becomes
+                    // the Content-Type MediaStreamController serves later,
+                    // so trusting the browser here would undo the point of
+                    // FileValidationService's content check (NFR-SEC-11).
+                    'mime_type' => $this->validator->detectMimeType($file) ?? (string) $file->getClientMimeType(),
                     'extension' => $extension,
                     'size_bytes' => (int) $file->getSize(),
                     'checksum_sha256' => hash_file('sha256', $file->getRealPath()) ?: null,

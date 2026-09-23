@@ -86,12 +86,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
          * Session cookie hardening (NFR-SEC-09, architecture.md §7.4).
-         * Encrypted cookies are on by default in Laravel; HttpOnly, SameSite
-         * and Secure are set in config/session.php.
-         *
-         * Phase 14 adds the security-headers middleware (CSP, nosniff,
-         * Referrer-Policy, frame-ancestors, Permissions-Policy).
+         * Encryption, HttpOnly, SameSite and Secure are all set explicitly
+         * in config/session.php — encryption and Secure are NOT Laravel's
+         * stock defaults (both default false out of the box), so leaving
+         * either on env()'s default would have silently shipped unencrypted,
+         * non-Secure session cookies.
          */
+        $middleware->append(App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

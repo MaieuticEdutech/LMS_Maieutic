@@ -391,7 +391,18 @@
         <div class="toolbar">
             <a class="primary" href="{{ route('certificates.download', $certificate) }}">Download PDF</a>
 
-            <button type="button" onclick="window.print()">Print</button>
+            <button type="button" id="certificate-print-button">Print</button>
+
+            {{-- No framework here (see the file-level note on why this page
+                 owns its own CSS/JS), so a real click listener replaces what
+                 would otherwise be an inline onclick= handler — CSP's
+                 script-src-attr has no nonce exemption for attributes, only
+                 for <script> elements. --}}
+            <script nonce="{{ $cspNonce ?? '' }}">
+                document.getElementById('certificate-print-button').addEventListener('click', function () {
+                    window.print();
+                });
+            </script>
 
             {{-- The list is inside the student-only route group, so it is
                  offered only to someone who can actually open it. A super admin
@@ -507,7 +518,7 @@
     @unless ($pdf)
         </div>
 
-        <script>
+        <script nonce="{{ $cspNonce ?? '' }}">
             // Fit the sheet to the window without ever enlarging it. Recomputed
             // on resize so rotating a tablet does not leave it clipped.
             (function () {

@@ -171,7 +171,10 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Phase 14 (NFR-SEC-09): default to Secure whenever APP_ENV is
+    // production, rather than requiring every deployment to remember to set
+    // SESSION_SECURE_COOKIE by hand. Still overridable per-environment.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------
