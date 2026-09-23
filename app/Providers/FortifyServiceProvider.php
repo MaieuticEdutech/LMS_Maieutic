@@ -38,6 +38,16 @@ class FortifyServiceProvider extends ServiceProvider
         // for "where does auth send people".
         $this->app->singleton(LoginResponseContract::class, \App\Http\Responses\LoginResponse::class);
         $this->app->singleton(LogoutResponseContract::class, \App\Http\Responses\LogoutResponse::class);
+
+        // Fortify's /forgot-password route has no limiter config hook the way
+        // /login does — see ThrottledPasswordResetLinkRequest's own docblock
+        // for why swapping the FormRequest Laravel resolves for that
+        // controller method is the fix, discovered missing entirely during
+        // the Phase 14 audit.
+        $this->app->bind(
+            \Laravel\Fortify\Http\Requests\SendPasswordResetLinkRequest::class,
+            \App\Http\Requests\ThrottledPasswordResetLinkRequest::class,
+        );
     }
 
     public function boot(): void
@@ -182,6 +192,12 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($throttleKey);
         });
 
+        // Unlike `login`, Fortify has no config hook that auto-attaches a
+        // named limiter to its /register route (only login, two-factor and
+        // passkeys get one from its own route file). This closure documents
+        // the intended ceiling; the actual check is manual, against the same
+        // 5-per-hour-per-IP numbers, inside CreateNewUser::create() — the
+        // one place that genuinely sees every registration attempt.
         RateLimiter::for('register', static fn (Request $request): Limit => Limit::perHour(5)->by((string) $request->ip()));
 
         // Covers both "forgot password" and "resend activation link". Keyed on
