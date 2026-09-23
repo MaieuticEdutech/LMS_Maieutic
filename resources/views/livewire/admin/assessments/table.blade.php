@@ -35,7 +35,7 @@
             </x-slot:head>
 
             @foreach ($assessments as $assessment)
-                <tr wire:key="assessment-{{ $assessment->id }}" class="cursor-pointer hover:bg-neutral-50" onclick="window.location='{{ route('admin.assessments.builder', $assessment) }}'">
+                <tr wire:key="assessment-{{ $assessment->id }}" class="cursor-pointer hover:bg-neutral-50" x-on:click="window.location = '{{ route('admin.assessments.builder', $assessment) }}'">
                     <td class="px-3 py-2 font-medium text-neutral-900">{{ $assessment->title }}</td>
                     <td class="px-3 py-2 text-neutral-500">{{ ucfirst($assessment->type->value) }}</td>
                     <td class="px-3 py-2 text-neutral-500">{{ $this->attachPointLabel($assessment) }}</td>
@@ -45,7 +45,7 @@
                             {{ $assessment->is_published ? 'Published' : 'Draft' }}
                         </x-badge>
                     </td>
-                    <td class="px-3 py-2 text-right" onclick="event.stopPropagation()">
+                    <td class="px-3 py-2 text-right" x-on:click.stop>
                         <x-button :href="route('admin.assessments.results', $assessment)" variant="secondary" size="sm" wire:navigate>Results</x-button>
                     </td>
                 </tr>
