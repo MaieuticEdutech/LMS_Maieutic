@@ -7,8 +7,11 @@ namespace App\Services\Reporting;
 use App\Enums\AttemptStatus;
 use App\Models\Assessment;
 use App\Models\AssessmentAttempt;
+use App\Models\Lesson;
+use App\Models\Module;
 use App\Models\Question;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 
 /**
@@ -42,7 +45,23 @@ final class AssessmentReport
 
         $rows = [];
 
-        foreach (Assessment::query()->with('assessable')->get() as $assessment) {
+        // `resolveCourse()` walks assessable(Lesson)->module->course, and a
+        // plain `with('assessable')` only eager-loads the polymorphic
+        // relation itself, not that nested chain — morphWith() is what lets
+        // a MorphTo eager-load different relations per concrete type.
+        // Without it this throws LazyLoadingViolationException in every
+        // non-production environment (AppServiceProvider::configureModels())
+        // and silently N+1s in production instead (NFR-PERF-03) — caught by
+        // Phase 14's report-isolation test, not by anything in Phase 13.
+        $withAssessable = static function ($morphTo): void {
+            /** @var MorphTo<\Illuminate\Database\Eloquent\Model, Assessment> $morphTo */
+            $morphTo->morphWith([
+                Lesson::class => ['module.course'],
+                Module::class => ['course'],
+            ]);
+        };
+
+        foreach (Assessment::query()->with(['assessable' => $withAssessable])->get() as $assessment) {
             $course = $assessment->resolveCourse();
 
             // Deny-safe: an assessment whose course cannot be resolved is
