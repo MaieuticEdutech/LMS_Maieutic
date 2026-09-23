@@ -41,6 +41,10 @@
         ['route' => 'admin.enrollments.index', 'label' => 'Enrolments', 'icon' => 'enrollments'],
         // Phase 8.
         ['route' => 'admin.assessments.index', 'label' => 'Assessments', 'icon' => 'assessments'],
+        // Phase 12. Grouped with the domain screens, not the operations
+        // group below — an order is a business record an admin browses the
+        // same way as a student or a course, not a system health signal.
+        ['route' => 'admin.orders.index', 'label' => 'Orders', 'icon' => 'orders'],
         ['route' => 'admin.reports.enrollments', 'label' => 'Reports', 'icon' => 'reports'],
     ];
 
@@ -51,6 +55,10 @@
         ['route' => 'admin.audit-log.index', 'label' => 'Audit log', 'icon' => 'audit'],
         ['route' => 'admin.email-log.index', 'label' => 'Email log', 'icon' => 'mail'],
         ['route' => 'admin.queue-health.index', 'label' => 'Queue health', 'icon' => 'queue'],
+        // Phase 12 — the counterpart to Email log/Queue health: a delivery
+        // record for the payment gateway rather than for outbound mail or
+        // the job queue, but the same "what did the system do" question.
+        ['route' => 'admin.webhook-events.index', 'label' => 'Webhook events', 'icon' => 'webhook'],
         ['route' => 'admin.settings.index', 'label' => 'Settings', 'icon' => 'settings'],
     ];
 
@@ -68,6 +76,8 @@
         'settings' => '<line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line>',
         'audit' => '<path d="M9 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M9 3v0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v0"></path><path d="M9 12h6"></path><path d="M9 16h6"></path>',
         'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>',
+        'orders' => '<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"></path><path d="M15 2v5h5"></path><path d="M9 13h6"></path><path d="M9 17h6"></path>',
+        'webhook' => '<path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"></path><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"></path><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"></path>',
         'queue' => '<path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>',
         'reports' => '<path d="M3 3v18h18"></path><path d="m7 14 3-4 3 3 5-6"></path>',
         'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path>',

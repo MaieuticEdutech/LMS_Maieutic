@@ -157,6 +157,11 @@
                        class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50">
                         Certificates
                     </a>
+
+                    <a href="{{ route('student.payments.index') }}"
+                       class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50">
+                        Payment history
+                    </a>
                 @endif
 
                 {{-- A POST form, not a link. Logout changes state, and a GET

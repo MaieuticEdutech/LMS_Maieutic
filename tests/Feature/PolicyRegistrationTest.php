@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Models\WebhookEvent;
 use Illuminate\Support\Facades\Gate;
 
 /*
@@ -37,6 +38,7 @@ it('resolves a policy for every domain model this session built', function (stri
     Order::class,
     Payment::class,
     Enrollment::class,
+    WebhookEvent::class,
 ]);
 
 it('routes AssessmentAttempt authorisation through AttemptPolicy specifically, not a default', function (): void {

@@ -10,7 +10,6 @@ use App\Models\LessonProgress;
 use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\User;
-use App\Models\WebhookEvent;
 use Illuminate\Support\Facades\Gate;
 
 /*
@@ -67,11 +66,6 @@ function policyExemptions(): array
         // Part of the user it belongs to. UserPolicy governs who may see or
         // edit an instructor, and the profile travels with them.
         InstructorProfile::class => 'authorised through UserPolicy on the owning user',
-
-        // Never user-facing. Rows are written by the webhook endpoint from a
-        // signature-verified payload and read by admin tooling in Phase 12,
-        // which will gate on the role rather than on a row.
-        WebhookEvent::class => 'not user-facing; written by the verified webhook path only',
     ];
 }
 

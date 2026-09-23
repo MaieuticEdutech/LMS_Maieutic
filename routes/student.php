@@ -11,6 +11,7 @@ use App\Livewire\Student\Certificates;
 use App\Livewire\Student\CoursePlayer;
 use App\Livewire\Student\Dashboard;
 use App\Livewire\Student\MyCourses;
+use App\Livewire\Student\PaymentHistory;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,6 +89,14 @@ Route::name('student.')
         | check is not a credential. See CertificatePolicy for why that is safe.
         */
         Route::get('/certificates', Certificates::class)->name('certificates.index');
+
+        /*
+        | Payment history (Phase 12) — "you used to have this," per
+        | MyCourses's own docblock. Self-scoped by its own query
+        | (PaymentHistory::orders()), not by a route parameter — there is
+        | nothing here for a student to tamper with by editing the URL.
+        */
+        Route::get('/payments', PaymentHistory::class)->name('payments.index');
     });
 
 /*
