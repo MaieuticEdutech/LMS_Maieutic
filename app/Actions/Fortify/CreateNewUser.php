@@ -6,7 +6,10 @@ namespace App\Actions\Fortify;
 
 use App\Actions\Identity\RegisterStudent;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 /**
@@ -27,13 +30,34 @@ final class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
 
-    public function __construct(private readonly RegisterStudent $registerStudent) {}
+    public function __construct(
+        private readonly RegisterStudent $registerStudent,
+        private readonly Request $request,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $input
      */
     public function create(array $input): User
     {
+        // Fortify's own /register route (unlike /login) has no built-in
+        // config hook for attaching a rate limiter — it reads
+        // config('fortify.limiters.login') for its login route, but has no
+        // equivalent for registration. RateLimiter::for('register', ...) in
+        // FortifyServiceProvider was defined since Phase 2 and never
+        // actually reachable by any route, discovered in the Phase 14 audit.
+        // Checked directly here instead, the same pattern AttemptRunner uses
+        // for the same reason (a Livewire action route middleware can't see).
+        $key = 'register:'.$this->request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'email' => 'Too many registration attempts. Please try again later.',
+            ]);
+        }
+
+        RateLimiter::hit($key, 3600);
+
         $validated = Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
