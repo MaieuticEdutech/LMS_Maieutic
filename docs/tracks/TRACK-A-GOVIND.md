@@ -3,6 +3,10 @@
 > Loaded via `CLAUDE.local.md` → `@docs/tracks/TRACK-A-GOVIND.md`.
 > The shared rules in root `CLAUDE.md` apply as well and are not repeated here.
 
+> **⚠ Reassigned 2026-09-24.** Govind has left the project. Track A is now owned by **Srivathsa**,
+> who also reviews every PR. This brief is kept as the record of Track A's scope; wherever it says
+> "you", read Srivathsa. See planning.md §21.2.6.
+
 ---
 
 ## Who you are on this project

@@ -962,6 +962,16 @@ Govind still carries the most, which is unavoidable: the critical path and both 
 components sit on one track by necessity. Track C is deliberately lightest **at the start** and
 picks up reporting and production work later, when Track A is at its busiest.
 
+### 21.2.6 Ownership change — 2026-09-24
+
+Govind has left the project. **Track A and every component it owned pass to Srivathsa**, including
+both single-owner components in §21.3, `database/migrations/`, `bootstrap/app.php`, the Phase 12
+webhook → enrollment path, and the student surfaces listed under Govind in §21.2.5.
+
+**Srivathsa is also the reviewer of every pull request** (P-6 amended in `CLAUDE.md`). Earlier
+sections that name Govind are left as the historical record of who built what; for any
+forward-looking ownership or review question, read *Srivathsa*.
+
 ### 21.3 Single-owner components — never parallelised
 
 Two components carry the guarantees the entire system rests on. They have **one owner, one branch,
