@@ -3,6 +3,10 @@
 > Loaded via `CLAUDE.local.md` → `@docs/tracks/TRACK-B-SRIVATHSA.md`.
 > The shared rules in root `CLAUDE.md` apply as well and are not repeated here.
 
+> **⚠ Ownership change 2026-09-24.** Govind has left the project. You now also own **all of Track A**
+> (`GrantEnrollment`, `EnrollmentAccessService`, migrations, `bootstrap/app.php`, payments) and you
+> **review every PR**. The "must not touch — Govind (A)" rows below no longer apply. See planning.md §21.2.6.
+
 ---
 
 ## Who you are on this project

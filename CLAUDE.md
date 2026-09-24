@@ -12,13 +12,13 @@ the import for your own track brief:
 
 | Developer | Track | Put this line in `CLAUDE.local.md` |
 |---|---|---|
-| **Govind** | A — Domain trunk | `@docs/tracks/TRACK-A-GOVIND.md` |
+| ~~Govind~~ → **Srivathsa** | A — Domain trunk *(reassigned 2026-09-24)* | `@docs/tracks/TRACK-A-GOVIND.md` |
 | **Srivathsa** | B — Surfaces | `@docs/tracks/TRACK-B-SRIVATHSA.md` |
 | **Shashank** | C — Infrastructure & commerce | `@docs/tracks/TRACK-C-SHASHANK.md` |
 
 ```bash
-# Govind, for example:
-echo '@docs/tracks/TRACK-A-GOVIND.md' > CLAUDE.local.md
+# Srivathsa, for example:
+echo '@docs/tracks/TRACK-B-SRIVATHSA.md' > CLAUDE.local.md
 ```
 
 `CLAUDE.local.md` is git-ignored, so it never conflicts. The track briefs themselves **are**
@@ -61,8 +61,8 @@ If code and documents disagree, that is a defect. Decide which is wrong and fix 
    signature-verified webhook or an audited admin grant (Rules 21–22, ADR-006).
 2. **Backend policy is the only authority.** Hiding a UI element is never security (Rule 20).
    Every fetch-by-ID is followed by a policy check.
-3. **`GrantEnrollment` and `EnrollmentAccessService` are single-owner.** They belong to Track A
-   (Govind). Nobody else creates, edits or works around them — consume them as read-only
+3. **`GrantEnrollment` and `EnrollmentAccessService` are single-owner.** They belong to Track A,
+   now owned by Srivathsa. Nobody else creates, edits or works around them — consume them as read-only
    interfaces. If you need a change, ask. Do not write your own.
 4. **Never hardcode secrets. Never commit `.env`.** A secret that reaches git history is leaked
    and must be rotated.
@@ -101,6 +101,15 @@ no baseline is ever added to make a failing build pass (Rule 9).
 
 ---
 
+## Ownership change — 2026-09-24
+
+Govind has left the project. **Srivathsa now owns everything Track A owned** — `GrantEnrollment`,
+`EnrollmentAccessService`, migrations, `bootstrap/app.php`, the payments path — and **reviews every
+PR**. Wherever an older document says "ask Govind" or "Govind's review", read Srivathsa.
+planning.md §21.2.6 records the decision.
+
+---
+
 ## Git workflow (parallel team — planning.md §21.6)
 
 | # | Rule |
@@ -110,7 +119,7 @@ no baseline is ever added to make a failing build pass (Rule 9).
 | P-3 | Every merge goes through a pull request. No direct pushes to `main` |
 | P-4 | CI green before merge |
 | P-5 | The phase's **Definition of Done is the PR review checklist** |
-| P-6 | A PR touching another track's single-owner component needs that owner's review |
+| P-6 | **Every PR is reviewed by Srivathsa**, the project owner (since 2026-09-24). A PR Srivathsa authors still needs a reviewer other than its author where one is available |
 | P-7 | Rebase on `main` before opening a PR; resolve your own conflicts |
 | P-8 | `main` stays deployable at all times |
 
@@ -120,8 +129,8 @@ no baseline is ever added to make a failing build pass (Rule 9).
 
 | File | Owner |
 |---|---|
-| `database/migrations/` | Track A (Govind) — filenames agreed in advance, never renumber a merged migration |
-| `bootstrap/app.php` | Track A (Govind) |
+| `database/migrations/` | Srivathsa (Track A, reassigned 2026-09-24) — filenames agreed in advance, never renumber a merged migration |
+| `bootstrap/app.php` | Srivathsa (Track A, reassigned 2026-09-24) |
 | `composer.json` / `package.json` | Track C (Shashank) — a new dependency needs a recorded Rule 6 justification |
 | `config/lms.php` | Track C (Shashank) — add keys, never repurpose |
 | `resources/views/components/` | Track B (Srivathsa) — extend, don't fork. A second button component is a defect |
