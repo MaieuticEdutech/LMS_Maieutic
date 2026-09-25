@@ -304,7 +304,7 @@ PNGs**, verified.
 
 | Surface | Variant |
 |---|---|
-| Login / auth brand panel (`teal-900`) | **White** |
+| Login / auth brand panel (`teal-900`) | **None** — the logo heads the form column instead |
 | Admin sidebar (`teal-900`) | **White** |
 | Instructor sidebar (`teal-900`) | **White** |
 | Any dark teal section or footer | **White** |
@@ -386,11 +386,24 @@ Four shells cover every screen. Each is in the reference — read it before buil
 
 ### Auth — split screen
 
-Left: `teal-900` brand panel with the M motif bottom-right, serif wordmark top, editorial headline
-and mono eyebrow centre, mono footer. Right: white form panel, form column **400px**, vertically
-centred, `fade-in 300ms var(--ease-out)` on mount.
+Left: light form panel. One **400px** column holds the red/teal logo at the top, the form
+vertically centred (`fade-in 300ms var(--ease-out)` on mount) and a small copyright line at the
+foot, so all three share a single left edge. Right: `teal-900` brand panel with the M motif
+bottom-right, mono eyebrow, an editorial serif headline in the IT-skills voice, a short `red-600` rule,
+a supporting line, and four product features (no footer: the copyright line under the form already
+names the organisation). From 2xl (1536px) the features
+are a 2×2 grid of cards plus a row of track labels; below that they collapse to a compact icon list, so a
+768px-tall laptop never has to scroll the sign-in page. The panel carries **no logo**, since the form column
+already does. **Every feature named there must exist in the product.** A sign-in page must not promise what
+the platform does not do.
 
-Grid `1fr 1.15fr` — the form side is slightly wider. **Collapses to form-only below 1024px**; the
+The form comes first in both the layout and the source order, so keyboard and screen-reader users reach
+the fields before the decorative panel. *(Flipped from brand-left on 2026-09-25, taking its structure
+from an external login reference. Only the structure was borrowed; none of that product's branding.)*
+
+Widths: the form side is **fixed — 520px at lg, 600px from xl** — just the 400px form and its gutters. The
+brand panel takes **all remaining width** (`flex-1`), with its content centred on a 46rem measure. Any
+percentage split left a band of empty page between form and panel that grew with the screen. **Collapses to form-only below 1024px**; the
 brand panel is decorative and must not push the form off-screen on mobile.
 
 ### Admin / instructor — dark sidebar

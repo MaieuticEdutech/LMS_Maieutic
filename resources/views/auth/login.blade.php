@@ -1,9 +1,9 @@
 @extends('layouts.auth')
 
-{{-- Copy from the mockup's login screen. The two-panel brand layout is kept:
-     it is a stronger treatment than the mockup's plain centred form, and the
-     mockup's login was a stand-in beside the eight student screens it was
-     actually drawn for. --}}
+{{-- Copy from the mockup's login screen. The two-panel brand layout is kept
+     (form left, brand right — see layouts/auth.blade.php): it is a stronger
+     treatment than the mockup's plain centred form, and the mockup's login
+     was a stand-in beside the eight student screens it was actually drawn for. --}}
 @section('title', 'Sign in')
 @section('eyebrow', 'Welcome back')
 @section('heading', 'Sign in to keep learning')
@@ -20,7 +20,7 @@
         activation — produces the SAME generic message, so this form cannot be
         used to discover which accounts exist (FR-AUTH-09).
     --}}
-    <form method="POST" action="{{ route('login') }}" class="space-y-5">
+    <form method="POST" action="{{ route('login') }}" class="space-y-5" data-submit-once>
         @csrf
 
         <x-input
@@ -49,7 +49,10 @@
             </a>
         </div>
 
-        <x-button type="submit" class="w-full">Sign in</x-button>
+        {{-- data-submit-once (resources/js/app.js) marks the button busy and
+             swaps in the busy label on submit, so a slow response is visibly
+             in progress and a second click cannot send the credentials twice. --}}
+        <x-button type="submit" size="lg" class="w-full aria-busy:cursor-wait aria-busy:opacity-75" data-busy-label="Signing in…">Sign in</x-button>
     </form>
 @endsection
 
