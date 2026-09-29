@@ -25,7 +25,7 @@ use Livewire\Livewire;
 | Livewire's updatedFile() hook automatically — no explicit call() needed.
 */
 
-function mediaUploaderPdfUpload(string $filename = 'notes.pdf'): UploadedFile
+function realPdfUpload(string $filename = 'notes.pdf'): UploadedFile
 {
     // ::fake()->createWithContent() — not a raw `new UploadedFile(...)` —
     // because Livewire's test harness only recognises files produced by the
@@ -55,7 +55,7 @@ it('attaches a valid document to a document lesson', function (): void {
         'purpose' => 'document',
         'multiple' => false,
         'downloadable' => true,
-    ])->set('file', mediaUploaderPdfUpload());
+    ])->set('file', realPdfUpload());
 
     expect(MediaFile::query()->where('purpose', 'document')->count())->toBe(1);
 });
@@ -84,8 +84,8 @@ it('replaces an existing single-file slot rather than adding a second row', func
         'multiple' => false,
         'downloadable' => true,
     ])
-        ->set('file', mediaUploaderPdfUpload('first.pdf'))
-        ->set('file', mediaUploaderPdfUpload('second.pdf'));
+        ->set('file', realPdfUpload('first.pdf'))
+        ->set('file', realPdfUpload('second.pdf'));
 
     expect(MediaFile::query()->where('purpose', 'document')->count())->toBe(1);
 
@@ -115,7 +115,7 @@ it('removes a file on confirmation', function (): void {
         'purpose' => 'document',
         'multiple' => false,
         'downloadable' => true,
-    ])->set('file', mediaUploaderPdfUpload());
+    ])->set('file', realPdfUpload());
 
     $media = MediaFile::query()->where('purpose', 'document')->firstOrFail();
 
@@ -135,6 +135,6 @@ it('denies uploading to an instructor', function (): void {
         'multiple' => false,
         'downloadable' => true,
     ])
-        ->set('file', mediaUploaderPdfUpload())
+        ->set('file', realPdfUpload())
         ->assertForbidden();
 });

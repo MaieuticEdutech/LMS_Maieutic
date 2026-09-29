@@ -53,18 +53,6 @@ final class AuditLogger
         'card',
         'card_number',
         'cvv',
-        // Government identity numbers from the learner profile. Encrypted at
-        // rest, and never written here: this log is append-only, so a number
-        // that reached it could never be erased.
-        'aadhaar_number',
-        'pan_number',
-        // The uploaded Aadhaar card scan. Redacting the path and filename is
-        // caution rather than a real leak — the file itself is encrypted at
-        // rest and this log never held bytes — but an original filename could
-        // itself carry something sensitive, and there is no cost to leaving
-        // it out.
-        'aadhaar_document_path',
-        'aadhaar_document_original_name',
     ];
 
     public function __construct(private readonly Request $request) {}

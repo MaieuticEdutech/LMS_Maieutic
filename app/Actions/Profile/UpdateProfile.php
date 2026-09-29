@@ -37,7 +37,7 @@ final class UpdateProfile
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * @param  array{name?: string, first_name?: string|null, last_name?: string|null, certificate_name?: string|null, phone?: string|null, title?: string|null, gender?: string|null, date_of_birth?: string|null, blood_group?: string|null, marital_status?: string|null, nationality?: string|null, aadhaar_number?: string|null, pan_number?: string|null, address_country?: string|null, address_state?: string|null, address_district?: string|null, address_city?: string|null, address_line_1?: string|null, address_line_2?: string|null, address_pincode?: string|null, permanent_address_same_as_correspondence?: bool, permanent_address_country?: string|null, permanent_address_state?: string|null, permanent_address_district?: string|null, permanent_address_city?: string|null, permanent_address_line_1?: string|null, permanent_address_line_2?: string|null, permanent_address_pincode?: string|null, tenth_school_name?: string|null, tenth_board?: string|null, tenth_year_of_passing?: int|null, tenth_marking_scheme?: string|null, tenth_score?: string|null, after_tenth_qualification?: string|null, twelfth_school_name?: string|null, twelfth_board?: string|null, twelfth_year_of_passing?: int|null, twelfth_result_status?: string|null, twelfth_marking_scheme?: string|null, twelfth_score?: string|null, graduation_university_name?: string|null, graduation_degree_name?: string|null, graduation_year_of_passing?: int|null, graduation_result_status?: string|null, graduation_marking_scheme?: string|null, graduation_score?: string|null}  $input
+     * @param  array{name?: string, first_name?: string|null, last_name?: string|null, certificate_name?: string|null, phone?: string|null}  $input
      */
     public function handle(User $user, array $input): User
     {
@@ -46,20 +46,6 @@ final class UpdateProfile
         // own action and its own verification flow.
         $changes = array_intersect_key($input, array_flip([
             'name', 'first_name', 'last_name', 'certificate_name', 'phone',
-            'title', 'gender', 'date_of_birth', 'blood_group', 'marital_status', 'nationality',
-            // Recorded in the audit entry only as "[redacted]" — AuditLogger
-            // strips both names — so the log shows THAT one changed, never
-            // what it changed to or from.
-            'aadhaar_number', 'pan_number',
-            'address_country', 'address_state', 'address_district', 'address_city',
-            'address_line_1', 'address_line_2', 'address_pincode',
-            'permanent_address_same_as_correspondence',
-            'permanent_address_country', 'permanent_address_state', 'permanent_address_district', 'permanent_address_city',
-            'permanent_address_line_1', 'permanent_address_line_2', 'permanent_address_pincode',
-            'tenth_school_name', 'tenth_board', 'tenth_year_of_passing', 'tenth_marking_scheme', 'tenth_score',
-            'after_tenth_qualification',
-            'twelfth_school_name', 'twelfth_board', 'twelfth_year_of_passing', 'twelfth_result_status', 'twelfth_marking_scheme', 'twelfth_score',
-            'graduation_university_name', 'graduation_degree_name', 'graduation_year_of_passing', 'graduation_result_status', 'graduation_marking_scheme', 'graduation_score',
         ]));
 
         if ($changes === []) {

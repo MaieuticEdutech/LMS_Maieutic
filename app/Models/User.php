@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\AcademicResultStatus;
-use App\Enums\AfterTenthQualification;
-use App\Enums\BloodGroup;
-use App\Enums\Gender;
-use App\Enums\MaritalStatus;
-use App\Enums\MarkingScheme;
-use App\Enums\PersonTitle;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Notifications\ResetPasswordNotification;
@@ -18,7 +11,6 @@ use App\Notifications\VerifyEmailNotification;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -39,55 +31,7 @@ use Illuminate\Notifications\Notifiable;
  * @property UserRole $role
  * @property UserStatus $status
  * @property string|null $phone
- * @property PersonTitle|null $title
- * @property Gender|null $gender
- * @property CarbonImmutable|null $date_of_birth
- * @property BloodGroup|null $blood_group
- * @property MaritalStatus|null $marital_status
- * @property string|null $nationality
- * @property string|null $aadhaar_number Encrypted at rest; see maskedAadhaar()
- * @property string|null $pan_number Encrypted at rest; see maskedPan()
- * @property string|null $address_country
- * @property string|null $address_state
- * @property string|null $address_district
- * @property string|null $address_city
- * @property string|null $address_line_1
- * @property string|null $address_line_2
- * @property string|null $address_pincode
- * @property bool $permanent_address_same_as_correspondence
- * @property string|null $permanent_address_country
- * @property string|null $permanent_address_state
- * @property string|null $permanent_address_district
- * @property string|null $permanent_address_city
- * @property string|null $permanent_address_line_1
- * @property string|null $permanent_address_line_2
- * @property string|null $permanent_address_pincode
- * @property string|null $tenth_school_name
- * @property string|null $tenth_board
- * @property int|null $tenth_year_of_passing
- * @property MarkingScheme|null $tenth_marking_scheme
- * @property string|null $tenth_score Decimal string, e.g. "85.34"
- * @property AfterTenthQualification|null $after_tenth_qualification
- * @property string|null $twelfth_school_name
- * @property string|null $twelfth_board
- * @property int|null $twelfth_year_of_passing
- * @property AcademicResultStatus|null $twelfth_result_status
- * @property MarkingScheme|null $twelfth_marking_scheme
- * @property string|null $twelfth_score Decimal string
- * @property string|null $graduation_university_name
- * @property string|null $graduation_degree_name
- * @property int|null $graduation_year_of_passing
- * @property AcademicResultStatus|null $graduation_result_status
- * @property MarkingScheme|null $graduation_marking_scheme
- * @property string|null $graduation_score Decimal string
- * @property string|null $avatar_path Not fillable — set only by App\Actions\Profile\UploadAvatar
- * @property string|null $avatar_original_name
- * @property string|null $avatar_mime_type
- * @property int|null $avatar_size_bytes
- * @property string|null $aadhaar_document_path Not fillable — set only by App\Actions\Profile\UploadAadhaarDocument
- * @property string|null $aadhaar_document_original_name
- * @property string|null $aadhaar_document_mime_type
- * @property int|null $aadhaar_document_size_bytes
+ * @property string|null $avatar_path
  * @property CarbonImmutable|null $last_login_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -126,60 +70,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email',
         'password',
         'phone',
-        // Optional personal details from the same form (NFR-DATA-01). None
-        // is a privilege field; all are the learner's own statement.
-        'title',
-        'gender',
-        'date_of_birth',
-        'blood_group',
-        'marital_status',
-        'nationality',
-        // Government identity numbers: encrypted by cast, hidden below, and
-        // redacted by AuditLogger. See the 2026_09_28_100200 migration.
-        'aadhaar_number',
-        'pan_number',
-        // Postal address — free text throughout (see the migration for why
-        // country/state/district are not a places lookup).
-        'address_country',
-        'address_state',
-        'address_district',
-        'address_city',
-        'address_line_1',
-        'address_line_2',
-        'address_pincode',
-        'permanent_address_same_as_correspondence',
-        'permanent_address_country',
-        'permanent_address_state',
-        'permanent_address_district',
-        'permanent_address_city',
-        'permanent_address_line_1',
-        'permanent_address_line_2',
-        'permanent_address_pincode',
-        // Academic history — three fixed stages, all optional. See the
-        // 2026_09_28_100400 migration for why this is flat columns rather
-        // than a repeatable relation.
-        'tenth_school_name',
-        'tenth_board',
-        'tenth_year_of_passing',
-        'tenth_marking_scheme',
-        'tenth_score',
-        'after_tenth_qualification',
-        'twelfth_school_name',
-        'twelfth_board',
-        'twelfth_year_of_passing',
-        'twelfth_result_status',
-        'twelfth_marking_scheme',
-        'twelfth_score',
-        'graduation_university_name',
-        'graduation_degree_name',
-        'graduation_year_of_passing',
-        'graduation_result_status',
-        'graduation_marking_scheme',
-        'graduation_score',
-        // avatar_path, its metadata, and the aadhaar_document_* columns are
-        // NOT fillable — see their docblock entries above and the
-        // 2026_09_28_100500 migration. Each is set only by its own Action,
-        // from a file that action itself just validated and stored.
+        'avatar_path',
     ];
 
     /**
@@ -188,10 +79,6 @@ class User extends Authenticatable implements MustVerifyEmailContract
     protected $hidden = [
         'password',
         'remember_token',
-        // Never serialised: a user array in a JSON response, a Livewire
-        // payload or an export must not carry an identity number.
-        'aadhaar_number',
-        'pan_number',
     ];
 
     /**
@@ -205,68 +92,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'password' => 'hashed',
             'role' => UserRole::class,
             'status' => UserStatus::class,
-            'title' => PersonTitle::class,
-            'gender' => Gender::class,
-            'date_of_birth' => 'immutable_date',
-            'blood_group' => BloodGroup::class,
-            'marital_status' => MaritalStatus::class,
-            'aadhaar_number' => 'encrypted',
-            'pan_number' => 'encrypted',
-            'permanent_address_same_as_correspondence' => 'boolean',
-            'tenth_marking_scheme' => MarkingScheme::class,
-            'tenth_score' => 'decimal:2',
-            'after_tenth_qualification' => AfterTenthQualification::class,
-            'twelfth_result_status' => AcademicResultStatus::class,
-            'twelfth_marking_scheme' => MarkingScheme::class,
-            'twelfth_score' => 'decimal:2',
-            'graduation_result_status' => AcademicResultStatus::class,
-            'graduation_marking_scheme' => MarkingScheme::class,
-            'graduation_score' => 'decimal:2',
         ];
-    }
-
-    /**
-     * The stored Aadhaar number with all but the last four digits hidden
-     * ("XXXX XXXX 2346"), or null if none is stored. The full number is never
-     * shown back once saved — UIDAI's own display convention.
-     */
-    public function maskedAadhaar(): ?string
-    {
-        $plain = $this->identityNumber('aadhaar_number');
-
-        return $plain === null ? null : 'XXXX XXXX '.substr($plain, -4);
-    }
-
-    /**
-     * The stored PAN with all but the last four characters hidden
-     * ("XXXXXX234F"), or null if none is stored.
-     */
-    public function maskedPan(): ?string
-    {
-        $plain = $this->identityNumber('pan_number');
-
-        return $plain === null ? null : 'XXXXXX'.substr($plain, -4);
-    }
-
-    /**
-     * Decrypt one identity column, tolerating a row inserted in this request
-     * (column absent, not null — see nameField) and a value that no longer
-     * decrypts because APP_KEY was rotated. The latter reads as "a number is
-     * stored but cannot be shown", never as a crash on the profile page.
-     */
-    private function identityNumber(string $column): ?string
-    {
-        if (($this->attributes[$column] ?? null) === null) {
-            return null;
-        }
-
-        try {
-            $plain = $this->getAttribute($column);
-        } catch (DecryptException) {
-            return 'XXXXXXXXXXXX';
-        }
-
-        return is_string($plain) && $plain !== '' ? $plain : null;
     }
 
     /**
