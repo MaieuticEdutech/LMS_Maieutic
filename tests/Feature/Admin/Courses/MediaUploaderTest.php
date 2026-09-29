@@ -12,6 +12,14 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
+function realPdfUpload(string $name = 'document.pdf'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent(
+        $name,
+        "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n",
+    );
+}
+
 /*
 |--------------------------------------------------------------------------
 | MediaUploader — Livewire wiring only
@@ -24,20 +32,6 @@ use Livewire\Livewire;
 | surfaces a rejection instead of throwing. set('file', ...) triggers
 | Livewire's updatedFile() hook automatically — no explicit call() needed.
 */
-
-function realPdfUpload(string $filename = 'notes.pdf'): UploadedFile
-{
-    // ::fake()->createWithContent() — not a raw `new UploadedFile(...)` —
-    // because Livewire's test harness only recognises files produced by the
-    // fake factory when wiring up a WithFileUploads property via set().
-    // Real magic bytes are still needed: FileValidationService sniffs
-    // content, and a fake() file full of random bytes would never exercise
-    // that check.
-    return UploadedFile::fake()->createWithContent(
-        $filename,
-        "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n",
-    );
-}
 
 beforeEach(function (): void {
     Storage::fake('content');
