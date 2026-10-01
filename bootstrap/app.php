@@ -94,6 +94,21 @@ return Application::configure(basePath: dirname(__DIR__))
          * non-Secure session cookies.
          */
         $middleware->append(App\Http\Middleware\SecurityHeaders::class);
+
+        /*
+         * Trust the reverse proxy's X-Forwarded-* headers (Phase 16).
+         *
+         * In production the app container is only reachable through Traefik
+         * (Coolify's proxy), which terminates TLS and forwards plain HTTP with
+         * X-Forwarded-Proto: https. Without this, Laravel believes every
+         * request is http:// and builds every asset, image, signed URL and
+         * redirect with that scheme -- which the browser then blocks as mixed
+         * content on the https page, so the site renders with no CSS or JS.
+         *
+         * '*' is safe here because nothing but the proxy can reach the
+         * container; it is not exposed on a public port.
+         */
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Report every unhandled exception to Sentry. Without this the package is
