@@ -78,6 +78,30 @@ return [
         ],
 
         /*
+         * PROFILE DOCUMENTS — a learner's own photo and Aadhaar card scan
+         * (App\Services\Profile\ProfileDocumentStorage).
+         *
+         * A deliberately separate disk from `content` above: profile
+         * documents belong to a person, not a course, have a different owner
+         * and a different config surface, and were kept out of the
+         * media_files/MediaPurpose system on purpose when this was built.
+         *
+         * 'serve' is FALSE for the same reason `content` sets it false: the
+         * built-in local-disk serving route would hand out files with no
+         * authorisation check at all. Every read goes through
+         * ProfileDocumentController, which also decrypts — every byte written
+         * here is ciphertext, never the document itself.
+         */
+        'profile_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/profile-documents'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => false,
+        ],
+
+        /*
          * S3-compatible equivalent of the `content` disk, for production.
          * Same contract, different driver — selected by LMS_CONTENT_DISK.
          */

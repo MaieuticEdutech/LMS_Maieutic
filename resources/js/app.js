@@ -143,3 +143,69 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
+
+/*
+| Submit-once forms
+|--------------------------------------------------------------------------
+| A form marked `data-submit-once` shows its submit button as busy on the
+| first submit and refuses any further submit until the page changes. A
+| button may carry `data-busy-label` to swap its text while busy.
+|
+| Plain DOM, not Alpine: Alpine ships inside Livewire, and the auth screens
+| do not load Livewire. The CSP forbids inline scripts, so this lives in the
+| bundle rather than in the view.
+|
+| The button is marked aria-busy rather than disabled: the shared button's
+| `disabled:hover:bg-current` turns a primary button white-on-white under the
+| pointer, and refusing the repeat submit here already does the real work.
+*/
+
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-submit-once')) {
+        return;
+    }
+
+    if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+
+        return;
+    }
+
+    form.dataset.submitting = 'true';
+
+    const button = event.submitter ?? form.querySelector('[type="submit"]');
+
+    if (!button) {
+        return;
+    }
+
+    button.setAttribute('aria-busy', 'true');
+
+    if (button.dataset.busyLabel) {
+        button.dataset.idleLabel = button.textContent.trim();
+        button.textContent = button.dataset.busyLabel;
+    }
+});
+
+// Back/forward cache restores the page exactly as it was left — busy button
+// included. Without this reset, returning to the login page after signing in
+// would show a form that silently refuses to submit.
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) {
+        return;
+    }
+
+    document.querySelectorAll('form[data-submit-once]').forEach((form) => {
+        delete form.dataset.submitting;
+
+        form.querySelectorAll('[aria-busy="true"]').forEach((button) => {
+            button.removeAttribute('aria-busy');
+
+            if (button.dataset.idleLabel) {
+                button.textContent = button.dataset.idleLabel;
+            }
+        });
+    });
+});
