@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\CertificateDocumentController;
 use App\Http\Controllers\CertificateDownloadController;
+use App\Http\Controllers\ProfileDocumentController;
 use App\Livewire\Student\AttemptHistory;
 use App\Livewire\Student\AttemptResult;
 use App\Livewire\Student\AttemptRunner;
@@ -110,6 +111,14 @@ Route::name('student.')
 */
 Route::middleware(['auth', 'active'])->group(static function (): void {
     Route::view('/profile', 'profile.show')->name('profile.show');
+
+    /*
+    | A learner's own profile photo and Aadhaar card scan
+    | (ProfileDocumentController). Self-service only — see the controller's
+    | docblock for why there is no user-id parameter to gate.
+    */
+    Route::get('/profile/photo', [ProfileDocumentController::class, 'avatar'])->name('profile.photo');
+    Route::get('/profile/aadhaar-document', [ProfileDocumentController::class, 'aadhaarDocument'])->name('profile.aadhaar-document');
 
     /*
     | The certificate DOCUMENT — the printable sheet, bound by `number`.
