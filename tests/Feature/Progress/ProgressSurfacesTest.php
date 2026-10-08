@@ -13,6 +13,7 @@ use App\Events\AttemptGraded;
 use App\Livewire\Student\CoursePlayer;
 use App\Models\Assessment;
 use App\Models\AssessmentAttempt;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
@@ -21,6 +22,7 @@ use App\Models\Module;
 use App\Models\User;
 use App\Services\Progress\ProgressCalculator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
 /*
@@ -162,10 +164,20 @@ it('marks the course complete on screen only once it really is', function (): vo
         ])->save();
     });
 
+    Queue::fake();
     app(ProgressCalculator::class)->recalculateCourse($this->enrollment);
 
+    $certificate = Certificate::query()
+        ->where('enrollment_id', $this->enrollment->getKey())
+        ->firstOrFail();
+
     Livewire::test(CoursePlayer::class, ['course' => $this->course, 'lesson' => $this->text])
-        ->assertSee('Course complete');
+        ->assertSee('Course complete')
+        ->assertSee('Congratulations, you completed')
+        ->assertSee('Your certificate is ready')
+        ->assertSee('Download certificate')
+        ->assertDontSee('wire:poll.5s', escape: false)
+        ->assertSee(route('certificates.download', $certificate), escape: false);
 });
 
 /*

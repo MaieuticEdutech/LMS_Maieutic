@@ -33,15 +33,28 @@
              for a course with a final test means the test was passed, not
              merely that every lesson was ticked (AC-31). --}}
         @if ($courseCompletedAt)
-            <div class="m-motif relative mb-6 overflow-hidden rounded-card bg-teal-900 p-6 text-white">
+            <div role="status" aria-live="polite" class="m-motif relative mb-6 overflow-hidden rounded-card bg-teal-900 p-6 text-white">
                 <div class="relative">
                     <p class="eyebrow text-white/55">Course complete</p>
-                    <p class="mt-2 font-serif text-xl font-semibold tracking-[-0.015em] text-balance">
-                        You finished {{ $course->title }}
-                    </p>
+                    <h2 class="mt-2 font-serif text-xl font-semibold text-balance">
+                        Congratulations, you completed {{ $course->title }}.
+                    </h2>
                     <p class="mt-1 text-sm text-white/70">
-                        Completed {{ $courseCompletedAt->format('d M Y') }}. Everything stays available to revisit.
+                        Completed {{ $courseCompletedAt->format('d M Y') }}. You can revisit every lesson in your library.
                     </p>
+                    @if ($certificate)
+                        <p class="mt-4 text-sm text-white/80">Your certificate is ready.</p>
+                        <x-button :href="route('certificates.download', $certificate)" class="mt-3">
+                            Download certificate
+                        </x-button>
+                    @else
+                        <p wire:poll.5s class="mt-4 text-sm text-white/80">
+                            Your certificate is being prepared automatically and will appear in Certificates shortly.
+                        </p>
+                        <x-button :href="route('student.certificates.index')" class="mt-3">
+                            View certificates
+                        </x-button>
+                    @endif
                 </div>
             </div>
         @endif

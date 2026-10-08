@@ -106,15 +106,16 @@ final class ProgressCalculator
 
         $wasComplete = $enrollment->completed_at !== null;
 
-        DB::transaction(static function () use ($enrollment, $changes): void {
+        DB::transaction(static function () use ($enrollment, $changes, $shouldComplete, $wasComplete): void {
             $enrollment->forceFill($changes)->save();
-        });
 
-        // Once, on the transition only. A recalculation that finds the course
-        // still at 100% must not re-fire the completion email.
-        if ($shouldComplete && ! $wasComplete) {
-            CourseCompleted::dispatch($enrollment->refresh());
-        }
+            if ($shouldComplete && ! $wasComplete) {
+                // The certificate listener is synchronous and writes within
+                // this transaction. Queued side effects such as email wait for
+                // commit, so a worker outage cannot delay certificate access.
+                CourseCompleted::dispatch($enrollment->refresh());
+            }
+        });
 
         return $enrollment;
     }

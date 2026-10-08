@@ -12,7 +12,6 @@ use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\User;
-use Illuminate\Support\Facades\Exceptions;
 
 /*
 |--------------------------------------------------------------------------
@@ -235,24 +234,13 @@ it('awards a certificate when the course-completed event fires', function (): vo
     expect(Certificate::query()->where('enrollment_id', $this->enrollment->getKey())->exists())->toBeTrue();
 });
 
-it('never lets a failed award break the completion itself', function (): void {
+it('propagates issuance failures so the completion transaction can roll back', function (): void {
     /*
-     * Finishing a course is the student's achievement; the certificate is a
-     * consequence. If issuing throws — here, because the enrolment is not
-     * actually complete — the listener must swallow it into the log rather than
-     * letting it propagate and take the completion email with it.
+     * Certificate issuance now runs synchronously inside the same transaction
+     * that records completion. Swallowing an issuance error would commit a
+     * completed enrollment without the certificate it promises.
      */
-    Exceptions::fake();
-
-    app(IssueCertificateOnCourseCompletion::class)->handle(
+    expect(fn () => app(IssueCertificateOnCourseCompletion::class)->handle(
         new CourseCompleted($this->enrollment),
-    );
-
-    expect(Certificate::query()->count())->toBe(0);
-
-    // Swallowed, but NOT silently. The whole risk of catching here is that a
-    // missed award becomes invisible, so it is reported to the handler — which
-    // is where error tracking is wired — rather than only written to a log file
-    // nobody reads.
-    Exceptions::assertReported(RuntimeException::class);
+    ))->toThrow(RuntimeException::class);
 });

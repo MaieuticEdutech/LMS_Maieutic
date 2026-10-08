@@ -6,6 +6,7 @@ namespace App\Livewire\Student;
 
 use App\Actions\Student\RecordLessonProgress;
 use App\Enums\CompletionStrategy;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
@@ -155,6 +156,9 @@ final class CoursePlayer extends Component
 
         $completedCount = $player->completedCount($flat, $progress);
         $totalCount = count($flat);
+        $certificate = $enrollment->completed_at === null
+            ? null
+            : Certificate::query()->where('enrollment_id', $enrollment->getKey())->first();
 
         return view('livewire.student.course-player', [
             'course' => $course,
@@ -188,6 +192,7 @@ final class CoursePlayer extends Component
             // than inferred from 100%, because a course requiring a final test
             // is not finished at 100% of lessons (AC-31).
             'courseCompletedAt' => $enrollment->completed_at,
+            'certificate' => $certificate,
         ]);
     }
 

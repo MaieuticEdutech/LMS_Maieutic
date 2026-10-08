@@ -28,6 +28,19 @@ it('sends a tuned Content-Security-Policy header on a public page', function ():
         ->and($csp)->toContain("frame-ancestors 'self'");
 });
 
+it('allows the local Vite server to serve development assets', function (): void {
+    $this->app->detectEnvironment(static fn (): string => 'local');
+    config()->set('filesystems.disks.public.url', 'http://localhost:8000/storage');
+
+    $csp = $this->get('/')->headers->get('Content-Security-Policy');
+
+    expect($csp)->toContain('http://127.0.0.1:5173')
+        ->toContain('ws://127.0.0.1:5173')
+        ->toContain("style-src 'self' 'unsafe-inline' http://127.0.0.1:5173")
+        ->toContain("font-src 'self' http://127.0.0.1:5173")
+        ->toContain("img-src 'self' http://localhost:8000");
+});
+
 it('sends a fresh nonce on every request', function (): void {
     $first = $this->get('/')->headers->get('Content-Security-Policy');
     $second = $this->get('/')->headers->get('Content-Security-Policy');
