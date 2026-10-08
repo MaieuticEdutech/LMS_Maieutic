@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\ActivateAccountController;
+use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\VerifyCertificateController;
@@ -147,6 +148,23 @@ Route::middleware('guest')->group(static function (): void {
         ->middleware('throttle:activation-resend')
         ->name('activate.resend');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Email verification — LMS-owned (FR-AUTH-11)
+|--------------------------------------------------------------------------
+|
+| Replaces Fortify's own `verification.verify`, which requires an active
+| session and so deadlocks the moment someone checks their email on a
+| different device than the one they registered on — see
+| VerifyEmailController's own docblock. Not `guest`-only: this must also
+| keep working for the one case Fortify's route did handle, someone still
+| logged in from registering.
+|
+*/
+Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify.lms');
 
 /*
 |--------------------------------------------------------------------------
