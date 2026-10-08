@@ -51,7 +51,7 @@ class VerifyEmailNotification extends Notification implements ShouldQueue
         $organisation = $branding->organisationName();
 
         $url = URL::temporarySignedRoute(
-            'verification.verify',
+            'verification.verify.lms',
             Carbon::now()->addMinutes(config()->integer('auth.verification.expire', 60)),
             [
                 'id' => $notifiable->getKey(),
