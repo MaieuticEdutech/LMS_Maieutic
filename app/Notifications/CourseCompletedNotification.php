@@ -20,12 +20,9 @@ use Illuminate\Notifications\Notification;
  * being congratulated three times because an author republished a lesson.
  *
  * ═════════════════════════════════════════════════════════════════════════
- * IT PROMISES NOTHING IT CANNOT DELIVER.
- *
- * No certificate is attached and none is mentioned. Certificates are not built
- * in V1, and an email saying "your certificate is on its way" would be a
- * promise the product does not keep — the most damaging kind of automated mail
- * there is, because the student has no way to tell it is a mistake.
+ * Certificate issuance runs separately on the queue, so this email points to
+ * the student's certificate list and says it is being prepared rather than
+ * promising it is already available when the email is delivered.
  *
  * What it does say is true and worth saying: the course is finished, and access
  * does not end because of it (EnrollmentAccessService still grants on
@@ -65,7 +62,8 @@ class CourseCompletedNotification extends Notification implements ShouldQueue
         $message = (new MailMessage)
             ->subject("You have completed {$this->courseTitle}")
             ->greeting("Congratulations, {$notifiable->name}")
-            ->line("You have completed **{$this->courseTitle}**.");
+            ->line("You have completed **{$this->courseTitle}**.")
+            ->line('Your certificate is being prepared automatically. It will appear in Certificates shortly.');
 
         // Only when there is a real figure to state. "You completed 0 lessons"
         // is worse than saying nothing about lessons at all.
@@ -79,7 +77,7 @@ class CourseCompletedNotification extends Notification implements ShouldQueue
 
         return $message
             ->line('The course stays in your library — you can revisit any lesson whenever you want to.')
-            ->action('Back to my courses', url(route('student.courses.index', absolute: false)))
+            ->action('View certificates', url(route('student.certificates.index', absolute: false)))
             ->salutation("— The {$organisation} team")
             ->replyTo($branding->supportEmail());
     }

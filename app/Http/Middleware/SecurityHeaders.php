@@ -65,6 +65,9 @@ final class SecurityHeaders
     private function contentSecurityPolicy(string $nonce): string
     {
         $script = ["'self'", "'unsafe-eval'", "'nonce-{$nonce}'", 'https://checkout.razorpay.com'];
+        $style = ["'self'", "'unsafe-inline'"];
+        $font = ["'self'"];
+        $image = ["'self'"];
         $connect = ["'self'", 'https://api.razorpay.com', 'https://lumberjack.razorpay.com'];
 
         // Vite's dev server serves unbuilt assets from its own origin and
@@ -74,9 +77,27 @@ final class SecurityHeaders
         // deployment, hence gated on the environment rather than a build
         // flag that could be forgotten.
         if (app()->environment('local')) {
-            $script[] = 'http://localhost:5173';
-            $connect[] = 'http://localhost:5173';
-            $connect[] = 'ws://localhost:5173';
+            $viteOrigin = 'http://127.0.0.1:5173';
+            $script[] = $viteOrigin;
+            $style[] = $viteOrigin;
+            $font[] = $viteOrigin;
+            $connect[] = $viteOrigin;
+            $connect[] = 'ws://127.0.0.1:5173';
+
+            $publicDiskUrl = parse_url(config()->string('filesystems.disks.public.url'));
+
+            if (is_array($publicDiskUrl)
+                && is_string($publicDiskUrl['scheme'] ?? null)
+                && in_array($publicDiskUrl['scheme'], ['http', 'https'], true)
+                && is_string($publicDiskUrl['host'] ?? null)) {
+                $imageOrigin = $publicDiskUrl['scheme'].'://'.$publicDiskUrl['host'];
+
+                if (isset($publicDiskUrl['port'])) {
+                    $imageOrigin .= ':'.$publicDiskUrl['port'];
+                }
+
+                $image[] = $imageOrigin;
+            }
         }
 
         $directives = [
@@ -87,9 +108,9 @@ final class SecurityHeaders
             // templates, dynamic progress bars) that nonce-per-style is not
             // practical; style injection alone cannot execute script, so
             // 'unsafe-inline' here is a deliberate, bounded trade-off.
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self'",
-            "font-src 'self'",
+            'style-src '.implode(' ', $style),
+            'img-src '.implode(' ', $image),
+            'font-src '.implode(' ', $font),
             'connect-src '.implode(' ', $connect),
             // Razorpay's hosted checkout renders inside its own iframe.
             'frame-src https://checkout.razorpay.com',

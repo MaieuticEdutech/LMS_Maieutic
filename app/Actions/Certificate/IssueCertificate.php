@@ -25,8 +25,8 @@ use RuntimeException;
  *
  * IDEMPOTENT, TWICE OVER.
  *
- * A course can be recalculated, a queue job retried, a lesson republished. None
- * of those may produce a second certificate, so:
+ * A course can be recalculated, a repair command rerun, or a lesson
+ * republished. None of those may produce a second certificate, so:
  *
  *   1. an existing certificate for the enrolment is returned unchanged;
  *   2. if two workers race past that check at once, the UNIQUE index on

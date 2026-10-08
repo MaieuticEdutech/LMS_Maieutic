@@ -165,18 +165,14 @@ it('congratulates a student exactly once', function (): void {
     Notification::assertSentToTimes($this->student, CourseCompletedNotification::class, 1);
 });
 
-it('promises no certificate, because there is none', function (): void {
+it('congratulates the student and links to their certificates', function (): void {
     $rendered = (string) (new CourseCompletedNotification('Statistics I', 12))
         ->toMail($this->student)
         ->render();
 
-    /*
-     * Certificates are not built in V1. "Your certificate is on its way" would
-     * be a promise the product does not keep, and the student has no way to
-     * tell it is a mistake.
-     */
-    expect($rendered)->not->toContain('certificate')
-        ->and($rendered)->not->toContain('Certificate');
+    expect($rendered)->toContain('Congratulations')
+        ->toContain('certificate is being prepared automatically')
+        ->toContain('/certificates');
 });
 
 it('reassures a student that access does not end with the course', function (): void {

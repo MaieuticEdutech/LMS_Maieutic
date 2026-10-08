@@ -297,19 +297,11 @@ class AppServiceProvider extends ServiceProvider
      * Make `composer dev`'s worker drain EVERY queue, in priority order.
      *
      * ═════════════════════════════════════════════════════════════════════
-     * THE DEFAULT DEV WORKER DRAINS ONE QUEUE OUT OF FOUR.
-     *
-     * Laravel's dev runner registers `queue:listen --tries=1 --timeout=0`
-     * with no --queue argument, so it processes `default` and nothing else.
+     * Laravel's stock dev worker drains only `default`, so it is replaced
+     * with a listener for every named queue. The explicit timeout and retries
+     * prevent a stuck job from occupying this worker indefinitely.
      * This application dispatches across four (config/lms.php): critical,
      * mail, default and low.
-     *
-     * The practical effect was that in local development EVERY OUTBOUND EMAIL
-     * queued and never sent — activation links, enrolment confirmations,
-     * assessment results — because they all land on `mail`. Nothing failed and
-     * nothing appeared in failed_jobs; the rows simply accumulated, so the
-     * symptom was a feature that looked built and did nothing. Certificates
-     * happened to work only because issuing sits on `default`.
      *
      * The order comes from config('lms.queues.priority'), which that file
      * already calls the single source of truth and which Phase 16 will read to
@@ -333,13 +325,14 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        // The stock 'queue' entry is dropped rather than left alongside ours:
-        // two listeners both polling `default` would process the same work
-        // twice over and make the runner's output impossible to read.
+        // Replace the stock single-queue entry instead of running two worker
+        // processes in development. Queue reservations prevent normal duplicate
+        // claims, but extra unmanaged workers make concurrency and logs harder
+        // to reason about.
         DevCommands::except('queue');
 
         DevCommands::artisan(
-            sprintf('queue:listen --queue=%s --tries=1 --timeout=0', implode(',', $priority)),
+            sprintf('queue:listen --queue=%s --tries=3 --timeout=60', implode(',', $priority)),
             'queues',
         );
     }

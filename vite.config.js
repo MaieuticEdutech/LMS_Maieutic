@@ -33,6 +33,12 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        // Explicit IPv4 host: without this Vite (and the `hot` file Laravel's
+        // plugin writes) can end up advertising `[::1]` — IPv6 loopback —
+        // which some Windows setups can't actually resolve from the browser,
+        // so every asset link Laravel renders silently 404s and the page
+        // loads with no CSS/JS at all, no error shown anywhere obvious.
+        host: '127.0.0.1',
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

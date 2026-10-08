@@ -92,6 +92,7 @@ php artisan storage:link
 # 7. Run
 npm run dev          # Vite dev server with HMR
 php artisan serve    # http://localhost:8000
+php artisan queue:work --queue=critical,mail,default,low --tries=3 --timeout=60  # Required for queued email and payment webhooks
 ```
 
 Visit `/up` to confirm the database, cache and content storage are all reachable.
