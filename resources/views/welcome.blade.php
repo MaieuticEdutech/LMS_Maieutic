@@ -4,52 +4,52 @@
 
 @section('content')
 {{--
-    Public landing page — reproduction of the Design-Compiler export in
-    `sample landing ui/chnages/LMS Landing.dc.html`.
+    Public landing page.
 
-    ═════════════════════════════════════════════════════════════════════════
-    THIS PAGE ADDRESSES THE LEARNER, NOT AN INSTITUTION.
+    THIS PAGE ADDRESSES THE LEARNER, NOT AN INSTITUTION. Every line is written
+    to "you", the person taking the course. No copy about managing departments
+    or running a campus belongs here.
 
-    The brief in that folder's CLAUDE.md is explicit: Maieutic sells courses
-    directly to students, the way Coursera or Springboard does — not to
-    universities. So every line is written to "you", the person taking the
-    course. There is no copy here about managing departments, assigning
-    instructors, or running a campus, and none should be added.
+    NOTHING HERE IS INVENTED. No testimonials, no learner counts, no course
+    names: the catalogue is the source of truth for courses and this page
+    links to it instead of pretending. Every claim below is a shipped feature.
+    The only figures on the page are inside clearly decorative UI samples.
 
-    That is a positioning decision, not a wording preference. Copy aimed at an
-    administrator on a page a student reads is the fastest way to make a
-    product feel like it was not built for them.
-    ═════════════════════════════════════════════════════════════════════════
+    Styling for every l-* class lives in layouts.landing. Section order:
 
-    THE MARKUP AND INLINE STYLES ARE THE EXPORT'S. Only what cannot run in
-    Blade is translated: <x-import … Button> to the app's <x-button>,
-    <sc-for> to @foreach, <sc-if> to a plain render, <image-slot> to the
-    placeholder partial.
-
-    Variables (--fs-5xl, --teal-200 …) are declared in layouts.landing and
-    point at the app's own theme tokens, so a brand change still reaches here.
-
-    Class hooks (l-split, l-media …) exist only for the layout's small-screen
-    media queries and carry no styling of their own.
+      hero        gradient panel · floating glass cards · stats bar overlap
+      steps       three colourful step cards joined by a dashed path
+      bento       feature grid with device-framed screenshots
+      quote       the Socratic idea, in one line
+      certificate dark band · CSS-drawn certificate
+      faq         accordions, two columns
+      closing     gradient band with the clear next step
+      footer
 --}}
 
-<header style="position:sticky;top:0;z-index:50;background:rgba(250,249,246,0.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
-  <div style="max-width:1240px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px">
-    <a href="{{ route('home') }}" style="display:flex;align-items:center">
-      <img src="{{ asset('images/logo-maieutic.png') }}" alt="{{ $organisation }}" style="height:34px;mix-blend-mode:multiply">
-    </a>
-    <nav class="l-nav" style="display:flex;align-items:center;gap:32px;font-size:15px;font-weight:var(--fw-medium)">
-      <a href="#platform" style="color:var(--text-body)">How it works</a>
-      <a href="#roles" style="color:var(--text-body)">For students</a>
-      <a href="#trust" style="color:var(--text-body)">Security</a>
+@php
+    $catalogueUrl = Route::has('catalogue.index') ? route('catalogue.index') : '#how';
+    $registerUrl  = Route::has('register') ? route('register') : route('login');
+
+    $check = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+@endphp
+
+{{-- ══ HEADER ══ --}}
+<header class="l-header">
+  <div class="l-wrap l-header-inner">
+    <a href="{{ route('home') }}" class="l-logo"><img src="{{ asset('images/logo-maieutic-edutech.png') }}" alt="{{ $organisation }}"></a>
+    <nav class="l-nav" aria-label="Primary">
+      <a href="{{ $catalogueUrl }}">Courses</a>
+      <a href="#how">How it works</a>
+      <a href="#inside">What's inside</a>
+      <a href="#faq">FAQ</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:12px">
-      {{-- Filled teal rather than the export's ghost: asked for directly, and
-           against a translucent header a ghost button is easy to miss. --}}
+    <div class="l-header-actions">
       @auth
-        <x-button :href="auth()->user()->role->homePath()" size="sm" style="height:36px;padding-left:16px;padding-right:16px">Dashboard</x-button>
+        <a href="{{ auth()->user()->role->homePath() }}" class="l-btn l-btn-amber l-btn-sm">Dashboard</a>
       @else
-        <x-button :href="route('login')" size="sm" style="height:36px;padding-left:16px;padding-right:16px">Sign in</x-button>
+        <a href="{{ $registerUrl }}" class="l-nav-link">Create account</a>
+        <a href="{{ route('login') }}" class="l-btn l-btn-amber l-btn-sm">Sign in</a>
       @endauth
     </div>
   </div>
@@ -57,241 +57,344 @@
 
 <main id="main">
 
-{{-- ══ HERO — full-bleed dark teal ══ --}}
-<div style="background:var(--teal-900)">
-<section class="l-section" style="max-width:1240px;margin:0 auto;padding:96px 24px 96px">
-  <div class="l-split" style="display:grid;grid-template-columns:6fr 5fr;gap:56px;align-items:center">
-    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:28px">
-      <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--teal-200)">{{ $organisation }}</div>
-      <h1 class="l-hero-h1" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:74px;line-height:var(--lh-tight);letter-spacing:var(--ls-tight);color:var(--text-inverse);text-wrap:balance">Learn skills that stay — by <em style="color:var(--teal-200);font-style:normal">questioning, not cramming</em>.</h1>
-      <p style="margin:0;max-width:52ch;font-size:var(--fs-xl);line-height:var(--lh-relaxed);color:var(--teal-100);text-wrap:pretty">Courses in the subjects that matter to you, taught the Socratic way. Enrol online, learn at your pace, test yourself, and watch real progress build.</p>
-      <div style="display:flex;align-items:center;gap:16px;margin-top:8px;flex-wrap:wrap">
-        <x-button :href="Route::has('catalogue.index') ? route('catalogue.index') : '#platform'" variant="secondary" size="lg" style="height:54px;padding-left:24px;padding-right:24px;font-size:16px">Explore the courses</x-button>
+{{-- ══ HERO ══ --}}
+<section class="l-hero">
+  <div class="l-blob l-blob-a" aria-hidden="true"></div>
+  <div class="l-blob l-blob-b" aria-hidden="true"></div>
+  <div class="l-blob l-blob-c" aria-hidden="true"></div>
+  <div class="l-grid-lines" aria-hidden="true"></div>
 
-        {{-- A plain link rather than <x-button variant="ghost">: that variant
-             is built for light surfaces (dark text, grey hover) and would be
-             nearly invisible here. Styled inline to the export's own values. --}}
-        <a href="#platform" class="l-ghost-dark" style="display:inline-flex;align-items:center;justify-content:center;height:54px;padding:0 20px;border-radius:8px;font-size:16px;font-weight:var(--fw-medium);color:var(--teal-100);text-decoration:none">How it works</a>
+  <div class="l-wrap l-hero-grid">
+    <div class="l-reveal l-stagger l-hero-copy">
+      <span class="l-pill"><span class="l-pill-dot"></span>Admissions open · Learn at your own pace</span>
+      <h1 class="l-hero-h1">Learn skills that <em>stay</em> — by questioning, not cramming.</h1>
+      <p class="l-hero-lead">Courses in the subjects that matter to you, taught the Socratic way. Enrol online, learn at your pace, test yourself, and watch real progress build.</p>
+      <div class="l-hero-actions">
+        <a href="{{ $catalogueUrl }}" class="l-btn l-btn-amber l-btn-lg">Explore the courses <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#how" class="l-btn l-btn-ghost-light l-btn-lg">See how it works</a>
       </div>
-      <div style="font-size:var(--fs-sm);color:var(--teal-300)">Browse every course free — enrol when you're ready.</div>
+      <ul class="l-proof">
+        <li><span class="l-proof-check">{!! $check !!}</span>Browse every course free</li>
+        <li><span class="l-proof-check">{!! $check !!}</span>Instant, automatic grading</li>
+        <li><span class="l-proof-check">{!! $check !!}</span>Certificates anyone can verify</li>
+      </ul>
     </div>
-    <div style="position:relative">
-      {{-- 4/3 is the photograph's own ratio, not a guess. The slot was
-                 built for a tall crop (a fixed 520px), but this image is
-                 landscape and its subject runs the full width — the student on
-                 the left, the product on the laptop centre-right. Forcing it
-                 into a portrait box with object-fit:cover cut off one or the
-                 other. Matching the ratio shows all of it and never distorts. --}}
-            <div class="l-media l-media-hero" style="position:relative;aspect-ratio:4/3;border-radius:var(--radius-lg);overflow:hidden">
+
+    <div class="l-reveal l-reveal-delay l-hero-visual">
+      <div class="l-photo">
         @include('partials.landing-image-slot', [
           'src' => 'images/landing/hero.jpg',
-          'alt' => 'A student in headphones taking handwritten notes on a tablet while a laptop beside her shows her Maieutic dashboard: course progress, the next lesson, and her enrolled courses.',
+          'alt' => 'A student in headphones taking handwritten notes on a tablet while a laptop beside her shows her Maieutic dashboard.',
           'caption' => 'A student learning with the Maieutic dashboard open',
           'width' => 1448,
           'height' => 1086,
         ])
       </div>
-      <div style="position:absolute;left:-14px;bottom:26px;width:120px;height:14px;background:var(--teal-600);transform:skewX(-32deg)"></div>
-      <div style="position:absolute;left:-14px;bottom:8px;width:74px;height:14px;background:var(--red-600);transform:skewX(-32deg)"></div>
-    </div>
-  </div>
-</section>
-</div>
 
-{{-- ══ HOW IT WORKS ══ --}}
-<section id="platform" style="border-top:1px solid var(--border);scroll-margin-top:68px">
-  <div style="max-width:1240px;margin:0 auto;padding:96px 24px 0;display:flex;flex-direction:column;gap:24px">
-    <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--text-brand)">How it works</div>
-    <h2 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-5xl);line-height:var(--lh-snug);letter-spacing:var(--ls-tight);color:var(--text-heading);max-width:24ch">Everything you need to learn, nothing in the way.</h2>
-  </div>
-
-  @php
-      $features = [
-          [
-              'number' => '01', 'kicker' => 'Courses',
-              'title' => 'Courses built as clear paths',
-              'body' => 'Every course is organised into modules and lessons — video, reading, and practice — so you always know where you are and what comes next.',
-              'points' => [
-                  'Step-by-step modules: watch, read, practise',
-                  'Browse any course’s full outline before you enrol',
-                  'Find courses by subject and level',
-              ],
-              'image' => 'Course builder UI — screenshot',
-              'src' => 'images/landing/feature-courses.jpg',
-              'alt' => 'A course dashboard: the lesson playing at the top, bookmarked moments beneath it, course categories, and a right-hand rail showing path progress at 65% with each module ticked off.',
-              // A SCREENSHOT, NOT A PHOTOGRAPH, and square. Cropping a photo
-              // loses scenery; cropping a screenshot loses the interface being
-              // shown — here the header and the whole recent-videos list. The
-              // row takes the image's own ratio so all of it is legible.
-              'ratio' => '1 / 1',
-              'padding' => '72px 24px',
-              'flip' => false,
-          ],
-          [
-              'number' => '02', 'kicker' => 'Assessment',
-              'title' => 'Test yourself, know for sure',
-              'body' => 'Quizzes and exams with instant, automatic grading. Your results arrive the moment they’re ready — no waiting, no guessing.',
-              'points' => [
-                  'Multiple question types, fair attempt limits',
-                  'Pass an assessment and the lesson completes itself',
-                  'Results delivered to you instantly, every time',
-              ],
-              'image' => 'Assessment screen — screenshot',
-              'src' => 'images/landing/feature-assessment.jpg',
-              'alt' => 'An assessments screen: counts of total, completed, in-progress and upcoming assessments, a list of quizzes and assignments each with a progress bar and a Continue button, and a weekly progress ring at 70% beside recent results.',
-              'ratio' => '4 / 3',
-              'padding' => '0 24px 72px',
-              'flip' => true,
-          ],
-          [
-              'number' => '03', 'kicker' => 'Progress',
-              'title' => 'See your progress build',
-              'body' => 'Every lesson you finish rolls up to course completion. Pick up exactly where you left off, and see how far you’ve come at a glance.',
-              'points' => [
-                  'Lesson-by-lesson progress, tracked automatically',
-                  'Completion notifications the moment you finish',
-                  'Your learning history, always in one place',
-              ],
-              'image' => 'Progress dashboard — screenshot',
-              'src' => 'images/landing/feature-progress.jpg',
-              'alt' => 'A progress dashboard: lessons completed, course progress, time spent and current streak across the top, a course-completion chart climbing week by week, and a recent-activity list of finished lessons and passed quizzes.',
-              'ratio' => '3 / 2',
-              'padding' => '0 24px 96px',
-              'flip' => false,
-          ],
-      ];
-  @endphp
-
-  @foreach ($features as $feature)
-    <div class="l-split" style="max-width:1240px;margin:0 auto;padding:{{ $feature['padding'] }};display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center">
-      @if ($feature['flip'])
-        <div class="l-media l-flip" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden;order:0', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
+      {{-- Illustrative UI samples. Decorative only. --}}
+      <div class="l-glass l-glass-progress l-float" aria-hidden="true">
+        <svg class="l-ring" width="56" height="56" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(0,97,92,0.12)" stroke-width="5"/>
+          <circle class="l-ring-fill" cx="26" cy="26" r="22" fill="none" stroke="var(--teal-600)" stroke-width="5" stroke-linecap="round" transform="rotate(-90 26 26)"/>
+        </svg>
+        <div>
+          <div class="l-glass-label">Course progress</div>
+          <div class="l-glass-value">65% <span>Module 4 of 6</span></div>
+          <div class="l-bar"><div class="l-bar-fill"></div></div>
         </div>
-      @endif
-
-      <div style="display:flex;flex-direction:column;gap:20px">
-        <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--text-muted)">{{ $feature['number'] }} · {{ $feature['kicker'] }}</div>
-        <h3 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-4xl);line-height:var(--lh-heading);letter-spacing:var(--ls-tight);color:var(--text-heading)">{{ $feature['title'] }}</h3>
-        <p style="margin:0;font-size:var(--fs-lg);line-height:var(--lh-relaxed);color:var(--text-muted);max-width:56ch">{{ $feature['body'] }}</p>
-        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:var(--fs-base);color:var(--text-body)">
-          @foreach ($feature['points'] as $point)
-            <li style="display:flex;gap:12px;align-items:baseline"><span style="width:6px;height:6px;background:var(--teal-600);flex:0 0 auto;transform:translateY(-2px)"></span>{{ $point }}</li>
-          @endforeach
-        </ul>
       </div>
 
-      @unless ($feature['flip'])
-        <div class="l-media" @style(['position:relative;border-radius:var(--radius-lg);overflow:hidden', 'aspect-ratio:'.($feature['ratio'] ?? '') => isset($feature['ratio']), 'height:400px' => ! isset($feature['ratio'])])>
-          @include('partials.landing-image-slot', ['caption' => $feature['image'], 'src' => $feature['src'], 'alt' => $feature['alt'] ?? null])
+      <div class="l-glass l-glass-quiz l-float l-float-slow" aria-hidden="true">
+        <span class="l-glass-icon l-glass-icon-teal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <div>
+          <div class="l-glass-label">Quiz graded</div>
+          <div class="l-glass-strong">9 / 10 · Passed</div>
         </div>
-      @endunless
-    </div>
-  @endforeach
-</section>
+      </div>
 
-{{-- ══ THE PARTS THAT JUST WORK ══ --}}
-@php
-    $gridFeatures = [
-        ['title' => 'Easy enrollment & payments', 'body' => 'Enrol and pay online in minutes — secure checkout, instant access.', 'icon' => '<rect width="20" height="14" x="2" y="5" rx="2"></rect><path d="M2 10h20"></path>'],
-        ['title' => 'Protected media delivery', 'body' => 'Your course videos and materials stream securely, on any device.', 'icon' => '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path>'],
-        ['title' => 'Your data stays yours', 'body' => 'Your account, your courses, your results — private to you.', 'icon' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>'],
-        ['title' => 'Browse before you buy', 'body' => 'Browse every course and its outline before spending a rupee.', 'icon' => '<path d="m16 6 4 14"></path><path d="M12 6v14"></path><path d="M8 8v12"></path><path d="M4 4v16"></path>'],
-        ['title' => 'Notifications that land', 'body' => 'Enrollment confirmations, results, and completion emails — right on time.', 'icon' => '<rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>'],
-        ['title' => 'Nothing gets lost', 'body' => 'A platform that keeps a careful record, so nothing is ever lost.', 'icon' => '<path d="M15 12h-5"></path><path d="M15 8h-5"></path><path d="M19 17V5a2 2 0 0 0-2-2H4"></path><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path>'],
-    ];
-@endphp
-
-<section style="background:var(--surface-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-  <div class="l-section" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:flex;flex-direction:column;gap:48px">
-    <h2 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-4xl);line-height:var(--lh-snug);letter-spacing:var(--ls-tight);color:var(--text-heading)">And the parts that just work</h2>
-    <div class="l-grid-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
-      @foreach ($gridFeatures as $f)
-        <div class="grid-card" style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;display:flex;flex-direction:column;gap:14px;background:var(--surface-card);transition:border-color 200ms,box-shadow 200ms">
-          <span style="display:inline-flex;width:22px;height:22px;color:var(--teal-600)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $f['icon'] !!}</svg>
-          </span>
-          <div style="font-weight:var(--fw-semibold);font-size:var(--fs-lg);color:var(--text-heading)">{{ $f['title'] }}</div>
-          <div style="font-size:var(--fs-base);line-height:var(--lh-normal);color:var(--text-muted)">{{ $f['body'] }}</div>
+      <div class="l-glass l-glass-cert l-float l-float-slower" aria-hidden="true">
+        <span class="l-glass-icon l-glass-icon-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg></span>
+        <div>
+          <div class="l-glass-label">Certificate issued</div>
+          <div class="l-glass-strong">Verified online</div>
         </div>
-      @endforeach
+      </div>
     </div>
   </div>
 </section>
 
-{{-- ══ FOR STUDENTS ══ --}}
+{{-- ══ HOW IT WORKS — three steps ══ --}}
 @php
     $steps = [
-        ['label' => 'Browse', 'accent' => 'var(--teal-600)', 'title' => 'A clean catalogue', 'body' => 'Find the right course by category and level, see exactly what it covers, and enrol in a few clicks.'],
-        ['label' => 'Learn', 'accent' => 'var(--red-600)', 'title' => 'Lessons that track themselves', 'body' => 'Your enrolled courses in one place — pick up where you left off, with progress recorded as you go.'],
-        ['label' => 'Prove it', 'accent' => 'var(--teal-600)', 'title' => 'Results that arrive promptly', 'body' => "Take assessments, get graded automatically, and see your results the moment they're ready."],
+        ['tone' => 'teal',  'label' => 'Browse',   'title' => 'Pick a course you can see inside', 'body' => 'Find the right course by subject and level, read its full outline, and enrol in a few clicks — no entrance test, no paperwork.', 'icon' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'],
+        ['tone' => 'amber', 'label' => 'Learn',    'title' => 'Lessons that track themselves',     'body' => 'Watch, read and practise at your own pace. Progress is saved as you go, so you always pick up exactly where you left off.', 'icon' => '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>'],
+        ['tone' => 'red',   'label' => 'Prove it', 'title' => 'Pass, and earn the certificate',    'body' => 'Take the assessments, get graded automatically, and finish with a certificate that anyone can verify online.', 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/>'],
     ];
 @endphp
-
-<section id="roles" class="l-section" style="max-width:1240px;margin:0 auto;padding:96px 24px;scroll-margin-top:68px">
-  <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:56px">
-    <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--text-brand)">For students</div>
-    <h2 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-5xl);line-height:var(--lh-snug);letter-spacing:var(--ls-tight);color:var(--text-heading);max-width:22ch">Learn without friction.</h2>
-  </div>
-  <div class="l-grid-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
-    @foreach ($steps as $step)
-      <div style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:0;right:0;width:44px;height:10px;background:{{ $step['accent'] }};transform:skewX(-32deg) translateX(10px)"></div>
-        <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--text-muted)">{{ $step['label'] }}</div>
-        <div style="font-family:var(--font-serif);font-size:var(--fs-2xl);color:var(--text-heading)">{{ $step['title'] }}</div>
-        <div style="font-size:var(--fs-base);line-height:var(--lh-relaxed);color:var(--text-muted)">{{ $step['body'] }}</div>
-      </div>
-    @endforeach
+<section id="how" class="l-section-pad">
+  <div class="l-wrap">
+    <div class="l-head l-reveal l-stagger">
+      <span class="l-eyebrow">How it works</span>
+      <h2 class="l-h2">Three steps from curious to certified.</h2>
+      <p class="l-sub">Everything you need to learn, and nothing in the way.</p>
+    </div>
+    {{-- An open journey line: three nodes on one track, no boxes. --}}
+    <ol class="l-journey l-reveal">
+      @foreach ($steps as $step)
+        <li class="l-jstep l-jstep-{{ $step['tone'] }} l-stagger-item" style="--i:{{ $loop->index }}">
+          <div class="l-jnode">
+            <span class="l-jnum">{{ $loop->iteration }}</span>
+            <span class="l-jicon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $step['icon'] !!}</svg></span>
+          </div>
+          <span class="l-jlabel">{{ $step['label'] }}</span>
+          <h3 class="l-h3">{{ $step['title'] }}</h3>
+          <p class="l-body">{{ $step['body'] }}</p>
+        </li>
+      @endforeach
+    </ol>
   </div>
 </section>
 
-{{-- ══ SECURITY ══ --}}
+{{-- ══ WHAT'S INSIDE — bento grid ══ --}}
+<section id="inside" class="l-section-pad l-section-tint">
+  <div class="l-wrap">
+    <div class="l-head l-reveal l-stagger">
+      <span class="l-eyebrow">What's inside</span>
+      <h2 class="l-h2">Built around the way you actually learn.</h2>
+      <p class="l-sub">Clear paths, honest feedback, and progress you can see at a glance.</p>
+    </div>
+
+    @php
+        $showcase = [
+            ['tone' => 'teal',  'label' => 'Courses',    'title' => 'Courses built as clear paths',  'body' => 'Every course is organised into modules and lessons — video, reading and practice — so you always know where you are and what comes next.', 'src' => 'images/landing/feature-courses.jpg',    'alt' => 'A course dashboard with the lesson playing, bookmarked moments, and path progress.', 'icon' => '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>'],
+            ['tone' => 'amber', 'label' => 'Assessment', 'title' => 'Test yourself, know for sure',  'body' => 'Quizzes and exams with instant, automatic grading. Your results arrive the moment they are ready, and passing an assessment completes the lesson for you.', 'src' => 'images/landing/feature-assessment.jpg', 'alt' => 'An assessments screen with quizzes, progress bars and recent results.', 'icon' => '<path d="M9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
+            ['tone' => 'red',   'label' => 'Progress',   'title' => 'See your progress build',       'body' => 'Every lesson you finish rolls up to course completion. Pick up exactly where you left off, and see how far you have come at a glance.', 'src' => 'images/landing/feature-progress.jpg',   'alt' => 'A progress dashboard with completion charts and recent activity.', 'icon' => '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>'],
+        ];
+        $strip = [
+            ['title' => 'Protected content',      'body' => 'Streams only to enrolled learners',           'icon' => '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'],
+            ['title' => 'Notifications that land','body' => 'Confirmations, results and completions',      'icon' => '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>'],
+            ['title' => 'Your data stays yours',  'body' => 'Account, courses and results, private to you','icon' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
+        ];
+    @endphp
+
+    {{-- Interactive showcase: pick a feature on the left, the screen on the right changes.
+         Works without JavaScript — the first panel is shown and the buttons are plain anchors. --}}
+    <div class="l-showcase l-reveal" data-showcase>
+      <div class="l-showcase-list" role="tablist" aria-label="Features">
+        @foreach ($showcase as $item)
+          <button type="button" class="l-showcase-tab l-showcase-tab-{{ $item['tone'] }} l-stagger-item{{ $loop->first ? ' is-active' : '' }}" style="--i:{{ $loop->index }}" role="tab" id="tab-{{ $loop->index }}" aria-controls="panel-{{ $loop->index }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" data-index="{{ $loop->index }}">
+            <span class="l-showcase-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $item['icon'] !!}</svg></span>
+            <span class="l-showcase-text">
+              <span class="l-eyebrow">{{ $item['label'] }}</span>
+              <span class="l-showcase-title">{{ $item['title'] }}</span>
+              <span class="l-showcase-body">{{ $item['body'] }}</span>
+            </span>
+            <span class="l-showcase-progress" aria-hidden="true"></span>
+          </button>
+        @endforeach
+      </div>
+
+      <div class="l-showcase-stage">
+        @foreach ($showcase as $item)
+          <div class="l-showcase-panel l-showcase-panel-{{ $item['tone'] }}{{ $loop->first ? ' is-active' : '' }}" role="tabpanel" id="panel-{{ $loop->index }}" aria-labelledby="tab-{{ $loop->index }}" @unless ($loop->first) hidden @endunless>
+            <div class="l-device">
+              <div class="l-device-bar"><span></span><span></span><span></span></div>
+              <div class="l-device-screen">
+                @include('partials.landing-image-slot', ['src' => $item['src'], 'caption' => $item['title'], 'alt' => $item['alt'], 'fit' => 'cover'])
+              </div>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </div>
+
+    {{-- Three more things, as a plain strip rather than boxes. --}}
+    <ul class="l-strip l-reveal">
+      @foreach ($strip as $item)
+        <li class="l-stagger-item" style="--i:{{ $loop->index }}">
+          <span class="l-strip-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{!! $item['icon'] !!}</svg></span>
+          <span><strong>{{ $item['title'] }}</strong><span class="l-strip-body">{{ $item['body'] }}</span></span>
+        </li>
+      @endforeach
+    </ul>
+  </div>
+</section>
+
+{{-- ══ THE IDEA — one line, large ══ --}}
+<section class="l-quote">
+  <div class="l-motif l-motif-left" aria-hidden="true"></div>
+  <div class="l-wrap l-reveal l-stagger">
+    <span class="l-eyebrow">The Maieutic method</span>
+    <blockquote class="l-quote-text">“I cannot teach anybody anything. I can only make them think.”</blockquote>
+    <p class="l-quote-cite">Socrates — and the reason every lesson here ends with a question, not a summary.</p>
+  </div>
+</section>
+
+{{-- ══ CERTIFICATE ══ --}}
+<section id="certificate" class="l-certband">
+  <div class="l-blob l-blob-d" aria-hidden="true"></div>
+  <div class="l-wrap l-certband-grid l-reveal">
+    <div class="l-stagger">
+      <span class="l-eyebrow l-eyebrow-light">Certificates</span>
+      <h2 class="l-h2 l-h2-light">Finish a course. Earn proof that holds up.</h2>
+      <p class="l-sub l-sub-light">Complete the lessons, pass the assessments, and your certificate is issued automatically — with a verification link an employer can check in seconds.</p>
+      <ul class="l-ticks l-ticks-light">
+        <li><span class="l-tick l-tick-light">{!! $check !!}</span>Issued the moment you complete the course</li>
+        <li><span class="l-tick l-tick-light">{!! $check !!}</span>Downloadable PDF, always in your account</li>
+        <li><span class="l-tick l-tick-light">{!! $check !!}</span>Verifiable online by anyone you share it with</li>
+      </ul>
+    </div>
+    {{-- The road to a certificate, as an animated timeline. Drawn in CSS,
+         no learner, course or date is ever named. Decorative only. --}}
+    <div class="l-tl" aria-hidden="true">
+      <div class="l-tl-head">
+        <span class="l-eyebrow">Your path to the certificate</span>
+        <span class="l-tl-status"><span class="l-tl-status-dot"></span>Live progress</span>
+      </div>
+      <ol class="l-tl-list">
+        <li class="l-tl-item is-done" style="--d:0">
+          <span class="l-tl-mark">{!! $check !!}</span>
+          <span class="l-tl-text"><strong>Lessons completed</strong><span>Every module watched, read and practised</span></span>
+          <span class="l-tl-meta">6 / 6</span>
+        </li>
+        <li class="l-tl-item is-done" style="--d:1">
+          <span class="l-tl-mark">{!! $check !!}</span>
+          <span class="l-tl-text"><strong>Assessments passed</strong><span>Graded automatically, the moment you submit</span></span>
+          <span class="l-tl-meta">Passed</span>
+        </li>
+        <li class="l-tl-item is-done" style="--d:2">
+          <span class="l-tl-mark">{!! $check !!}</span>
+          <span class="l-tl-text"><strong>Final test cleared</strong><span>One last check that the learning stuck</span></span>
+          <span class="l-tl-meta">92%</span>
+        </li>
+        <li class="l-tl-item is-issue" style="--d:3">
+          <span class="l-tl-mark l-tl-mark-amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg></span>
+          <span class="l-tl-text"><strong>Certificate issued</strong><span>Automatically, with a verification link</span></span>
+          <span class="l-tl-meta l-tl-meta-amber">Just now</span>
+        </li>
+      </ol>
+      <div class="l-tl-foot">
+        <span class="l-tl-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>verify.maieutic.in/…</span>
+        <span class="l-tl-seal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Verified</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{-- ══ FAQ ══ --}}
 @php
-    $guarantees = [
-        ['title' => 'Payments you can trust', 'body' => 'Your enrollment activates only after your payment is securely verified — so access is guaranteed, every time.'],
-        ['title' => 'Content that stays yours', 'body' => 'Course content is delivered only to enrolled learners, through a protected path — your paid content stays exclusive.'],
-        ['title' => 'A record you can rely on', 'body' => 'Every enrollment, payment, and result is recorded — your history is always there when you need it.'],
+    $faqs = [
+        ['q' => 'Do I have to pay to look at a course?',     'a' => 'No. Every course, its outline and its modules are open to browse. You pay only when you decide to enrol.'],
+        ['q' => 'When does my access start?',                'a' => 'As soon as your payment is verified. The enrolment activates automatically — nothing to wait for, no one to chase.'],
+        ['q' => 'Can I learn around a full-time job?',       'a' => 'Yes. Lessons are self-paced, work on any device, and your progress is saved as you go, so a ten-minute session still counts.'],
+        ['q' => 'How are assessments graded?',               'a' => 'Automatically, the moment you submit. You see your result straight away, and passing an assessment completes its lesson.'],
+        ['q' => 'What do I get at the end?',                 'a' => 'A certificate of completion, issued automatically once every lesson and required assessment is done, with a link anyone can use to verify it.'],
+        ['q' => 'Is my payment safe?',                       'a' => 'Yes. Access is granted only after the payment is verified on our side — never on the basis of a message from your browser.'],
     ];
 @endphp
-
-<section id="trust" style="background:var(--teal-900);scroll-margin-top:68px">
-  <div class="l-split l-section" style="max-width:1240px;margin:0 auto;padding:96px 24px;display:grid;grid-template-columns:5fr 7fr;gap:80px;align-items:start">
-    <div style="display:flex;flex-direction:column;gap:24px">
-      <div style="font-family:var(--font-mono);font-size:var(--fs-eyebrow);letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--teal-200)">Security</div>
-      <h2 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-5xl);line-height:var(--lh-snug);letter-spacing:var(--ls-tight);color:var(--text-inverse)">Your learning is protected.</h2>
-      <p style="margin:0;font-size:var(--fs-lg);line-height:var(--lh-relaxed);color:var(--teal-100);max-width:44ch">Payments, course access, and your results are protected at every step — not just on the surface.</p>
+<section id="faq" class="l-section-pad">
+  <div class="l-wrap">
+    <div class="l-head l-head-center l-reveal l-stagger">
+      <span class="l-eyebrow">FAQ</span>
+      <h2 class="l-h2">Questions, answered.</h2>
+      <p class="l-sub">The things people ask before their first course.</p>
     </div>
-    <div style="display:flex;flex-direction:column;gap:0">
-      @foreach ($guarantees as $g)
-        <div style="display:flex;gap:24px;padding:28px 0;{{ ! $loop->last ? 'border-bottom:1px solid var(--border-inverse)' : '' }}">
-          <div style="font-family:var(--font-mono);font-size:var(--fs-sm);color:var(--teal-300);flex:0 0 40px">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="font-weight:var(--fw-semibold);font-size:var(--fs-lg);color:var(--text-inverse)">{{ $g['title'] }}</div>
-            <div style="font-size:var(--fs-base);line-height:var(--lh-relaxed);color:var(--teal-100)">{{ $g['body'] }}</div>
-          </div>
-        </div>
+    <div class="l-faq l-reveal">
+      @foreach ($faqs as $faq)
+        <details class="l-faq-item l-stagger-item" style="--i:{{ $loop->index }}" @if ($loop->first) open @endif>
+          <summary><span>{{ $faq['q'] }}</span><span class="l-faq-plus" aria-hidden="true"></span></summary>
+          <p>{{ $faq['a'] }}</p>
+        </details>
       @endforeach
     </div>
   </div>
 </section>
 
 {{-- ══ CLOSING ══ --}}
-<section class="l-section" style="max-width:1240px;margin:0 auto;padding:120px 24px;display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center">
-  <h2 class="l-display" style="margin:0;font-family:var(--font-serif);font-weight:var(--fw-medium);font-size:var(--fs-6xl);line-height:var(--lh-tight);letter-spacing:var(--ls-tight);color:var(--text-heading);max-width:18ch;text-wrap:balance">Start learning by asking.</h2>
-  <p style="margin:0;font-size:var(--fs-xl);line-height:var(--lh-relaxed);color:var(--text-muted);max-width:44ch">Real courses, a clear method, and progress you can see. Start with any subject — start with a question.</p>
+<section class="l-closing">
+  <div class="l-blob l-blob-e" aria-hidden="true"></div>
+  <div class="l-motif" aria-hidden="true"></div>
+  <div class="l-wrap l-reveal l-stagger l-closing-inner">
+    <span class="l-eyebrow l-eyebrow-light">Get started</span>
+    <h2 class="l-h2 l-h2-light l-h2-xl">Start learning by asking.</h2>
+    <p class="l-sub l-sub-light">Real courses, a clear method, and progress you can see. Browse the catalogue free, and enrol when a course is right for you.</p>
+    <div class="l-hero-actions l-center">
+      <a href="{{ $catalogueUrl }}" class="l-btn l-btn-amber l-btn-lg">Browse the courses <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      @guest
+        <a href="{{ $registerUrl }}" class="l-btn l-btn-ghost-light l-btn-lg">Create a free account</a>
+      @endguest
+    </div>
+  </div>
 </section>
 
 </main>
 
-<footer style="border-top:1px solid var(--border)">
-  <div class="l-split" style="max-width:1240px;margin:0 auto;padding:40px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px">
-    <img src="{{ asset('images/logo-maieutic.png') }}" alt="{{ $organisation }}" style="height:26px;mix-blend-mode:multiply">
-    <div style="display:flex;gap:28px;font-size:var(--fs-sm)">
-      <a href="#platform" style="color:var(--text-muted)">Platform</a>
-      <a href="#roles" style="color:var(--text-muted)">For students</a>
-      <a href="#trust" style="color:var(--text-muted)">Security</a>
+<footer class="l-footer">
+  <div class="l-wrap l-footer-inner">
+    <div class="l-footer-brand">
+      <img src="{{ asset('images/logo-maieutic-edutech.png') }}" alt="{{ $organisation }}">
+      <p>Online courses taught the Socratic way — learn by questioning, not cramming.</p>
     </div>
-    <div style="font-size:var(--fs-sm);color:var(--text-subtle)">© {{ now()->year }} {{ $organisation }}. All rights reserved.</div>
+    <nav class="l-footer-links" aria-label="Footer">
+      <a href="{{ $catalogueUrl }}">Courses</a>
+      <a href="#how">How it works</a>
+      <a href="#inside">What's inside</a>
+      <a href="#certificate">Certificates</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="l-footer-copy">© {{ now()->year }} {{ $organisation }}. All rights reserved.</div>
   </div>
 </footer>
+
+{{-- Reveal-on-scroll. Opt-in: .has-reveal is only added here, so without
+     this script the page is fully visible. A safety timer reveals
+     everything regardless, so a stalled observer can never leave a section blank. --}}
+<script nonce="{{ $cspNonce ?? '' }}">
+  (function () {
+    var root = document.querySelector('.landing');
+    var els = document.querySelectorAll('.l-reveal');
+    var header = document.querySelector('.l-header');
+    var onScroll = function () { if (header) header.classList.toggle('is-scrolled', window.scrollY > 72); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    if (!root || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    root.classList.add('has-reveal');
+    var showAll = function () { els.forEach(function (el) { el.classList.add('is-in'); }); };
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) { entry.target.classList.add('is-in'); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+    setTimeout(showAll, 1500);
+  })();
+
+  // Feature showcase: tabs switch the framed screenshot. Auto-advances every
+  // 6s until the visitor interacts, and never while the pointer is over it.
+  (function () {
+    var root = document.querySelector('[data-showcase]');
+    if (!root) return;
+    var tabs = Array.prototype.slice.call(root.querySelectorAll('.l-showcase-tab'));
+    var panels = Array.prototype.slice.call(root.querySelectorAll('.l-showcase-panel'));
+    var current = 0, timer = null, manual = false;
+    var show = function (i) {
+      current = i;
+      tabs.forEach(function (t, k) { t.classList.toggle('is-active', k === i); t.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+      panels.forEach(function (p, k) { p.classList.toggle('is-active', k === i); p.hidden = k !== i; });
+    };
+    var next = function () { show((current + 1) % tabs.length); };
+    var start = function () { if (timer || manual || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; timer = setInterval(next, 6000); root.classList.add('is-auto'); };
+    var stop = function () { if (timer) { clearInterval(timer); timer = null; } root.classList.remove('is-auto'); };
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { manual = true; stop(); show(i); });
+      t.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); manual = true; stop(); show((i + 1) % tabs.length); tabs[current].focus(); }
+        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); manual = true; stop(); show((i - 1 + tabs.length) % tabs.length); tabs[current].focus(); }
+      });
+    });
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    show(0); start();
+  })();
+</script>
 @endsection
