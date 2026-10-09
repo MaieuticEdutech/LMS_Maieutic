@@ -33,7 +33,7 @@
 
 <header class="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/92 px-5 backdrop-blur-[8px] lg:gap-8 lg:px-10">
     <a href="{{ route('student.home') }}" class="shrink-0" aria-label="{{ $branding->organisationName() }} — dashboard">
-        <img src="{{ asset('images/logo-maieutic.png') }}"
+        <img src="{{ asset('images/logo-maieutic-edutech.png') }}"
              alt="{{ $branding->organisationName() }}"
              class="h-8 w-auto">
     </a>

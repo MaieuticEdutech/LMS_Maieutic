@@ -53,7 +53,7 @@
     <header class="border-b border-neutral-200 bg-neutral-0">
         <nav class="mx-auto flex max-w-content items-center justify-between gap-6 px-6 py-4" aria-label="Primary">
             <a href="{{ route('home') }}" class="shrink-0">
-                <img src="{{ asset('images/logo-maieutic.png') }}"
+                <img src="{{ asset('images/logo-maieutic-edutech.png') }}"
                      alt="{{ app(\App\Services\Settings\BrandingService::class)->organisationName() }}"
                      class="h-8 w-auto">
             </a>
