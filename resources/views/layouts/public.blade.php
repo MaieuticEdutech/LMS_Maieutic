@@ -50,17 +50,29 @@
     @if (auth()->user()?->isStudent())
         @include('partials.student-header')
     @else
-    <header class="border-b border-neutral-200 bg-neutral-0">
-        <nav class="mx-auto flex max-w-content items-center justify-between gap-6 px-6 py-4" aria-label="Primary">
+    <header class="sticky top-0 z-50 border-b border-neutral-200/80 bg-white/90 backdrop-blur-[10px]">
+        <nav class="flex h-[68px] items-center justify-between gap-6 px-5 lg:px-9" aria-label="Primary">
             <a href="{{ route('home') }}" class="shrink-0">
                 <img src="{{ asset('images/logo-maieutic-edutech.png') }}"
                      alt="{{ app(\App\Services\Settings\BrandingService::class)->organisationName() }}"
                      class="h-8 w-auto">
             </a>
 
-            <div class="flex items-center gap-6">
+            {{-- Same search the student header carries: a plain GET to the
+                 catalogue, so a guest can search from any public page. --}}
+            <form method="GET" action="{{ route('catalogue.index') }}" role="search"
+                  class="relative mx-auto hidden max-w-[540px] flex-1 items-center md:flex">
+                <label for="public-search" class="sr-only">Search for courses</label>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="pointer-events-none absolute left-4 text-neutral-500"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                <input id="public-search" type="search" name="q"
+                       value="{{ request()->routeIs('catalogue.index') ? request()->query('q') : '' }}"
+                       placeholder="Search for courses, skills, or topics"
+                       class="h-11 w-full rounded-full border-[1.5px] border-neutral-200 bg-white pl-11 pr-4 text-sm text-neutral-900 shadow-xs placeholder:text-neutral-500 focus:border-teal-600">
+            </form>
+
+            <div class="flex items-center gap-5">
                 @if (Route::has('catalogue.index'))
-                    <a href="{{ route('catalogue.index') }}" class="text-sm font-medium text-neutral-700 hover:text-teal-700">
+                    <a href="{{ route('catalogue.index') }}" class="text-sm font-semibold text-neutral-700 hover:text-teal-700">
                         Catalogue
                     </a>
                 @endif
@@ -90,9 +102,12 @@
                     </form>
                 @else
                     @if (Route::has('login'))
-                        <a href="{{ route('login') }}" class="text-sm font-medium text-neutral-700 hover:text-teal-700">
+                        <a href="{{ route('login') }}" class="text-sm font-semibold text-neutral-700 hover:text-teal-700">
                             Sign in
                         </a>
+                    @endif
+                    @if (Route::has('register'))
+                        <x-button :href="route('register')" size="sm" pill>Join for free</x-button>
                     @endif
                 @endauth
             </div>
@@ -105,11 +120,7 @@
         {{ $slot ?? '' }}
     </main>
 
-    <footer class="border-t border-neutral-200">
-        <div class="mx-auto max-w-content px-6 py-8 text-sm text-neutral-500">
-            &copy; {{ now()->year }} {{ app(\App\Services\Settings\BrandingService::class)->organisationName() }}
-        </div>
-    </footer>
+    @include('partials.site-footer')
 
     @livewireScripts
 </body>

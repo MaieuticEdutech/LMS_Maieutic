@@ -3,6 +3,8 @@
     'size' => 'md',
     'type' => 'button',
     'href' => null,
+    // Fully rounded ends, for the storefront's hero and sticky-bar CTAs.
+    'pill' => false,
 ])
 
 {{--
@@ -41,10 +43,13 @@
         'sm' => 'h-8 px-3 text-xs gap-1.5',
         'md' => 'h-10 px-4 text-sm gap-2',
         'lg' => 'h-11 px-5 text-sm gap-2',
+        // Storefront hero and sticky enrol bar.
+        'xl' => 'h-14 px-7 text-[15px] font-semibold gap-2.5',
     ];
 
     $classes = implode(' ', [
-        'inline-flex items-center justify-center rounded-control font-medium',
+        'inline-flex items-center justify-center font-medium',
+        $pill ? 'rounded-full' : 'rounded-control',
         'transition-colors duration-150 ease-out',
         'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-current',
         $variants[$variant] ?? $variants['primary'],
