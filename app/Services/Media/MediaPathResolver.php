@@ -6,6 +6,7 @@ namespace App\Services\Media;
 
 use App\Enums\MediaPurpose;
 use App\Models\Course;
+use App\Models\InstructorProfile;
 use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -100,6 +101,8 @@ final class MediaPathResolver
         return match (true) {
             $attachable instanceof Course => 'courses/'.$attachable->getKey(),
             $attachable instanceof Lesson => 'courses/'.$this->courseIdFor($attachable).'/lessons/'.$attachable->getKey(),
+            // Instructor profile photos: public, like course thumbnails.
+            $attachable instanceof InstructorProfile => 'instructors/'.$attachable->getKey(),
             default => throw new InvalidArgumentException(
                 'Cannot resolve a storage path for ['.$attachable::class.']. '
                 .'Add it to MediaPathResolver rather than building a path at the call site.',
