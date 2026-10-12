@@ -54,7 +54,7 @@
         <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8"
              aria-label="Student navigation">
             <a href="{{ route('student.home') }}" class="shrink-0">
-                <img src="{{ asset('images/logo-maieutic.png') }}"
+                <img src="{{ asset('images/logo-maieutic-edutech.png') }}"
                      alt="{{ $branding->organisationName() }}"
                      class="h-8 w-auto">
             </a>

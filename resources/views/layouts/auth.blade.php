@@ -89,7 +89,7 @@
                      own whitespace, so anything smaller reads as a speck. --}}
                 <a href="{{ url('/') }}" class="self-start rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">
                     <img
-                        src="{{ asset('images/logo-maieutic.png') }}"
+                        src="{{ asset('images/logo-maieutic-edutech.png') }}"
                         alt="{{ $branding->organisationName() }}"
                         class="h-12 w-auto"
                     >
