@@ -7,6 +7,9 @@ namespace App\Livewire\Catalogue;
 use App\Models\Course;
 use App\Models\CourseReview;
 use App\Models\Module;
+use App\Models\User;
+use App\Services\Catalogue\Promotion;
+use App\Services\Enrollment\EnrollmentAccessService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Layout;
@@ -29,6 +32,11 @@ final class Show extends Component
     public function mount(Course $course): void
     {
         $this->authorize('view', $course);
+
+        // A guest who joins from the promo button comes straight back here.
+        if (auth()->guest() && app(Promotion::class)->active()) {
+            session()->put('url.intended', route('catalogue.show', ['course' => $course]));
+        }
 
         // thumbnail and category are read by the hero and the card partial;
         // preventLazyLoading() throws on either if they are left unloaded.
@@ -86,9 +94,26 @@ final class Show extends Component
             ->get();
     }
 
+    /**
+     * Whether the signed-in viewer already holds access, so the promo card can
+     * say "Go to course" instead of offering to enrol again. Asked of the one
+     * definition of access (rule S-8).
+     */
+    public function viewerHasAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && app(EnrollmentAccessService::class)->grantsAccess($user, $this->course);
+    }
+
     public function render(): View
     {
+        $promotion = app(Promotion::class);
+
         return view('livewire.catalogue.show', [
+            'promoActive' => $promotion->active(),
+            'promoEndsAt' => $promotion->endsAt(),
+            'viewerHasAccess' => $promotion->active() && $this->viewerHasAccess(),
             'curriculum' => $this->curriculum(),
             'learners' => $this->learnerCount(),
             'reviews' => $this->reviews(),

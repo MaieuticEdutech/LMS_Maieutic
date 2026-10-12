@@ -58,7 +58,8 @@ If code and documents disagree, that is a defect. Decide which is wrong and fix 
 ## The five rules nobody may break
 
 1. **A browser saying "payment succeeded" grants nothing.** Enrollment comes only from a
-   signature-verified webhook or an audited admin grant (Rules 21–22, ADR-006).
+   signature-verified webhook, an audited admin grant, or — only while a free promotion is running —
+   the student's own audited claim through `EnrolInFreePromotion` (Rules 21–22, ADR-006, planning.md §16.4).
 2. **Backend policy is the only authority.** Hiding a UI element is never security (Rule 20).
    Every fetch-by-ID is followed by a policy check.
 3. **`GrantEnrollment` and `EnrollmentAccessService` are single-owner.** They belong to Track A,
