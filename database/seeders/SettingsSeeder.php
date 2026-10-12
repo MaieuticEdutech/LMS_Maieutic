@@ -49,6 +49,10 @@ class SettingsSeeder extends Seeder
             // something to show in Phase 4.
             ['learning.video_completion_threshold', 90, 'learning', 'integer', false],
             ['learning.default_passing_percentage', 60, 'learning', 'integer', false],
+
+            // Free-launch promotion (planning.md §16.4). Empty = not running.
+            // Entered in IST; see App\Services\Catalogue\Promotion.
+            ['promotion.free_access_until', '', 'promotion', 'string', true],
         ];
 
         foreach ($defaults as [$key, $value, $group, $type, $isPublic]) {

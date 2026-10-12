@@ -13,6 +13,11 @@
                             <x-checkbox wire:model="{{ $fieldName }}" :name="$fieldName" :label="$fieldLabel" />
                         @elseif ($setting->type === 'integer')
                             <x-input wire:model="{{ $fieldName }}" type="number" :name="$fieldName" :label="$fieldLabel" />
+                        @elseif ($setting->key === \App\Services\Catalogue\Promotion::SETTING)
+                            {{-- Free-launch promotion end. Indian time; clear it to end the promotion. --}}
+                            <x-input wire:model="{{ $fieldName }}" type="datetime-local" :name="$fieldName"
+                                     label="Free access until (IST)"
+                                     hint="While this date is in the future, students can enrol free and purchase buttons are hidden. Leave empty for no promotion." />
                         @else
                             <x-input wire:model="{{ $fieldName }}" type="text" :name="$fieldName" :label="$fieldLabel" />
                         @endif
