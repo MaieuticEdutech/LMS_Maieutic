@@ -50,9 +50,6 @@
         ],
     ];
 
-    // Illustrative subject areas, not a catalogue query. Keep these in
-    // line with the categories the organisation actually publishes.
-    $tracks = ['Programming', 'Cloud', 'Data', 'Cybersecurity', 'DevOps'];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -156,67 +153,60 @@
         </main>
 
         {{-- ══ BRAND PANEL ══════════════════════════════════════════════
-             Hidden below lg. Deep teal with the M motif anchored bottom
-             right. It carries no logo: the logo already heads the form
-             column, and one mark per screen is the rule the motif follows
-             too.
+             Hidden below lg. A learner photo under a deep-teal wash, with the
+             headline and two floating glass cards on top: the same Canvas
+             treatment as the storefront hero, so a visitor moving from the
+             landing page to "Sign in" stays in one visual language.
 
-             WIDTH: everything the form column does not need (flex-1). The
-             form is a fixed 400px, so any percentage split left a band of
-             empty page between the form and the panel that widened with the
-             screen. The form side is now fixed (520px, 600px from xl) and the
-             panel absorbs the rest; its content is centred inside it so a
-             very wide panel does not open the same gap on its own right.
+             The photo is decorative (alt=""), and the panel comes AFTER the
+             form in the source so a keyboard or screen-reader user reaches the
+             fields first.
 
-             EVERY FEATURE CLAIMED HERE EXISTS IN THE PRODUCT — lesson types
-             (LessonType), assessments, resumable progress (LessonProgress)
-             and publicly verifiable certificates (VerifyCertificateController).
-             A sign-in page is the first thing a learner reads; it must not
-             promise something the platform does not do. Remove a card if
-             its feature is ever withdrawn. --}}
-        <aside class="relative hidden overflow-hidden bg-teal-900 px-14 py-12 text-white lg:flex lg:flex-1 lg:flex-col lg:justify-center 2xl:px-20 2xl:py-16">
-            {{-- The M angle motif — one per screen, never repeated. --}}
-            <div class="m-motif pointer-events-none absolute -right-px -bottom-px size-44" aria-hidden="true"></div>
+             EVERY CLAIM HERE EXISTS IN THE PRODUCT — lesson types, graded
+             assessments, resumable progress and publicly verifiable
+             certificates. A sign-in page is the first thing a learner reads;
+             it must not promise something the platform does not do. Remove a
+             card if its feature is ever withdrawn. --}}
+        <aside class="relative hidden overflow-hidden bg-teal-900 text-white lg:flex lg:flex-1 lg:flex-col lg:justify-end">
+            <img src="{{ asset('images/storefront/learner.jpg') }}" alt="" aria-hidden="true"
+                 class="absolute inset-0 size-full object-cover" loading="eager" decoding="async">
+            <div class="absolute inset-0 bg-gradient-to-t from-teal-900 via-teal-900/70 to-teal-900/25" aria-hidden="true"></div>
 
-            <div class="relative mx-auto w-full max-w-[46rem]">
+            {{-- Floating glass cards, drawn from the same feature list as the
+                 copy below so the two cannot disagree. --}}
+            <x-store.glass-card class="absolute right-10 top-14 hidden max-w-[17rem] xl:block" :delay="2">
+                <p class="text-sm font-semibold">{{ $features[1]['title'] }}</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-neutral-600">{{ $features[1]['body'] }}</p>
+            </x-store.glass-card>
+
+            <x-store.glass-card class="absolute left-10 top-40 hidden max-w-[17rem] xl:block" :delay="4">
+                <p class="text-sm font-semibold">{{ $features[3]['title'] }}</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-neutral-600">{{ $features[3]['body'] }}</p>
+            </x-store.glass-card>
+
+            <div class="relative px-14 pb-14 2xl:px-20 2xl:pb-20">
                 <p class="eyebrow text-teal-300">IT skills, built properly</p>
-                <p class="mt-4 max-w-[18ch] font-serif text-[2.25rem] leading-[1.12] font-semibold tracking-[-0.015em] text-balance 2xl:text-[2.9rem]">
+                <p class="mt-4 max-w-[18ch] font-serif text-[2.25rem] leading-[1.12] font-medium tracking-[-0.015em] text-balance 2xl:text-[2.9rem]">
                     Build the IT skills that move your career forward.
                 </p>
-                {{-- Short brand-red rule under the headline — the one accent
-                     colour on the panel, echoing the red in the motif. --}}
-                <span class="mt-5 block h-1 w-12 rounded-full bg-red-600 2xl:mt-6" aria-hidden="true"></span>
-                <p class="mt-5 max-w-[50ch] 2xl:mt-6 text-base leading-relaxed text-white/70">
+                <span class="mt-5 block h-1 w-12 rounded-full bg-red-600" aria-hidden="true"></span>
+                <p class="mt-5 max-w-[50ch] text-base leading-relaxed text-white/75">
                     Structured courses you learn at your own pace: practical lessons,
                     real assessments, and a certificate to show for it.
                 </p>
 
-                {{-- A compact icon list until 2xl, cards in a 2×2 grid above
-                     it. Below ~1536px the panel is too narrow for two cards
-                     side by side, and four stacked cards push a 768–800px
-                     laptop screen into scrolling a sign-in page. --}}
-                <ul class="mt-8 grid gap-5 2xl:mt-10 2xl:grid-cols-2 2xl:gap-3" role="list">
-                    @foreach ($features as $feature)
-                        <li class="flex gap-4 2xl:flex-col 2xl:gap-0 2xl:rounded-card 2xl:bg-white/5 2xl:p-5 2xl:ring-1 2xl:ring-inset 2xl:ring-white/10">
-                            <span class="flex size-9 shrink-0 items-center justify-center rounded-control bg-teal-500/20 text-teal-300" aria-hidden="true">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-3" role="list">
+                    @foreach ([$features[0], $features[2]] as $feature)
+                        <li class="flex items-center gap-2.5 text-sm text-white/85">
+                            <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-teal-200" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                                     {!! $feature['icon'] !!}
                                 </svg>
                             </span>
-                            <div class="2xl:mt-4">
-                                <p class="text-sm font-semibold text-white">{{ $feature['title'] }}</p>
-                                <p class="mt-1 text-sm leading-relaxed text-white/65">{{ $feature['body'] }}</p>
-                            </div>
+                            {{ $feature['title'] }}
                         </li>
                     @endforeach
                 </ul>
-
-                <div class="mt-8 hidden flex-wrap items-center gap-2 2xl:flex">
-                    <span class="eyebrow mr-1 text-white/50">Tracks</span>
-                    @foreach ($tracks as $track)
-                        <span class="rounded-full px-3 py-1 text-xs font-medium text-white/80 ring-1 ring-inset ring-white/15">{{ $track }}</span>
-                    @endforeach
-                </div>
             </div>
         </aside>
     </div>

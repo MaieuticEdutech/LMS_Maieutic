@@ -4,7 +4,10 @@
     (FR-RBAC-08). Rendering them read-only is presentation; the policy is the
     control.
 --}}
-<div class="flex flex-col items-center gap-1.5 rounded-card border border-neutral-200 bg-white p-7 text-center">
+<div class="relative flex flex-col items-center gap-1.5 overflow-hidden rounded-hero border border-neutral-200 bg-white px-7 pb-7 pt-12 text-center shadow-xs">
+    {{-- A deep-teal band behind the avatar, as on the storefront heroes. --}}
+    <div class="absolute inset-x-0 top-0 h-20 bg-teal-900" aria-hidden="true"></div>
+
     {{-- The uploaded photo once there is one (Upload Documents, elsewhere on
          this page), the initials disc until then. Both are decorative here —
          the name text beside it already identifies the account, so an empty
@@ -13,10 +16,10 @@
         <img
             src="{{ route('profile.photo') }}"
             alt=""
-            class="mb-2 h-[76px] w-[76px] rounded-full border border-neutral-200 object-cover"
+            class="relative mb-2 h-[76px] w-[76px] rounded-full border-4 border-white object-cover"
         >
     @else
-        <div class="mb-2 flex h-[76px] w-[76px] items-center justify-center rounded-full bg-teal-600 text-2xl font-semibold text-white"
+        <div class="relative mb-2 flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white bg-teal-600 text-2xl font-semibold text-white"
              aria-hidden="true">
             {{ $user->initials() }}
         </div>
