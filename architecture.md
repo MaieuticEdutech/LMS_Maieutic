@@ -1350,7 +1350,7 @@ Full ADRs live in `docs/adr/`. Summary:
 | ADR-003 | Polymorphic `media_files` + content type registry | New content types without schema change (FR-CNT-07, P-7) |
 | ADR-004 | Laravel password broker for activation tokens | Same security properties, zero new surface, framework-maintained |
 | ADR-005 | Enum role column + policies, no permission package | Three fixed roles; documented single-call-site migration path to many-to-many |
-| ADR-006 | Enrollment granted only by `GrantEnrollment`, only from verified sources | The central business guarantee, made structurally testable |
+| ADR-006 | Enrollment granted only by `GrantEnrollment`, only from verified sources (amended 2026-10-12: plus the audited free-promotion claim, planning.md §16.4) | The central business guarantee, made structurally testable |
 | ADR-007 | Money as integer minor units + `Money` value object | Eliminates float error; matches Razorpay's paise API |
 | ADR-008 | Progress: lesson is fact, module derived, course cached and rebuildable | Correctness plus dashboard performance without duplicated truth |
 | ADR-009 | `orders` separated from `payments` | Retries and refunds are first-class; mirrors the gateway's own model |
@@ -1358,7 +1358,7 @@ Full ADRs live in `docs/adr/`. Summary:
 | ADR-011 | Livewire only where interactivity needs server state | Avoids an unnecessary SPA and a second authorisation surface |
 | ADR-012 | Native PHP enums + DB CHECK constraints instead of PostgreSQL enum types | Type safety in code and data, without `ALTER TYPE` migration pain |
 | ADR-013 | **Laravel Fortify as the headless auth backend, with LMS-owned views**; Fortify's pipeline actions are thin adapters delegating to LMS domain Actions | Framework-maintained security primitives (hashing, throttling, session handling, verification, reset) without adopting starter-kit UI we would rewrite. Keeps `RegisterStudent` etc. as the single implementation callable outside HTTP (P-5). Status gating moves into `authenticateUsing` so it cannot be bypassed by pipeline ordering |
-| ADR-014 | **All V1 courses are paid; no free-course path and no guest preview content** | Removes the zero-amount order branch, the `is_free` column, the `ClaimFreeCourse` action, the `is_preview` column and the preview branch of the access gate. Fewer paths into enrollment and content means fewer places for an access bug to hide. Both are additive [V1.1] changes |
+| ADR-014 | **All V1 courses are paid; no free-course path and no guest preview content** (note 2026-10-12: a time-boxed site-wide promotion now exists; still no `is_free` column, see planning.md §16.4) | Removes the zero-amount order branch, the `is_free` column, the `ClaimFreeCourse` action, the `is_preview` column and the preview branch of the access gate. Fewer paths into enrollment and content means fewer places for an access bug to hide. Both are additive [V1.1] changes |
 
 ---
 

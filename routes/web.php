@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\ActivateAccountController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Dev\MailPreviewController;
+use App\Http\Controllers\EnrolInFreePromotionController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\VerifyCertificateController;
 use App\Livewire\Catalogue\Index as CatalogueIndex;
@@ -57,6 +58,15 @@ Route::get('/', static fn (): View => view('welcome', [
 */
 Route::get('/courses', CatalogueIndex::class)->name('catalogue.index');
 Route::get('/courses/{course}', CatalogueShow::class)->name('catalogue.show');
+
+/*
+ * "Enrol free" during the free-launch promotion (planning.md §16.4). A POST that
+ * changes state, behind auth + active + student. The controller hands to
+ * EnrolInFreePromotion → GrantEnrollment; this route is not the control.
+ */
+Route::post('/courses/{course}/enrol-free', EnrolInFreePromotionController::class)
+    ->middleware(['auth', 'active', 'role:student', 'throttle:10,1'])
+    ->name('catalogue.enrol-free');
 
 /*
 |--------------------------------------------------------------------------

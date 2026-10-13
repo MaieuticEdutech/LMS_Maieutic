@@ -85,7 +85,22 @@
                 @include('partials.course-thumb', ['course' => $course])
 
                 <div class="flex flex-col gap-3 px-6 py-[22px]">
-                    <div class="font-serif text-3xl font-semibold">{{ $course->price }}</div>
+                    @if ($promoActive)
+                        {{-- Free-launch promotion (planning.md §16.4): the real price,
+                             struck through, never changed or hidden. --}}
+                        <div>
+                            <div class="font-serif text-3xl font-semibold text-teal-700">Free</div>
+                            <div class="mt-0.5 text-sm text-neutral-500">
+                                <s>{{ $course->price }}</s>
+                                <span class="ml-1.5 font-medium text-teal-700">Free for a limited time</span>
+                            </div>
+                            @if ($promoEndsAt)
+                                <div class="mt-1 text-[12.5px] text-neutral-500">Enrol by {{ $promoEndsAt->format('j M Y') }}</div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="font-serif text-3xl font-semibold">{{ $course->price }}</div>
+                    @endif
 
                     <div class="text-[15px] font-medium text-neutral-700">Included in your enrolment</div>
 
@@ -108,11 +123,34 @@
                          webhook or an audited admin grant (Rules 21–22,
                          ADR-006). Phase 12's InitiateCheckout is what this
                          button reaches. --}}
-                    <x-button :href="route('checkout.start', ['course' => $course])" variant="primary" size="lg" class="mt-1.5 w-full" wire:navigate>
-                        Purchase course
-                    </x-button>
+                    @if ($promoActive)
+                        {{-- The purchase button below is hidden, not removed: it
+                             returns when the promotion ends. --}}
+                        @if ($viewerHasAccess)
+                            <x-button :href="route('student.courses.play', ['course' => $course])" variant="primary" size="lg" class="mt-1.5 w-full">
+                                Go to course
+                            </x-button>
+                        @elseif (auth()->guest())
+                            <x-button :href="route('register')" variant="primary" size="lg" class="mt-1.5 w-full">
+                                Join free to enrol
+                            </x-button>
+                            <p class="text-center text-[12.5px] text-neutral-500">
+                                Already have an account? <a href="{{ route('login') }}" class="font-medium text-teal-700 hover:underline">Sign in</a>
+                            </p>
+                        @elseif (auth()->user()->isStudent())
+                            <form method="POST" action="{{ route('catalogue.enrol-free', ['course' => $course]) }}">
+                                @csrf
+                                <x-button type="submit" variant="primary" size="lg" class="mt-1.5 w-full">Enrol free</x-button>
+                            </form>
+                            <p class="text-center text-[12.5px] text-neutral-500">Course and certificate included.</p>
+                        @endif
+                    @else
+                        <x-button :href="route('checkout.start', ['course' => $course])" variant="primary" size="lg" class="mt-1.5 w-full" wire:navigate>
+                            Purchase course
+                        </x-button>
 
-                    <p class="text-center text-[12.5px] text-neutral-500">Secure checkout via Razorpay.</p>
+                        <p class="text-center text-[12.5px] text-neutral-500">Secure checkout via Razorpay.</p>
+                    @endif
                 </div>
             </div>
         </div>
