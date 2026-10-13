@@ -9,11 +9,13 @@
     never from the course or the user. A course renamed next year must not
     rewrite a document an employer verified this year.
 --}}
-<div class="mx-auto w-full max-w-content px-5 pb-24 pt-12 lg:px-10">
+<div class="mx-auto w-full max-w-content px-5 pb-24 pt-10 lg:px-10">
 
-    <p class="eyebrow text-teal-600">Achievements</p>
+    <div class="rounded-hero bg-gradient-to-br from-marigold via-white to-teal-50 px-6 py-8 sm:px-10">
+        <p class="eyebrow text-teal-600">Achievements</p>
 
-    <h1 class="mt-2.5 font-serif text-[40px]/[1.1] font-medium">Certificates</h1>
+        <h1 class="mt-2 font-serif text-[40px]/[1.08] font-normal tracking-[-0.02em] text-neutral-900 md:text-[48px]">Certificates</h1>
+    </div>
 
     @if ($certificates->isEmpty())
         <div class="mt-10">
@@ -27,14 +29,14 @@
             </x-empty-state>
         </div>
     @else
-        <p class="mb-10 mt-2 text-base/[1.6] text-neutral-500">
+        <p class="mb-8 mt-6 text-base/[1.6] text-neutral-500">
             {{ $certificates->count() }} {{ Str::plural('certificate', $certificates->count()) }} earned.
             Each one is verifiable by its ID.
         </p>
 
         <div class="grid gap-5 lg:grid-cols-2">
             @foreach ($certificates as $certificate)
-                <div class="overflow-hidden rounded-card border border-neutral-200 bg-white"
+                <div class="overflow-hidden rounded-[20px] border border-neutral-200 bg-white shadow-md transition hover:shadow-lg"
                      wire:key="certificate-{{ $certificate->id }}">
 
                     {{-- The handoff's banner gradient: deep teal with a red
@@ -73,12 +75,12 @@
                              usable. See CertificateDownloadController. --}}
                         <div class="flex gap-2">
                             <a href="{{ route('certificates.show', $certificate) }}"
-                               class="rounded-sm border border-neutral-300 bg-white px-3.5 py-[9px] text-[13px] font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                               class="rounded-full border border-neutral-300 bg-white px-4 py-[9px] text-[13px] font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
                                 View
                             </a>
 
                             <a href="{{ route('certificates.download', $certificate) }}"
-                               class="rounded-sm bg-teal-600 px-3.5 py-[9px] text-[13px] font-semibold text-white transition-colors hover:bg-teal-700">
+                               class="rounded-full bg-teal-600 px-4 py-[9px] text-[13px] font-semibold text-white transition-colors hover:bg-teal-700">
                                 Download PDF
                             </a>
                         </div>
