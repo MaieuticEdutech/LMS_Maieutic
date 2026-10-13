@@ -31,7 +31,7 @@
 @php($branding = app(\App\Services\Settings\BrandingService::class))
 @php($me = auth()->user())
 
-<header class="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/92 px-5 backdrop-blur-[8px] lg:gap-8 lg:px-10">
+<header class="sticky top-0 z-50 flex h-[68px] items-center gap-4 border-b border-neutral-200/80 bg-white/90 px-5 backdrop-blur-[10px] lg:gap-7 lg:px-9">
     <a href="{{ route('student.home') }}" class="shrink-0" aria-label="{{ $branding->organisationName() }} — dashboard">
         <img src="{{ asset('images/logo-maieutic-edutech.png') }}"
              alt="{{ $branding->organisationName() }}"
@@ -41,16 +41,19 @@
     {{-- Two items, written out rather than looped. A loop needs the array
          declared in a php block, and a raw php block in a layout file has
          already once stopped every directive after it from compiling. --}}
-    <nav class="flex gap-2" aria-label="Primary">
+    <nav class="flex gap-1.5" aria-label="Primary">
+        {{-- Storefront (Spotlight × Canvas): Explore leads as a filled chip with a
+             grid mark, so the store reads as the first thing you can do. --}}
         <a href="{{ route('catalogue.index') }}"
            @if (request()->routeIs('catalogue.*')) aria-current="page" @endif
-           class="rounded-sm px-[14px] py-2 text-sm font-medium transition-colors {{ request()->routeIs('catalogue.*') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
+           class="inline-flex items-center gap-2 rounded-control px-[14px] py-2 text-sm font-semibold transition-colors {{ request()->routeIs('catalogue.*') ? 'bg-teal-600 text-white' : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200' }}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Explore
         </a>
 
         <a href="{{ route('student.courses.index') }}"
            @if (request()->routeIs('student.courses.index')) aria-current="page" @endif
-           class="rounded-sm px-[14px] py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.courses.index') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
+           class="hidden rounded-control px-[14px] py-2 text-sm font-semibold transition-colors sm:inline-flex {{ request()->routeIs('student.courses.index') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
             My Learning
         </a>
 
@@ -60,7 +63,7 @@
         @if (auth()->user()?->isStudent())
             <a href="{{ route('student.certificates.index') }}"
                @if (request()->routeIs('student.certificates.*')) aria-current="page" @endif
-               class="rounded-sm px-[14px] py-2 text-sm font-medium transition-colors {{ request()->routeIs('student.certificates.*') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
+               class="hidden rounded-control px-[14px] py-2 text-sm font-semibold transition-colors lg:inline-flex {{ request()->routeIs('student.certificates.*') ? 'bg-teal-50 text-teal-600' : 'text-neutral-700 hover:bg-neutral-100' }}">
                 Certificates
             </a>
         @endif
@@ -74,12 +77,12 @@
     <form method="GET"
           action="{{ route('catalogue.index') }}"
           role="search"
-          class="relative ml-auto hidden max-w-[420px] flex-1 items-center md:flex">
+          class="relative ml-auto hidden max-w-[540px] flex-1 items-center md:flex">
         <label for="header-search" class="sr-only">Search for courses</label>
 
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-             class="pointer-events-none absolute left-[14px] text-neutral-500">
+             class="pointer-events-none absolute left-4 text-neutral-500">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
         </svg>
@@ -89,7 +92,12 @@
                name="q"
                value="{{ request()->routeIs('catalogue.index') ? request()->query('q') : '' }}"
                placeholder="Search for courses, skills, or topics"
-               class="h-10 w-full rounded-sm border border-neutral-200 bg-neutral-50 pl-10 pr-[14px] text-sm text-neutral-900 placeholder:text-neutral-500">
+               class="h-11 w-full rounded-full border-[1.5px] border-neutral-200 bg-white pl-11 pr-14 text-sm text-neutral-900 shadow-xs placeholder:text-neutral-500 focus:border-teal-600">
+
+        <button type="submit" class="absolute right-1.5 grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-white transition-colors hover:bg-teal-700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            <span class="sr-only">Search</span>
+        </button>
     </form>
 
     <div class="ml-auto flex items-center gap-4 md:ml-0">
@@ -129,7 +137,7 @@
                     x-on:keydown.escape.window="open = false"
                     x-bind:aria-expanded="open ? 'true' : 'false'"
                     aria-haspopup="true"
-                    class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-teal-600 text-[13px] font-semibold text-white transition-colors hover:bg-teal-700">
+                    class="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-teal-600 text-[13px] font-semibold text-white ring-2 ring-white shadow-sm transition-colors hover:bg-teal-700">
                 <span aria-hidden="true">{{ $me?->initials() }}</span>
                 <span class="sr-only">Your account</span>
             </button>
@@ -146,6 +154,13 @@
                     <div class="truncate text-sm font-semibold text-neutral-900">{{ $me?->name }}</div>
                     <div class="truncate text-[12.5px] text-neutral-500">{{ $me?->email }}</div>
                 </div>
+
+                {{-- On phones the My Learning tab is hidden from the bar to make
+                     room for the logo and Explore, so it lives here instead. --}}
+                <a href="{{ route('student.courses.index') }}"
+                   class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 sm:hidden">
+                    My Learning
+                </a>
 
                 <a href="{{ route('profile.show') }}"
                    class="block px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50">

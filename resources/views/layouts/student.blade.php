@@ -35,6 +35,8 @@
         {{ $slot ?? '' }}
     </main>
 
+    @include('partials.site-footer')
+
     @livewireScripts
 </body>
 </html>

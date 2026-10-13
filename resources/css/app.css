@@ -105,6 +105,8 @@
     --radius-control: 10px;
     --radius-card: 16px;
     --radius-xl: 24px;
+    /* Storefront surfaces: the large hero panels and story cards. */
+    --radius-hero: 28px;
 
     /*
     | SHADOWS — minimal and warm-tinted (rgba of ink, never black).
@@ -116,6 +118,9 @@
     --shadow-sm: 0 1px 3px rgba(26, 24, 21, 0.06), 0 1px 2px rgba(26, 24, 21, 0.04);
     --shadow-md: 0 6px 20px -6px rgba(26, 24, 21, 0.1);
     --shadow-lg: 0 16px 48px -12px rgba(26, 24, 21, 0.14);
+    /* Elevation for the storefront's floating glass cards and hero photos —
+       tinted with deep teal so they sit on the paper rather than above it. */
+    --shadow-float: 0 20px 44px rgba(5, 40, 38, 0.18);
 
     /*
     | MOTION — quiet and precise. No bounces, no springs.
@@ -129,6 +134,10 @@
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
     --animate-fade-in: fade-in 300ms var(--ease-out) both;
+    /* Storefront motion (Spotlight × Canvas). Both stop under reduced motion
+       via the base layer. */
+    --animate-float: float 7s ease-in-out infinite;
+    --animate-marquee: marquee 40s linear infinite;
 
     /* LAYOUT */
     --spacing-sidebar: 248px;
@@ -225,6 +234,18 @@
     }
     to {
         opacity: 1;
+    }
+}
+
+@keyframes float {
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes marquee {
+    to {
+        transform: translateX(-50%);
     }
 }
 
@@ -360,4 +381,33 @@
     background-image:
         linear-gradient(315deg, var(--color-teal-600) 0 26%, transparent 26.5%),
         linear-gradient(315deg, var(--color-red-600) 0 34%, transparent 34.5%);
+}
+
+/*
+| Storefront utilities (Spotlight × Canvas, UI Lab round 3).
+|
+| glass: the floating cards that sit over hero photos. Translucent white with
+| a backdrop blur, so the photo reads through without hurting contrast.
+*/
+@utility glass {
+    background: rgb(255 255 255 / 0.86);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow: var(--shadow-float);
+}
+
+/* The arch frame that holds the hero photo: round top, softly squared base. */
+@utility rounded-arch {
+    border-radius: 220px 220px 32px 32px;
+}
+
+/*
+| Outline numerals for the Top 10 rank and numbered course chapters. The
+| number is the decoration, so it is hollow; the content beside it stays the
+| thing that is read.
+*/
+@utility numeral-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--color-teal-600);
 }
