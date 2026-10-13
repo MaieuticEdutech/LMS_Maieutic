@@ -98,7 +98,9 @@
 
     {{-- ══ YOUR WEEK ══ "Your week, planned" is its own component, built
          separately; it sits directly below the hero and the stat strip. --}}
-    <livewire:student.week-planner />
+    <div class="mt-8">
+        <livewire:student.week-planner />
+    </div>
 
     @if (! $enrolled)
         <div class="mt-10">
