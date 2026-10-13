@@ -62,6 +62,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $permanent_address_line_1
  * @property string|null $permanent_address_line_2
  * @property string|null $permanent_address_pincode
+ * @property int $weekly_goal_minutes Not fillable; set only by SetWeeklyGoal (default 300)
  * @property string|null $tenth_school_name
  * @property string|null $tenth_board
  * @property int|null $tenth_year_of_passing
@@ -212,6 +213,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'marital_status' => MaritalStatus::class,
             'aadhaar_number' => 'encrypted',
             'pan_number' => 'encrypted',
+            'weekly_goal_minutes' => 'integer',
             'permanent_address_same_as_correspondence' => 'boolean',
             'tenth_marking_scheme' => MarkingScheme::class,
             'tenth_score' => 'decimal:2',

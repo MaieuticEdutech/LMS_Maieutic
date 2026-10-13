@@ -30,7 +30,7 @@
             <p class="eyebrow text-honeydew">Verified certificate</p>
         </div>
 
-        <div class="overflow-hidden rounded-card border border-neutral-200 bg-white">
+        <div class="overflow-hidden rounded-[24px] border border-neutral-200 bg-white shadow-lg">
             <div class="p-10 text-white"
                  style="background:linear-gradient(118deg,#052826 0%,#052826 78%,#800d07 78%)">
 
@@ -44,11 +44,11 @@
 
                 <p class="text-sm text-white/70">This certifies that</p>
 
-                <p class="mt-1.5 font-serif text-[34px]/[1.15] font-medium">{{ $certificate->recipient_name }}</p>
+                <p class="mt-1.5 font-serif text-[40px]/[1.1] font-normal tracking-[-0.02em]">{{ $certificate->recipient_name }}</p>
 
                 <p class="mt-4 text-sm text-white/70">has successfully completed</p>
 
-                <p class="mt-1.5 font-serif text-[26px]/[1.2] font-medium">{{ $certificate->course_title }}</p>
+                <p class="mt-1.5 font-serif text-[28px]/[1.2] font-normal italic">{{ $certificate->course_title }}</p>
             </div>
 
             <dl class="grid gap-6 px-10 py-7 sm:grid-cols-3">

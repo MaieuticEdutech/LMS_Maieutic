@@ -8,7 +8,7 @@
         Attempt history
     </a>
 
-    <div class="rounded-card border border-neutral-200 bg-white p-8 text-center">
+    <div class="rounded-hero border border-neutral-200 bg-white p-10 text-center shadow-xs">
         <p class="eyebrow text-teal-600">{{ $assessment->title }}</p>
 
         @if ($attempt->status === \App\Enums\AttemptStatus::Graded)

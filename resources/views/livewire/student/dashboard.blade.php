@@ -1,42 +1,108 @@
 {{--
-    Student dashboard (FR-STU-05, FR-STU-07).
-
-    Follows the mockup's dashboard: dated eyebrow, serif welcome, a row of four
-    stat tiles, "Continue learning" as wide two-up cards, then a course grid.
+    Student dashboard (FR-STU-05, FR-STU-07), Spotlight × Canvas.
 
     ═════════════════════════════════════════════════════════════════════════
-    THE MOCKUP'S FOUR STATS ARE NOT ALL THINGS THIS SYSTEM KNOWS.
+    EVERY FIGURE HERE IS MEASURED. Hours and lessons-this-month come from
+    lesson_progress, certificates from the certificates table, progress from
+    the cached enrolment figures. Nothing is a placeholder a learner could
+    mistake for a claim — see StudentDashboardService.
 
-    It shows "42h hours learned", "3 courses in progress", "17 lessons this
-    month" and "2 certificates earned". Two of those are real: in-progress and
-    completed counts come from StudentDashboardService.
-
-    The other two are not. Nothing records watch time as hours, and there is no
-    certificate anywhere in this codebase — no model, no migration, no issuing
-    rule. Printing "42h" and "2 certificates" would be inventing figures on a
-    screen a learner will believe, so the two slots hold what the system can
-    actually stand behind: total enrolled, and overall progress across them.
-
-    The layout is the mockup's. The numbers are ours.
+    Three states, in priority order: a returning student (hero with a resume
+    link, continue-learning card), someone enrolled but not yet started, and a
+    brand-new account. The empty state matters more than it looks — on day one
+    EVERY student sees it.
     ═════════════════════════════════════════════════════════════════════════
-
-    Three states, in priority order: continue-learning cards for a returning
-    student, a course grid for someone enrolled but not yet started, and an
-    empty state for a brand-new account. The empty state matters more than it
-    looks — on day one EVERY student sees it, and it is the first impression
-    the product makes.
 --}}
-<div class="mx-auto w-full max-w-content px-5 pb-24 pt-12 lg:px-10">
+@php
+    $firstName = auth()->user()->editableNameParts()['first'];
+    $enrolled = $enrollments->isNotEmpty();
+    $continueCourse = $continue?->course;
+@endphp
 
-    <p class="eyebrow text-teal-600">{{ now()->format('l, j F') }}</p>
+<div class="mx-auto w-full max-w-content px-5 pb-24 pt-8 lg:px-10">
 
-    <h1 class="mt-2.5 font-serif text-[40px]/[1.1] font-medium">
-        Welcome back, {{ auth()->user()->editableNameParts()['first'] }}
-    </h1>
+    {{-- ══ HERO ══ the Canvas arch, made personal. --}}
+    <section class="relative overflow-hidden rounded-hero bg-gradient-to-br from-marigold via-white to-teal-50 px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+        <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+                <p class="eyebrow text-teal-600">{{ now()->format('l, j F') }}</p>
 
-    <p class="mt-2 text-base/[1.6] text-neutral-500">Continue learning and reach your goals.</p>
+                <h1 class="mt-2.5 font-serif text-[40px]/[1.08] font-normal tracking-[-0.02em] text-neutral-900 md:text-[52px]">
+                    Welcome back, <em class="italic text-teal-600">{{ $firstName }}</em>
+                </h1>
 
-    @if ($enrollments->isEmpty())
+                <p class="mt-3 max-w-[46ch] text-base/[1.6] text-neutral-600">Continue learning and reach your goals.</p>
+
+                @if ($continueCourse)
+                    <div class="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+                        <x-button :href="route('student.courses.play', $continueCourse)" size="lg" :pill="true">Resume learning</x-button>
+
+                        <p class="text-sm text-neutral-600">
+                            @if ($continue->lastLesson)
+                                Next up: <span class="font-semibold text-neutral-900">{{ $continue->lastLesson->title }}</span>
+                            @else
+                                <span class="font-semibold text-neutral-900">{{ $continueCourse->title }}</span>
+                            @endif
+                        </p>
+                    </div>
+                @else
+                    <div class="mt-7">
+                        <x-button :href="route('catalogue.index')" size="lg" :pill="true">Explore courses</x-button>
+                    </div>
+                @endif
+
+                @if ($enrolled)
+                    <ul class="mt-7 flex flex-wrap gap-2.5 text-[13px] font-semibold text-neutral-700">
+                        <li class="rounded-full bg-white/80 px-3.5 py-1.5 ring-1 ring-neutral-200">
+                            {{ $stats['lessons_this_month'] }} {{ Str::plural('lesson', $stats['lessons_this_month']) }} this month
+                        </li>
+                        <li>
+                            <a href="{{ route('student.certificates.index') }}"
+                               class="block rounded-full bg-white/80 px-3.5 py-1.5 ring-1 ring-neutral-200 hover:ring-neutral-300">
+                                {{ $stats['certificates'] }} {{ Str::plural('certificate', $stats['certificates']) }}
+                            </a>
+                        </li>
+                    </ul>
+                @endif
+            </div>
+
+            <x-store.arch-photo :src="asset('images/storefront/learner.jpg')" class="mx-auto hidden min-h-[320px] w-full max-w-[460px] lg:block">
+                <x-store.glass-card class="absolute left-0 top-[14%] w-[200px]">
+                    <div class="flex items-center gap-3">
+                        <x-store.progress-ring :value="$overall['percentage']" :size="64" />
+                        <p class="text-[12.5px] font-semibold leading-tight text-neutral-700">Overall progress</p>
+                    </div>
+                </x-store.glass-card>
+
+                @if ($continueCourse && $continue->lastLesson)
+                    <x-store.glass-card class="absolute bottom-[10%] right-0 w-[210px]" :delay="2">
+                        <p class="text-[11px] font-bold uppercase tracking-wide text-teal-600">Up next</p>
+                        <p class="mt-1 text-[13px] font-semibold leading-snug text-neutral-900">{{ $continue->lastLesson->title }}</p>
+                        <p class="mt-1 text-xs text-neutral-500">{{ (int) $continue->progress_percentage }}% of the course done</p>
+                    </x-store.glass-card>
+                @endif
+            </x-store.arch-photo>
+        </div>
+    </section>
+
+    @if ($enrolled)
+        {{-- ══ STATS ══ the tested labels are kept: "Hours learned",
+             "Courses in progress", "Lessons this month", "Certificates earned". --}}
+        <x-store.stat-strip class="relative z-10 mx-4 -mt-8 md:mx-10" :items="[
+            ['value' => $stats['hours'].'h', 'label' => 'Hours learned'],
+            ['value' => (string) $stats['in_progress'], 'label' => 'Courses in progress'],
+            ['value' => (string) $stats['lessons_this_month'], 'label' => 'Lessons this month'],
+            ['value' => (string) $stats['certificates'], 'label' => 'Certificates earned'],
+        ]" />
+    @endif
+
+    {{-- ══ YOUR WEEK ══ "Your week, planned" is its own component, built
+         separately; it sits directly below the hero and the stat strip. --}}
+    <div class="mt-8">
+        <livewire:student.week-planner />
+    </div>
+
+    @if (! $enrolled)
         <div class="mt-10">
             <x-empty-state
                 title="You are not enrolled in any courses yet"
@@ -44,83 +110,20 @@
             />
         </div>
     @else
-        {{-- ══ STATS ══ the handoff's four tiles, serif figure over a small
-             label. Every one is measured: hours and lessons-this-month come
-             from lesson_progress, certificates from the certificates table. --}}
-        <div class="mb-14 mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['hours'] }}h</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Hours learned</div>
-            </div>
+        {{-- ══ CONTINUE LEARNING ══ absent, rather than shown empty, for a
+             student who has never opened a lesson. --}}
+        @if ($continueCourse)
+            <div class="mt-14">
+                <x-store.section-heading title="Continue learning" :href="route('student.courses.index')" link-label="View all" />
 
-            <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['in_progress'] }}</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Courses in progress</div>
-            </div>
+                <div class="flex flex-col overflow-hidden rounded-[20px] border border-neutral-200 bg-white shadow-md transition hover:shadow-lg sm:flex-row">
+                    <div class="sm:w-[38%]">
+                        <x-store.course-art :course="$continueCourse" class="h-full min-h-[160px]" />
+                    </div>
 
-            <div class="rounded-card border border-neutral-200 bg-white px-[22px] py-5">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['lessons_this_month'] }}</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Lessons this month</div>
-            </div>
+                    <div class="flex flex-1 flex-col gap-2 px-6 py-5">
+                        <h3 class="font-sans text-[17px]/[1.3] font-bold text-neutral-900">{{ $continueCourse->title }}</h3>
 
-            {{-- Counted from the certificates table, not from completed
-                 courses — see StudentDashboardService for why those two are
-                 allowed to differ. --}}
-            <a href="{{ route('student.certificates.index') }}"
-               class="rounded-card border border-neutral-200 bg-white px-[22px] py-5 transition-colors hover:border-neutral-300">
-                <div class="font-serif text-[32px]/none font-medium text-neutral-900">{{ $stats['certificates'] }}</div>
-                <div class="mt-2 text-[13px] font-medium text-neutral-500">Certificates earned</div>
-            </a>
-        </div>
-
-        {{-- ══ OVERALL PROGRESS ══
-             THE ONE ADDITION TO THE DESIGN'S DASHBOARD, AND IT IS REQUIRED.
-
-             FR-PROG-07 puts a student's overall progress on this screen; the
-             prototype's four tiles do not include it. Rather than drop a
-             committed requirement to match a mockup, it sits here as a single
-             slim row — it states the figure without competing with the tiles
-             above or the cards below.
-
-             A MEAN OF COURSE PERCENTAGES, not of lessons: someone halfway
-             through two courses is 50% whether one has ten lessons and the
-             other a hundred, which is how a person thinks about their own
-             progress. --}}
-        <div class="mb-14 flex flex-wrap items-center gap-4">
-            <p class="eyebrow shrink-0 text-neutral-500">Overall progress</p>
-
-            <x-progress-bar :value="$overall['percentage']" label="Overall progress" class="min-w-40 flex-1" />
-
-            <p class="shrink-0 font-mono text-xs font-semibold text-neutral-700">{{ $overall['percentage'] }}%</p>
-        </div>
-
-        {{-- ══ CONTINUE LEARNING ══ the single most useful control on the page
-             for anyone who has started something. Absent, rather than shown
-             empty, for a student who has never opened a lesson. --}}
-        @if ($continue?->course)
-            @php($continueCourse = $continue->course)
-
-            <div class="mb-5 flex items-baseline justify-between">
-                <h2 class="font-serif text-[26px] font-medium tracking-[-0.01em]">Continue learning</h2>
-
-                <a href="{{ route('student.courses.index') }}" class="text-sm font-medium text-teal-600 hover:text-teal-700">
-                    View all
-                </a>
-            </div>
-
-            <div class="mb-14 grid gap-5 lg:grid-cols-2">
-                <div class="flex overflow-hidden rounded-card border border-neutral-200 bg-white transition-all duration-[180ms] ease-standard hover:border-neutral-300 hover:shadow-[0_2px_8px_rgba(26,24,21,0.06)]">
-                    @include('partials.course-thumb', ['course' => $continueCourse, 'variant' => 'side'])
-
-                    <div class="flex flex-1 flex-col gap-1.5 px-6 py-5">
-                        <h3 class="font-sans text-[17px]/[1.3] font-semibold tracking-normal text-neutral-900">
-                            {{ $continueCourse->title }}
-                        </h3>
-
-                        {{-- The lesson they will land on, named — the handoff's
-                             "Lesson 6: Data cleaning". It is the resume pointer
-                             the player itself maintains, so the two cannot
-                             disagree about where they left off. --}}
                         <p class="text-[13.5px] text-neutral-500">
                             @if ($continue->lastLesson)
                                 Next: {{ $continue->lastLesson->title }}
@@ -129,18 +132,15 @@
                             @endif
                         </p>
 
-                        <div class="mt-auto flex flex-col gap-[10px]">
-                            <div class="flex items-center gap-[10px]">
+                        <div class="mt-auto flex flex-col gap-2.5 pt-2">
+                            <div class="flex items-center gap-2.5">
                                 <x-progress-bar :value="(int) $continue->progress_percentage" class="flex-1" />
-                                <span class="font-mono text-xs font-semibold text-neutral-700">
-                                    {{ (int) $continue->progress_percentage }}%
-                                </span>
+                                <span class="font-mono text-xs font-semibold text-neutral-700">{{ (int) $continue->progress_percentage }}%</span>
                             </div>
 
-                            <a href="{{ route('student.courses.play', $continueCourse) }}"
-                               class="self-start rounded-sm bg-teal-600 px-[18px] py-[9px] text-[13.5px] font-semibold text-white transition-colors hover:bg-teal-700">
-                                Continue learning
-                            </a>
+                            <div>
+                                <x-button :href="route('student.courses.play', $continueCourse)" size="sm">Continue learning</x-button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -148,64 +148,56 @@
         @endif
 
         {{-- ══ YOUR COURSES ══ --}}
-        <div class="mb-5 flex items-baseline justify-between">
-            <h2 class="font-serif text-[26px] font-medium tracking-[-0.01em]">Your courses</h2>
+        <div class="mt-14">
+            <x-store.section-heading title="Your courses" :href="route('catalogue.index')" link-label="Explore all courses" />
 
-            <a href="{{ route('catalogue.index') }}" class="text-sm font-medium text-teal-600 hover:text-teal-700">
-                Explore all courses
-            </a>
-        </div>
-
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($enrollments->take(6) as $enrollment)
-                @include('livewire.student.partials.course-card', ['enrollment' => $enrollment])
-            @endforeach
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($enrollments->take(6) as $enrollment)
+                    @include('livewire.student.partials.course-card', ['enrollment' => $enrollment])
+                @endforeach
+            </div>
         </div>
     @endif
 
-    {{-- ══ RECOMMENDED FOR YOU ══ (design handoff §1)
-         Shown to a brand-new account too — on day one it is the only thing on
-         the page worth doing, and an empty dashboard with nowhere to go is a
-         poor first impression. Absent only when there is genuinely nothing
+    {{-- ══ RECOMMENDED FOR YOU ══
+         Shown to a brand-new account too: on day one it is the only thing on
+         the page worth doing. Absent only when there is genuinely nothing
          published they are not already in. --}}
     @if ($recommended->isNotEmpty())
-        <div class="mb-5 mt-14 flex items-baseline justify-between">
-            <h2 class="font-serif text-[26px] font-medium tracking-[-0.01em]">Recommended for you</h2>
+        <div class="mt-14">
+            <x-store.section-heading title="Recommended for you" :href="route('catalogue.index')" link-label="Explore all courses" />
 
-            <a href="{{ route('catalogue.index') }}" class="text-sm font-medium text-teal-600 hover:text-teal-700">
-                Explore all courses
-            </a>
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($recommended as $course)
+                    <x-store.course-card
+                        wire:key="recommended-{{ $course->id }}"
+                        :course="$course"
+                        :href="route('catalogue.show', $course)"
+                        :free="$free"
+                        :instructor-photo="$course->instructors->first()?->instructorProfile?->photoUrl()"
+                    />
+                @endforeach
+            </div>
         </div>
+    @endif
 
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($recommended as $course)
-                <a href="{{ route('catalogue.show', $course) }}"
-                   wire:key="recommended-{{ $course->id }}"
-                   class="group flex flex-col overflow-hidden rounded-card border border-neutral-200 bg-white transition-all duration-[180ms] ease-standard hover:-translate-y-px hover:border-neutral-300 hover:shadow-[0_2px_8px_rgba(26,24,21,0.06)]">
+    {{-- ══ TOP 10 THIS WEEK ══ real enrolment counts from the last 7 days;
+         hidden when nothing has been enrolled in. --}}
+    @if ($top->isNotEmpty())
+        <div class="mt-14">
+            <x-store.section-heading title="Top 10 this week" subtitle="What learners are starting right now." :href="route('catalogue.index')" link-label="Explore all courses" />
 
-                    @include('partials.course-thumb', ['course' => $course])
-
-                    <div class="flex flex-1 flex-col gap-1.5 px-5 pb-5 pt-[18px]">
-                        <h3 class="font-sans text-base/[1.35] font-semibold tracking-normal text-neutral-900 group-hover:text-teal-700">
-                            {{ $course->title }}
-                        </h3>
-
-                        <p class="text-[13px] text-neutral-500">
-                            @if ($course->instructors->isNotEmpty())
-                                {{ $course->instructors->first()->name }}
-                            @else
-                                {{ $course->category?->name ?? 'General' }}
-                            @endif
-                        </p>
-
-                        <div class="mt-auto flex items-center gap-2 pt-2 text-[13px] text-neutral-600">
-                            <span>{{ $course->level->label() }}</span>
-                            <span class="text-neutral-300">·</span>
-                            <span>{{ $course->lessons_count }} {{ Str::plural('lesson', $course->lessons_count) }}</span>
-                        </div>
-                    </div>
-                </a>
-            @endforeach
+            <div class="-mx-5 flex gap-6 overflow-x-auto px-5 pb-4 lg:mx-0 lg:px-0">
+                @foreach ($top as $rank => $course)
+                    <x-store.rank-card
+                        wire:key="top-{{ $course->id }}"
+                        class="w-[230px] shrink-0 md:w-[270px]"
+                        :course="$course"
+                        :rank="$rank"
+                        :href="route('catalogue.show', $course)"
+                    />
+                @endforeach
+            </div>
         </div>
     @endif
 </div>

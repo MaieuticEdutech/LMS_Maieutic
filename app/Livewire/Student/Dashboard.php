@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Livewire\Student;
 
+use App\Models\Course;
 use App\Models\User;
+use App\Services\Catalogue\Promotion;
+use App\Services\Catalogue\StorefrontService;
 use App\Services\Progress\ProgressCalculator;
 use App\Services\Student\StudentDashboardService;
 use Illuminate\Contracts\View\View;
@@ -30,17 +33,42 @@ use Livewire\Component;
 #[Title('Dashboard')]
 final class Dashboard extends Component
 {
-    public function render(StudentDashboardService $dashboard, ProgressCalculator $calculator): View
-    {
+    public function render(
+        StudentDashboardService $dashboard,
+        ProgressCalculator $calculator,
+        StorefrontService $storefront,
+        Promotion $promotion,
+    ): View {
         /** @var User $student */
         $student = Auth::user();
 
+        $enrollments = $dashboard->activeEnrollments($student);
+        $enrolledIds = $enrollments->pluck('course_id')->all();
+
         return view('livewire.student.dashboard', [
+            /*
+             * "Top 10 this week": the storefront's real ranking, minus courses
+             * the student already has (those are in their library above). Each
+             * keeps its true rank, so a gap means "you already have that one".
+             * Eager-loaded here because the poster reads them and lazy loading
+             * is prevented outside production.
+             *
+             * @var Collection<int, Course> keyed by rank
+             */
+            'top' => $storefront->topThisWeek()
+                ->load(['category', 'thumbnail'])
+                ->values()
+                ->mapWithKeys(static fn (Course $course, int $index): array => [$index + 1 => $course])
+                ->reject(static fn (Course $course): bool => in_array($course->getKey(), $enrolledIds, true)),
+
+            // While the free launch runs, cards show "Free" beside the real price.
+            'free' => $promotion->active(),
+
             // The single "pick up where you left off" entry point. Null for a
             // student who has never opened a lesson, which the view treats as
             // its own state rather than as an empty card.
             'continue' => $dashboard->continueLearning($student),
-            'enrollments' => $dashboard->activeEnrollments($student),
+            'enrollments' => $enrollments,
             'stats' => $dashboard->stats($student),
 
             /*

@@ -10,10 +10,9 @@
     to "you", the person taking the course. No copy about managing departments
     or running a campus belongs here.
 
-    NOTHING HERE IS INVENTED. No testimonials, no learner counts, no course
-    names: the catalogue is the source of truth for courses and this page
-    links to it instead of pretending. Every claim below is a shipped feature.
-    The only figures on the page are inside clearly decorative UI samples.
+    NOTHING HERE IS INVENTED. Every figure, course, instructor and review comes
+    from HomeController (StorefrontService / Promotion); a section with no data
+    behind it is not rendered. The copy claims only shipped features.
 
     Styling for every l-* class lives in layouts.landing. Section order:
 
@@ -57,7 +56,7 @@
 
 <main id="main">
 
-{{-- ══ HERO ══ --}}
+{{-- ══ HERO — the Canvas arch ══ --}}
 <section class="l-hero">
   <div class="l-blob l-blob-a" aria-hidden="true"></div>
   <div class="l-blob l-blob-b" aria-hidden="true"></div>
@@ -66,11 +65,15 @@
 
   <div class="l-wrap l-hero-grid">
     <div class="l-reveal l-stagger l-hero-copy">
-      <span class="l-pill"><span class="l-pill-dot"></span>Admissions open · Learn at your own pace</span>
+      @if ($promoActive && $promoEndsAt)
+        <span class="l-pill"><span class="l-pill-dot"></span>Free for a limited time · <x-store.countdown :ends="$promoEndsAt" tone="inverse" /></span>
+      @else
+        <span class="l-pill"><span class="l-pill-dot"></span>Admissions open · Learn at your own pace</span>
+      @endif
       <h1 class="l-hero-h1">Learn skills that <em>stay</em> — by questioning, not cramming.</h1>
       <p class="l-hero-lead">Courses in the subjects that matter to you, taught the Socratic way. Enrol online, learn at your pace, test yourself, and watch real progress build.</p>
       <div class="l-hero-actions">
-        <a href="{{ $catalogueUrl }}" class="l-btn l-btn-amber l-btn-lg">Explore the courses <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="{{ $catalogueUrl }}" class="l-btn l-btn-amber l-btn-lg">{{ $promoActive ? 'Start learning free' : 'Explore the courses' }} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         <a href="#how" class="l-btn l-btn-ghost-light l-btn-lg">See how it works</a>
       </div>
       <ul class="l-proof">
@@ -81,47 +84,137 @@
     </div>
 
     <div class="l-reveal l-reveal-delay l-hero-visual">
-      <div class="l-photo">
-        @include('partials.landing-image-slot', [
-          'src' => 'images/landing/hero.jpg',
-          'alt' => 'A student in headphones taking handwritten notes on a tablet while a laptop beside her shows her Maieutic dashboard.',
-          'caption' => 'A student learning with the Maieutic dashboard open',
-          'width' => 1448,
-          'height' => 1086,
-        ])
-      </div>
+      <x-store.arch-photo :src="asset('images/storefront/learner.jpg')" position="center top" class="h-[460px] w-full max-w-[520px] md:h-[520px]">
+        {{-- Real figures only: nothing here is a sample. --}}
+        @if (count($figures) > 0)
+          <x-store.glass-card class="absolute left-0 top-[14%] max-w-[210px]">
+            <div class="font-serif text-[28px] leading-none">{{ $figures[0]['value'] }}</div>
+            <div class="mt-1 text-[12.5px] text-neutral-600">{{ $figures[0]['label'] }}</div>
+          </x-store.glass-card>
+        @endif
 
-      {{-- Illustrative UI samples. Decorative only. --}}
-      <div class="l-glass l-glass-progress l-float" aria-hidden="true">
-        <svg class="l-ring" width="56" height="56" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(0,97,92,0.12)" stroke-width="5"/>
-          <circle class="l-ring-fill" cx="26" cy="26" r="22" fill="none" stroke="var(--teal-600)" stroke-width="5" stroke-linecap="round" transform="rotate(-90 26 26)"/>
-        </svg>
-        <div>
-          <div class="l-glass-label">Course progress</div>
-          <div class="l-glass-value">65% <span>Module 4 of 6</span></div>
-          <div class="l-bar"><div class="l-bar-fill"></div></div>
-        </div>
-      </div>
+        <x-store.glass-card class="absolute bottom-[10%] left-[2%] max-w-[230px]" :delay="2">
+          <div class="text-[12.5px] font-bold text-teal-700">Certificate issued</div>
+          <div class="mt-0.5 text-[13px] text-neutral-700">Verified online by anyone</div>
+        </x-store.glass-card>
 
-      <div class="l-glass l-glass-quiz l-float l-float-slow" aria-hidden="true">
-        <span class="l-glass-icon l-glass-icon-teal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <div>
-          <div class="l-glass-label">Quiz graded</div>
-          <div class="l-glass-strong">9 / 10 · Passed</div>
-        </div>
-      </div>
-
-      <div class="l-glass l-glass-cert l-float l-float-slower" aria-hidden="true">
-        <span class="l-glass-icon l-glass-icon-amber"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg></span>
-        <div>
-          <div class="l-glass-label">Certificate issued</div>
-          <div class="l-glass-strong">Verified online</div>
-        </div>
-      </div>
+        @if ($promoActive && $promoEndsAt)
+          <x-store.glass-card class="absolute right-0 top-[6%]" :delay="4">
+            <div class="text-[12.5px] font-bold text-red-600">Free for a limited time</div>
+            <x-store.countdown :ends="$promoEndsAt" />
+          </x-store.glass-card>
+        @endif
+      </x-store.arch-photo>
     </div>
   </div>
 </section>
+
+{{-- ══ REAL FIGURES ══ --}}
+@if (count($figures) > 0)
+  <section class="l-wrap" style="margin-top: -36px; position: relative; z-index: 2;">
+    <x-store.stat-strip :items="$figures" />
+  </section>
+@endif
+
+{{-- ══ POPULAR COURSES ══ --}}
+@if ($popular->isNotEmpty())
+  @php
+    $pills = $popular->pluck('category')->filter()->unique('id')->values();
+  @endphp
+  <section id="popular" class="l-section-pad">
+    <div class="l-wrap">
+      <x-store.section-heading title="Popular <em>courses</em>" subtitle="What learners are taking right now." :href="$catalogueUrl" link-label="All courses" />
+
+      @if ($pills->isNotEmpty())
+        <ul class="mb-6 flex flex-wrap gap-2" aria-label="Browse by category">
+          @foreach ($pills as $pill)
+            <li><a href="{{ route('catalogue.index', ['category' => [$pill->slug]]) }}" class="inline-flex rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-[13px] font-semibold text-neutral-700 transition-colors hover:border-teal-600 hover:text-teal-700">{{ $pill->name }}</a></li>
+          @endforeach
+        </ul>
+      @endif
+
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach ($popular as $course)
+          <x-store.course-card
+            :course="$course"
+            :href="route('catalogue.show', $course)"
+            :badge="$badges[$course->getKey()] ?? null"
+            :free="$promoActive"
+            :learners="$course->enrollments_count"
+            :instructor-photo="$course->instructors->first()?->instructorProfile?->photoUrl()" />
+        @endforeach
+      </div>
+    </div>
+  </section>
+@endif
+
+{{-- ══ TOP 10 THIS WEEK ══ --}}
+@if ($top->isNotEmpty())
+  <section id="top" class="l-section-pad l-section-tint">
+    <div class="l-wrap">
+      <x-store.section-heading title="Top 10 <em>this week</em>" subtitle="The courses most learners enrolled in over the last seven days." />
+      <ol class="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+        @foreach ($top as $course)
+          <li><x-store.rank-card :course="$course" :rank="$loop->iteration" :href="route('catalogue.show', $course)" /></li>
+        @endforeach
+      </ol>
+    </div>
+  </section>
+@endif
+
+{{-- ══ INSTRUCTORS ══ --}}
+@if ($instructors->isNotEmpty())
+  <section id="instructors" class="l-section-pad">
+    <div class="l-wrap">
+      <x-store.section-heading title="Learn from the <em>people who teach</em>" />
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach ($instructors as $row)
+          @php
+            $person = $row['user'];
+          @endphp
+          <div class="flex flex-col items-center rounded-[20px] border border-neutral-200 bg-white p-6 text-center">
+            <x-store.avatar :name="$person->name" :photo="$person->instructorProfile?->photoUrl()" :size="88" />
+            <h3 class="mt-4 font-sans text-base font-bold text-neutral-900">{{ $person->name }}</h3>
+            @if ($person->instructorProfile?->headline)
+              <p class="mt-1 text-[13px] text-neutral-500">{{ $person->instructorProfile->headline }}</p>
+            @endif
+            <p class="mt-3 text-[12.5px] text-neutral-600">
+              {{ $row['stats']['courses'] }} {{ Str::plural('course', $row['stats']['courses']) }}
+              @if ($row['stats']['learners'] > 0)
+                · {{ number_format($row['stats']['learners']) }} {{ Str::plural('learner', $row['stats']['learners']) }}
+              @endif
+              @if ($row['stats']['rating'] !== null)
+                · {{ number_format($row['stats']['rating'], 1) }} rating
+              @endif
+            </p>
+          </div>
+        @endforeach
+      </div>
+    </div>
+  </section>
+@endif
+
+{{-- ══ REAL REVIEWS ══ --}}
+@if ($reviews->isNotEmpty())
+  <section id="reviews" class="l-section-pad l-section-tint">
+    <div class="l-wrap">
+      <x-store.section-heading title="What learners <em>say</em>" subtitle="Written by people who took the courses." />
+      <div class="grid gap-5 md:grid-cols-3">
+        @foreach ($reviews as $review)
+          <figure class="flex flex-col rounded-[20px] border border-neutral-200 bg-white p-6">
+            <div class="text-sm font-semibold text-red-500" aria-hidden="true">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</div>
+            <span class="sr-only">Rated {{ $review->rating }} out of 5</span>
+            <blockquote class="mt-3 flex-1 text-[14.5px]/[1.6] text-neutral-700">“{{ $review->body }}”</blockquote>
+            <figcaption class="mt-4 flex items-center gap-3 text-[13px]">
+              <x-store.avatar :name="$review->user?->name ?? ''" :size="32" />
+              <span><b class="block text-neutral-900">{{ $review->user?->name }}</b><span class="text-neutral-500">on {{ $review->course?->title }}</span></span>
+            </figcaption>
+          </figure>
+        @endforeach
+      </div>
+    </div>
+  </section>
+@endif
 
 {{-- ══ HOW IT WORKS — three steps ══ --}}
 @php

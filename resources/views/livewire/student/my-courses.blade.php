@@ -7,9 +7,12 @@
     Courses whose access has ended are absent rather than greyed out — see the
     component docblock for why.
 --}}
-<div class="mx-auto w-full max-w-content px-5 pb-24 pt-12 lg:px-10">
+<div class="mx-auto w-full max-w-content px-5 pb-24 pt-10 lg:px-10">
 
-    <h1 class="mb-8 font-serif text-[40px]/[1.1] font-medium">My Learning</h1>
+    <div class="mb-8 rounded-hero bg-gradient-to-br from-marigold via-white to-teal-50 px-6 py-8 sm:px-10">
+        <p class="eyebrow text-teal-600">Your library</p>
+        <h1 class="mt-2 font-serif text-[40px]/[1.08] font-normal tracking-[-0.02em] text-neutral-900 md:text-[48px]">My Learning</h1>
+    </div>
 
     @if ($enrollments->isEmpty())
         <x-empty-state
@@ -22,14 +25,14 @@
              underline is the current-state signal, so it carries aria-current
              too — colour alone would not tell a screen-reader user which tab
              they are on. --}}
-        <div class="mb-8 flex gap-2 border-b border-neutral-200" role="tablist" aria-label="Filter your courses">
+        <div class="mb-8 flex flex-wrap gap-2" role="tablist" aria-label="Filter your courses">
             @foreach ($this->tabs() as $value => $label)
                 <button
                     type="button"
                     role="tab"
                     wire:click="$set('filter', '{{ $value }}')"
                     aria-selected="{{ $filter === $value ? 'true' : 'false' }}"
-                    class="-mb-px border-b-2 px-4 py-2.5 text-[14.5px] font-medium transition-colors {{ $filter === $value ? 'border-teal-600 text-teal-600' : 'border-transparent text-neutral-500 hover:text-neutral-700' }}"
+                    class="rounded-full px-4 py-2 text-[14px] font-semibold transition-colors {{ $filter === $value ? 'bg-teal-600 text-white' : 'bg-white text-neutral-600 ring-1 ring-inset ring-neutral-200 hover:text-neutral-900 hover:ring-neutral-300' }}"
                 >
                     {{ $label }}
                 </button>

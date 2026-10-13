@@ -57,7 +57,7 @@ final class StudentDashboardService
          * twenty names.
          */
         return $this->accessibleQuery($student)
-            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'instructors', 'thumbnail'])])
+            ->with(['course' => static fn (Relation $q) => $q->with(['category', 'instructors.instructorProfile.photo', 'thumbnail'])])
             ->orderByRaw('COALESCE(last_accessed_at, enrolled_at) DESC')
             ->get();
     }
@@ -112,7 +112,7 @@ final class StudentDashboardService
         // change taught the card to render an uploaded image, and this is the
         // one query feeding it that did not come with the change.
         return Course::published()
-            ->with(['category', 'instructors', 'thumbnail'])
+            ->with(['category', 'instructors.instructorProfile.photo', 'thumbnail'])
             ->whereNotExists(static function (QueryBuilder $query) use ($student): void {
                 $query->selectRaw('1')
                     ->from('enrollments')

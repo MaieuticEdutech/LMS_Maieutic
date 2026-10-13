@@ -7,13 +7,12 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Dev\MailPreviewController;
 use App\Http\Controllers\EnrolInFreePromotionController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\VerifyCertificateController;
 use App\Livewire\Catalogue\Index as CatalogueIndex;
 use App\Livewire\Catalogue\Show as CatalogueShow;
 use App\Livewire\Checkout\Start as CheckoutStart;
 use App\Livewire\Checkout\Status as CheckoutStatus;
-use App\Services\Settings\BrandingService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,9 +42,7 @@ use Illuminate\Support\Facades\Route;
  * literal in the template (rule S-1, FR-SYS-01). Renaming the organisation is
  * an administrator changing a setting, not a developer editing a view.
  */
-Route::get('/', static fn (): View => view('welcome', [
-    'organisation' => app(BrandingService::class)->organisationName(),
-]))->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 /*
 |--------------------------------------------------------------------------
