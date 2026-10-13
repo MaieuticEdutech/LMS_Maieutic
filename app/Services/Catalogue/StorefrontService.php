@@ -7,6 +7,7 @@ namespace App\Services\Catalogue;
 use App\Enums\CourseStatus;
 use App\Models\Certificate;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -148,6 +149,49 @@ final class StorefrontService
                 'rating' => $reviews > 0 ? round($total / $reviews, 1) : null,
             ];
         });
+    }
+
+    /**
+     * How many reviews gave each star, for the rating bars on a course page.
+     * Keys 5 down to 1; a star nobody gave is 0, never missing.
+     *
+     * @return array<int, int>
+     */
+    public function ratingBreakdown(Course $course): array
+    {
+        /** @var array<int, int> $counts */
+        $counts = CourseReview::query()
+            ->where('course_id', $course->getKey())
+            ->selectRaw('rating, count(*) as total')
+            ->groupBy('rating')
+            ->pluck('total', 'rating')
+            ->map(fn (mixed $total): int => (int) $total)
+            ->all();
+
+        $breakdown = [];
+
+        foreach ([5, 4, 3, 2, 1] as $star) {
+            $breakdown[$star] = $counts[$star] ?? 0;
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * The newest written reviews of published courses, for the landing page.
+     * A star with no words is not a quote, so it is left out.
+     *
+     * @return Collection<int, CourseReview>
+     */
+    public function recentReviews(int $limit = 3): Collection
+    {
+        return CourseReview::query()
+            ->whereNotNull('body')
+            ->whereIn('course_id', Course::query()->published()->select('id'))
+            ->with(['user', 'course'])
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
 
     /**

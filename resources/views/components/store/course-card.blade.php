@@ -8,6 +8,9 @@
     'learners' => null,
     // Public photo URL of the first instructor, when known.
     'instructorPhoto' => null,
+    // 0-100 for a course the student is enrolled in: shows the progress bar
+    // in place of the price. Null on the storefront.
+    'progress' => null,
 ])
 
 {{--
@@ -24,6 +27,7 @@
         'Bestseller' => 'bg-[#fef79a] text-[#3d3c0a]',
         'New' => 'bg-teal-50 text-teal-700',
         'Highest rated' => 'bg-marigold text-[#7a4510]',
+        'Completed' => 'bg-honeydew text-white',
     ];
 @endphp
 
@@ -70,7 +74,14 @@
         </div>
 
         <div class="mt-auto pt-2">
-            <x-store.price :course="$course" :free="$free" size="sm" />
+            @if ($progress !== null)
+                <div class="flex items-center gap-2.5">
+                    <x-progress-bar :value="(int) $progress" :tone="$badge === 'Completed' ? 'success' : 'brand'" class="flex-1" />
+                    <span class="font-mono text-xs font-semibold text-neutral-700">{{ (int) $progress }}%</span>
+                </div>
+            @else
+                <x-store.price :course="$course" :free="$free" size="sm" />
+            @endif
         </div>
     </div>
 </article>

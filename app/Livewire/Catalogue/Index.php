@@ -7,6 +7,8 @@ namespace App\Livewire\Catalogue;
 use App\Enums\CourseLevel;
 use App\Models\Category;
 use App\Models\Course;
+use App\Services\Catalogue\Promotion;
+use App\Services\Catalogue\StorefrontService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -149,7 +151,9 @@ final class Index extends Component
      */
     public function courses(): LengthAwarePaginator
     {
-        $query = Course::published()->with(['category', 'thumbnail']);
+        $query = Course::published()
+            ->with(['category', 'thumbnail', 'instructors.instructorProfile.photo'])
+            ->withCount('enrollments');
 
         if ($this->search !== '') {
             $query->where('title', 'like', '%'.$this->search.'%');
@@ -247,6 +251,7 @@ final class Index extends Component
         match ($this->sort) {
             'price-asc' => $query->orderBy('price_amount'),
             'price-desc' => $query->orderByDesc('price_amount'),
+            'popular' => $query->orderByDesc('enrollments_count')->orderByDesc('published_at'),
             default => $query->orderByDesc('published_at'),
         };
 
@@ -263,9 +268,18 @@ final class Index extends Component
 
     public function render(): View
     {
+        $storefront = app(StorefrontService::class);
+        $courses = $this->courses();
+        $bestsellers = $storefront->bestsellerIds();
+
         return view('livewire.catalogue.index', [
-            'courses' => $this->courses(),
+            'courses' => $courses,
             'categories' => $this->categories(),
+            'promoActive' => app(Promotion::class)->active(),
+            // Badges are worked out once for the page, not once per card.
+            'badges' => $courses->getCollection()->mapWithKeys(fn (Course $course): array => [
+                $course->getKey() => $storefront->badgeFor($course, $bestsellers),
+            ]),
         ]);
     }
 }

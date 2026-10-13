@@ -9,6 +9,7 @@ use App\Models\CourseReview;
 use App\Models\Module;
 use App\Models\User;
 use App\Services\Catalogue\Promotion;
+use App\Services\Catalogue\StorefrontService;
 use App\Services\Enrollment\EnrollmentAccessService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -40,7 +41,7 @@ final class Show extends Component
 
         // thumbnail and category are read by the hero and the card partial;
         // preventLazyLoading() throws on either if they are left unloaded.
-        $this->course = $course->loadMissing(['category', 'thumbnail']);
+        $this->course = $course->loadMissing(['category', 'thumbnail', 'instructors.instructorProfile.photo']);
     }
 
     /**
@@ -109,6 +110,7 @@ final class Show extends Component
     public function render(): View
     {
         $promotion = app(Promotion::class);
+        $storefront = app(StorefrontService::class);
 
         return view('livewire.catalogue.show', [
             'promoActive' => $promotion->active(),
@@ -117,6 +119,10 @@ final class Show extends Component
             'curriculum' => $this->curriculum(),
             'learners' => $this->learnerCount(),
             'reviews' => $this->reviews(),
+            'breakdown' => $this->course->hasRatings() ? $storefront->ratingBreakdown($this->course) : [],
+            'instructorStats' => $this->course->instructors->mapWithKeys(fn (User $instructor): array => [
+                $instructor->getKey() => $storefront->instructorStats($instructor),
+            ]),
         ]);
     }
 }
