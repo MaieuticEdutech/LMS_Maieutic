@@ -28,6 +28,19 @@ it('sends a tuned Content-Security-Policy header on a public page', function ():
         ->and($csp)->toContain("frame-ancestors 'self'");
 });
 
+it('allows every Razorpay origin its hosted checkout needs, and nothing broader', function (): void {
+    $csp = $this->get('/')->headers->get('Content-Security-Policy');
+
+    expect($csp)
+        ->toContain('script-src')
+        ->toContain('https://cdn.razorpay.com')
+        ->toContain('frame-src https://checkout.razorpay.com https://api.razorpay.com')
+        ->toContain('https://*.razorpay.com')
+        // Still no blanket wildcard for scripts or frames.
+        ->not->toContain('script-src *')
+        ->not->toContain('frame-src *');
+});
+
 it('allows the local Vite server to serve development assets', function (): void {
     $this->app->detectEnvironment(static fn (): string => 'local');
     config()->set('filesystems.disks.public.url', 'http://localhost:8000/storage');

@@ -64,7 +64,11 @@ final class SecurityHeaders
 
     private function contentSecurityPolicy(string $nonce): string
     {
-        $script = ["'self'", "'unsafe-eval'", "'nonce-{$nonce}'", 'https://checkout.razorpay.com'];
+        // Razorpay's checkout loads its risk-detection bundle from cdn.razorpay.com
+        // and frames api.razorpay.com as well as checkout.razorpay.com; its
+        // sprites and bank logos come from *.razorpay.com. Allowing only
+        // checkout.razorpay.com left the modal half-working in production.
+        $script = ["'self'", "'unsafe-eval'", "'nonce-{$nonce}'", 'https://checkout.razorpay.com', 'https://cdn.razorpay.com'];
         $style = ["'self'", "'unsafe-inline'"];
         $font = ["'self'"];
         $image = ["'self'"];
@@ -100,6 +104,10 @@ final class SecurityHeaders
             }
         }
 
+        // Razorpay's modal draws its logos and sprites from *.razorpay.com.
+        $image[] = 'data:';
+        $image[] = 'https://*.razorpay.com';
+
         $directives = [
             "default-src 'self'",
             'script-src '.implode(' ', $script),
@@ -113,7 +121,7 @@ final class SecurityHeaders
             'font-src '.implode(' ', $font),
             'connect-src '.implode(' ', $connect),
             // Razorpay's hosted checkout renders inside its own iframe.
-            'frame-src https://checkout.razorpay.com',
+            'frame-src https://checkout.razorpay.com https://api.razorpay.com',
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
