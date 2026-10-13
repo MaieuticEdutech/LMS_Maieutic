@@ -586,6 +586,7 @@ Numerals for data. Em dashes for asides. Minimal exclamation marks. **No emoji, 
 
 - [ ] No hex codes, no arbitrary Tailwind values, no invented tokens
 - [ ] No component duplicating an existing one
+- [ ] No inline `@php(...)` in a Blade file that also has `@php … @endphp` blocks: the block matcher swallows everything between them and the page 500s with an unclosed `@if` (this took the landing page down in PR 4). Use the block form throughout
 - [ ] Loading, empty and error states all present
 - [ ] Keyboard: full tab order, visible focus, `Escape` closes overlays
 - [ ] Contrast checked on the real token pairs used
