@@ -118,7 +118,9 @@
 
 {{-- ══ POPULAR COURSES ══ --}}
 @if ($popular->isNotEmpty())
-  @php($pills = $popular->pluck('category')->filter()->unique('id')->values())
+  @php
+    $pills = $popular->pluck('category')->filter()->unique('id')->values();
+  @endphp
   <section id="popular" class="l-section-pad">
     <div class="l-wrap">
       <x-store.section-heading title="Popular <em>courses</em>" subtitle="What learners are taking right now." :href="$catalogueUrl" link-label="All courses" />
@@ -167,7 +169,9 @@
       <x-store.section-heading title="Learn from the <em>people who teach</em>" />
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         @foreach ($instructors as $row)
-          @php($person = $row['user'])
+          @php
+            $person = $row['user'];
+          @endphp
           <div class="flex flex-col items-center rounded-[20px] border border-neutral-200 bg-white p-6 text-center">
             <x-store.avatar :name="$person->name" :photo="$person->instructorProfile?->photoUrl()" :size="88" />
             <h3 class="mt-4 font-sans text-base font-bold text-neutral-900">{{ $person->name }}</h3>
