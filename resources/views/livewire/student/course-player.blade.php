@@ -33,7 +33,7 @@
              for a course with a final test means the test was passed, not
              merely that every lesson was ticked (AC-31). --}}
         @if ($courseCompletedAt)
-            <div role="status" aria-live="polite" class="m-motif relative mb-6 overflow-hidden rounded-card bg-teal-900 p-6 text-white">
+            <div role="status" aria-live="polite" class="m-motif relative mb-6 overflow-hidden rounded-hero bg-teal-900 p-7 text-white">
                 <div class="relative">
                     <p class="eyebrow text-white/55">Course complete</p>
                     <h2 class="mt-2 font-serif text-xl font-semibold text-balance">
@@ -81,7 +81,19 @@
              thing you came to watch leads, and its title annotates it. --}}
         <div class="mt-7 flex flex-wrap items-start justify-between gap-6">
             <div class="min-w-0">
-                <p class="eyebrow text-teal-600">{{ $lesson->type->label() }}</p>
+                @php
+                    $position = 0;
+                    $found = false;
+                    foreach ($curriculum as $m) {
+                        foreach ($m->lessons as $l) {
+                            $position++;
+                            if ($l->id === $lesson->id) { $found = true; break 2; }
+                        }
+                    }
+                @endphp
+                <p class="eyebrow text-teal-600">
+                    @if ($found) Lesson {{ $position }} of {{ $totalCount }} · @endif{{ $lesson->type->label() }}
+                </p>
                 <h1 class="mt-2 font-serif text-[30px]/[1.15] font-medium tracking-[-0.01em] text-balance">
                     {{ $lesson->title }}
                 </h1>
@@ -110,10 +122,9 @@
                         </button>
                     @endif
                 @elseif ($strategy->allowsManualCompletion())
-                    <button type="button" wire:click="toggleComplete" wire:loading.attr="disabled"
-                            class="rounded-sm bg-teal-600 px-5 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                    <x-button wire:click="toggleComplete" wire:loading.attr="disabled" size="lg" pill>
                         Mark complete
-                    </button>
+                    </x-button>
                 @endif
             </div>
         </div>
@@ -137,19 +148,17 @@
         <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
             <div>
                 @if ($neighbours['previous'])
-                    <a href="{{ route('student.courses.play', [$course, $neighbours['previous']]) }}"
-                       class="rounded-sm border border-neutral-300 bg-white px-5 py-[11px] text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                    <x-button :href="route('student.courses.play', [$course, $neighbours['previous']])" variant="secondary" size="lg" pill>
                         ← Previous lesson
-                    </a>
+                    </x-button>
                 @endif
             </div>
 
             <div>
                 @if ($neighbours['next'])
-                    <a href="{{ route('student.courses.play', [$course, $neighbours['next']]) }}"
-                       class="rounded-sm bg-teal-600 px-5 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                    <x-button :href="route('student.courses.play', [$course, $neighbours['next']])" size="lg" pill>
                         Next lesson →
-                    </a>
+                    </x-button>
                 @endif
             </div>
         </div>
@@ -164,16 +173,16 @@
         {{-- Course figure, counted from the curriculum on screen so it can never
              disagree with the ticks below it. --}}
         <div class="border-b border-neutral-200 px-[22px] py-5">
-            <p class="mb-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">COURSE CONTENT</p>
+            <div class="flex items-center gap-4">
+                <x-store.progress-ring :value="$percentage" :size="72" />
 
-            <div class="flex items-center gap-2.5">
-                <x-progress-bar :value="$percentage" class="flex-1" />
-                <span class="font-mono text-xs font-semibold text-neutral-700">{{ $percentage }}%</span>
+                <div class="min-w-0">
+                    <p class="mb-1 font-mono text-[11px] font-semibold tracking-[0.14em] text-neutral-700">COURSE CONTENT</p>
+                    <p class="text-[12.5px] text-neutral-500">
+                        {{ $completedCount }} of {{ $totalCount }} {{ Str::plural('lesson', $totalCount) }} completed
+                    </p>
+                </div>
             </div>
-
-            <p class="mt-1.5 text-[12.5px] text-neutral-500">
-                {{ $completedCount }} of {{ $totalCount }} {{ Str::plural('lesson', $totalCount) }} completed
-            </p>
         </div>
 
         @foreach ($curriculum as $module)

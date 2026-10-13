@@ -98,7 +98,7 @@
         {{-- wire:key on the question id, not the index: keying on the index
              would let Livewire reuse the previous question's DOM — and its
              checked radio — for the next one. --}}
-        <div class="rounded-card border border-neutral-200 bg-white p-8" wire:key="runner-question-{{ $current['id'] }}">
+        <div class="rounded-hero border border-neutral-200 bg-white p-8 shadow-xs sm:p-10" wire:key="runner-question-{{ $current['id'] }}">
 
             <div class="mb-4 flex items-baseline justify-between gap-3">
                 <span class="font-mono text-[12.5px] font-semibold text-neutral-700">
@@ -182,37 +182,29 @@
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3" x-data>
             <div>
                 @if ($index > 0)
-                    <button type="button"
-                            wire:click="goToQuestion({{ $index - 1 }})"
-                            class="rounded-sm border border-neutral-300 bg-white px-5 py-[11px] text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                    <x-button wire:click="goToQuestion({{ $index - 1 }})" variant="secondary" size="lg" pill>
                         Previous
-                    </button>
+                    </x-button>
                 @endif
             </div>
 
             <div class="flex flex-wrap gap-2.5">
                 {{-- Saves nothing new — every answer is already persisted. It is
                      a way OUT, and the attempt stays in progress. --}}
-                <button type="button"
-                        wire:click="saveAndExit"
-                        class="rounded-sm border border-neutral-300 bg-white px-5 py-[11px] text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50">
+                <x-button wire:click="saveAndExit" variant="secondary" size="lg" pill>
                     Save &amp; exit
-                </button>
+                </x-button>
 
                 @if ($isLast)
                     {{-- Still opens the confirmation rather than submitting
                          outright: grading is irreversible. --}}
-                    <button type="button"
-                            x-on:click="$dispatch('open-modal', 'confirm-submit')"
-                            class="rounded-sm bg-teal-600 px-6 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                    <x-button x-on:click="$dispatch('open-modal', 'confirm-submit')" size="lg" pill>
                         Submit assessment
-                    </button>
+                    </x-button>
                 @else
-                    <button type="button"
-                            wire:click="goToQuestion({{ $index + 1 }})"
-                            class="rounded-sm bg-teal-600 px-6 py-[11px] text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                    <x-button wire:click="goToQuestion({{ $index + 1 }})" size="lg" pill>
                         Next question
-                    </button>
+                    </x-button>
                 @endif
             </div>
         </div>
