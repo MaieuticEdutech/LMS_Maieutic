@@ -10,9 +10,11 @@ use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\Module;
 use App\Models\User;
-use App\Services\Enrollment\EnrollmentAccessService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * "Your week, planned": computed from real progress, nothing stored.
@@ -24,9 +26,12 @@ use Carbon\CarbonImmutable;
  *
  * DONE     = lesson_progress rows completed inside this IST week.
  * UPCOMING = the next unfinished lessons, in course / module / lesson order,
- * across courses the student can reach NOW. Reach is decided by
- * EnrollmentAccessService (rule S-8); the candidate list comes from
- * StudentDashboardService, which mirrors that rule as a query.
+ * across courses the student can reach NOW. The list comes from
+ * StudentDashboardService::activeEnrollments(), which applies the same live-
+ * enrolment rule as EnrollmentAccessService (rule S-8) as a single query. The
+ * planner does not ask the access service again per course: that is the same
+ * question answered a second time, once per course, on the dashboard's hot
+ * path (NFR-PERF-04).
  *
  * Planning fills today and the days after it until the remaining goal is
  * covered, and then stops: the last lesson may overshoot the goal by part of
@@ -46,7 +51,6 @@ final class WeekPlanService
     public function __construct(
         private readonly StudentDashboardService $dashboard,
         private readonly CoursePlayerService $player,
-        private readonly EnrollmentAccessService $access,
     ) {}
 
     public function forStudent(User $student, ?CarbonImmutable $now = null): WeekPlan
@@ -62,7 +66,7 @@ final class WeekPlanService
         $courses = [];
         foreach ($this->dashboard->activeEnrollments($student) as $enrollment) {
             $course = $enrollment->course;
-            if ($course !== null && $this->access->grantsAccess($student, $course)) {
+            if ($course !== null) {
                 $courses[$course->getKey()] = $course;
             }
         }
@@ -71,14 +75,18 @@ final class WeekPlanService
             return new WeekPlan($this->emptyDays($weekStart, $today), 0, $goal, false);
         }
 
-        // Curriculum per course, in player order.
+        // Curriculum per course, in player order. One query for every course
+        // at once: the dashboard must not cost a query per enrolled course
+        // (NFR-PERF-04).
+        $curricula = $this->curricula(array_keys($courses));
+
         /** @var array<int, list<Lesson>> $lessonsByCourse */
         $lessonsByCourse = [];
         /** @var array<int, array{0: Course, 1: Lesson}> $lessonIndex */
         $lessonIndex = [];
         $lessonIds = [];
         foreach ($courses as $courseId => $course) {
-            $flat = $this->player->flatLessons($this->player->curriculum($course));
+            $flat = $this->player->flatLessons($curricula[$courseId] ?? new Collection);
             $lessonsByCourse[$courseId] = $flat;
             foreach ($flat as $lesson) {
                 $lessonIds[] = $lesson->getKey();
@@ -187,6 +195,30 @@ final class WeekPlanService
             : 0;
 
         return new WeekPlanBlock($course, $lesson, $lesson->title, max(self::MIN_LESSON_MINUTES, $minutes), false, $done);
+    }
+
+    /**
+     * The published curriculum of several courses, keyed by course id. The same
+     * rules as CoursePlayerService::curriculum() (published modules, published
+     * lessons, by position), read in one pass.
+     *
+     * @param  list<int>  $courseIds
+     * @return array<int, Collection<int, Module>>
+     */
+    private function curricula(array $courseIds): array
+    {
+        return Module::query()
+            ->whereIn('course_id', $courseIds)
+            ->where('is_published', true)
+            ->orderBy('position')
+            ->with([
+                'lessons' => static fn (Relation $query) => $query
+                    ->where('is_published', true)
+                    ->orderBy('position'),
+            ])
+            ->get()
+            ->groupBy('course_id')
+            ->all();
     }
 
     /**
