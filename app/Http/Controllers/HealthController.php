@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Services\Queue\QueueHealthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +15,18 @@ use Throwable;
 /**
  * Liveness / readiness endpoint.
  *
- * Phase 1 delivers database, cache and content-storage checks. Redis and queue
- * depth checks are added in Phase 11 when those become real dependencies, and
- * this endpoint is what uptime monitoring watches in Phase 17
- * (architecture.md §20).
+ * Hard dependencies — database, cache, content storage. If one is unreachable
+ * the response is 503, so a load balancer or container healthcheck can act on
+ * the status code alone without parsing the body.
  *
- * Returns 200 when every dependency is reachable, 503 otherwise, so a load
- * balancer or monitor can act on the status code alone without parsing the body.
+ * ADVISORY — the queue. A queue that is not being consumed is a stopped worker,
+ * which is a separate Coolify resource from the web app. It is reported as
+ * `stalled` and turns `status` to `degraded`, but the HTTP code stays 200:
+ * otherwise a dead worker could get a healthy web container pulled out of
+ * service. Uptime monitoring (Phase 17) should alert on `status != ok`.
+ *
+ * `unknown` means the queue is not the database driver, so its age cannot be
+ * read here. That is reported honestly and does not degrade the status.
  *
  * SECURITY: the body reports only reachable/unreachable per dependency. It must
  * never leak connection strings, credentials, versions or exception messages —
@@ -28,7 +34,13 @@ use Throwable;
  */
 final class HealthController extends Controller
 {
-    public function __invoke(): JsonResponse
+    /**
+     * The oldest waiting job may be this old before the worker is considered
+     * stopped. Jobs here are mail, grading and reconciliation: seconds of work.
+     */
+    private const QUEUE_STALLED_AFTER_SECONDS = 300;
+
+    public function __invoke(QueueHealthService $queue): JsonResponse
     {
         $checks = [
             'database' => $this->check(static function (): void {
@@ -60,14 +72,43 @@ final class HealthController extends Controller
         ];
 
         $healthy = ! in_array(false, $checks, true);
+        $queueState = $this->queueState($queue);
 
         return response()->json([
-            'status' => $healthy ? 'ok' : 'degraded',
-            'checks' => array_map(
-                static fn (bool $ok): string => $ok ? 'ok' : 'unreachable',
-                $checks,
-            ),
+            'status' => $healthy && $queueState !== 'stalled' ? 'ok' : 'degraded',
+            'checks' => [
+                ...array_map(
+                    static fn (bool $ok): string => $ok ? 'ok' : 'unreachable',
+                    $checks,
+                ),
+                'queue' => $queueState,
+            ],
         ], $healthy ? 200 : 503);
+    }
+
+    /**
+     * @return 'ok'|'stalled'|'unknown'
+     */
+    private function queueState(QueueHealthService $queue): string
+    {
+        try {
+            $oldest = $queue->oldestPendingSeconds();
+        } catch (Throwable $e) {
+            report($e);
+
+            return 'unknown';
+        }
+
+        if ($oldest === null) {
+            // Nothing waiting, or a driver whose age cannot be read. Only the
+            // first is "ok"; the service returns null for both, so a
+            // non-database queue is told apart here.
+            $connection = config()->string('queue.default');
+
+            return config()->string("queue.connections.{$connection}.driver") === 'database' ? 'ok' : 'unknown';
+        }
+
+        return $oldest > self::QUEUE_STALLED_AFTER_SECONDS ? 'stalled' : 'ok';
     }
 
     /**
