@@ -51,7 +51,7 @@ moved to a bucket, and **today most of it is not switchable to a bucket**:
 | Disk | Holds | Path | Can move to S3 by config? |
 |---|---|---|---|
 | `content` | Course videos, PDFs, slides | `storage/app/content` | **Yes** — `LMS_CONTENT_DISK=s3_content` |
-| `profile_documents` | Learner photo and Aadhaar scan (ciphertext) | `storage/app/profile-documents` | **No** — hard-wired `local` |
+| `profile_documents` | Learner photo and Aadhaar scan (ciphertext) | `storage/app/profile-documents` | **Yes, once PR `phase/16-storage-health` is merged** — `LMS_PROFILE_DOCUMENTS_DRIVER=s3` (optional `LMS_PROFILE_DOCUMENTS_BUCKET`); until then hard-wired `local`. Existing files do **not** move by themselves |
 | `public` | Course thumbnails, instructor photos | `storage/app/public` | **No** |
 | `temp` | In-flight uploads | `storage/app/temp` | No (transient) |
 
@@ -66,9 +66,11 @@ php artisan tinker --execute='echo storage_path("app");'
 Mount the **worker** on the same volume, or it cannot read what the web app wrote.
 
 Moving `content` to a bucket (Cloudflare R2 per `HOSTING-COMPARISON.md` §4.3) is still the right
-long-term step for video, but it does **not** remove the need for the volume while
-`profile_documents` and `public` remain local. Making those two switchable is a code change
-(a new env-driven disk selection); it is listed in §10, not done.
+long-term step for video, but it does **not** remove the need for the volume while the
+`public` disk (thumbnails, instructor photos) stays local. `profile_documents` can move to a
+private bucket with `LMS_PROFILE_DOCUMENTS_DRIVER=s3` once that PR is merged; **copy existing
+files across before switching**, or documents already uploaded become unreachable. The `public`
+disk is not switchable (it would also need the bucket's origin in the CSP `img-src`) — §10.
 
 ---
 
@@ -93,8 +95,12 @@ The `--tries` value matches `LMS_MAIL_TRIES`. Scheduled commands registered in `
 - `php artisan schedule:list` lists the tasks; the next due time advances every minute.
 - Trigger a password reset to a mailbox you control; the mail arrives, and no job sits in `jobs`.
 
-`GET /up` does **not** check the worker or the scheduler — it checks only the database, the cache
-and the content disk. A green `/up` with a dead worker is possible.
+`GET /up` checks the database, the cache and the content disk (a failure returns 503). Once PR
+`phase/16-storage-health` is merged it also reports `checks.queue`: `ok`, `stalled` (oldest waiting
+job older than 5 minutes) or `unknown` (non-database queue driver). A stalled queue sets
+`status` to `degraded` but keeps HTTP 200, so a container healthcheck cannot pull the web app out
+of service because the separate worker died — **alert on `status != ok`**. It does not check the
+scheduler.
 
 ---
 
@@ -224,8 +230,9 @@ returns 200 and appears in Admin → *Webhook events*.
 
 | Gap | Impact | Suggested step |
 |---|---|---|
-| `profile_documents` and `public` disks cannot move to S3 | Student documents and thumbnails depend on the persistent volume and its backup | Env-driven disk selection, same pattern as `LMS_CONTENT_DISK` |
-| `/up` ignores worker and scheduler | A dead worker looks healthy | Add a queue heartbeat check, or alert on Queue health |
+| `public` disk cannot move to S3 | Thumbnails and instructor photos depend on the persistent volume and its backup | Env-driven disk plus the bucket origin in the CSP `img-src` |
+| `profile_documents` → bucket needs a one-off copy | Switching the driver strands files already on the volume | Copy `storage/app/profile-documents` into the bucket under the `profile-documents/` prefix, then switch |
+| `/up` does not check the scheduler | A stopped scheduler looks healthy | Alert on `lms:` task output, or add a heartbeat the scheduler writes |
 | No `storage:link` in deploy (before this runbook) | Broken thumbnails and instructor photos | Add to post-deploy command (§6) |
 | Staging does not exist | Rollback and restore cannot be rehearsed safely | Clone the production environment in Coolify |
 | PD-07 and PD-09 unresolved | No verified sending domain; no live-payment proof | Owner to supply |
