@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Payment;
 
+use App\Actions\Payment\ApplyRefund;
 use App\Actions\Payment\RecordFailedPayment;
 use App\Actions\Payment\SettleCapturedPayment;
 use App\Contracts\Payment\PaymentGateway;
@@ -53,6 +54,7 @@ final class ProcessPaymentWebhook implements ShouldQueue
         PaymentGateway $gateway,
         SettleCapturedPayment $settleCapturedPayment,
         RecordFailedPayment $recordFailedPayment,
+        ApplyRefund $applyRefund,
         AuditLogger $audit,
     ): void {
         $webhookEvent = WebhookEvent::query()->find($this->webhookEventId);
@@ -79,6 +81,7 @@ final class ProcessPaymentWebhook implements ShouldQueue
             match (true) {
                 $event->type === 'payment.captured' && $event->payment !== null => $settleCapturedPayment->handle($event->payment),
                 $event->type === 'payment.failed' && $event->payment !== null => $recordFailedPayment->handle($event->payment),
+                $event->type === 'refund.processed' && $event->payment !== null && $event->refund !== null => $applyRefund->handle($event->payment, $event->refund),
                 default => $this->ignore($webhookEvent, $event->type),
             };
 

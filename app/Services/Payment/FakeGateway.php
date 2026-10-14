@@ -10,6 +10,7 @@ use App\Support\Money;
 use App\Support\Payment\GatewayEvent;
 use App\Support\Payment\GatewayOrder;
 use App\Support\Payment\GatewayPayment;
+use App\Support\Payment\GatewayRefund;
 use Illuminate\Support\Str;
 
 /**
@@ -53,9 +54,19 @@ final class FakeGateway implements PaymentGateway
     {
         $type = (string) ($payload['event'] ?? '');
         $entity = $payload['payload']['payment']['entity'] ?? null;
+        $refundEntity = $payload['payload']['refund']['entity'] ?? null;
+
+        $refund = is_array($refundEntity) && isset($refundEntity['id'], $refundEntity['payment_id'])
+            ? new GatewayRefund(
+                id: (string) $refundEntity['id'],
+                paymentId: (string) $refundEntity['payment_id'],
+                amount: (int) ($refundEntity['amount'] ?? 0),
+                status: (string) ($refundEntity['status'] ?? ''),
+            )
+            : null;
 
         if (! is_array($entity)) {
-            return new GatewayEvent(type: $type, payment: null);
+            return new GatewayEvent(type: $type, payment: null, refund: $refund);
         }
 
         return new GatewayEvent(
@@ -69,7 +80,9 @@ final class FakeGateway implements PaymentGateway
                 method: isset($entity['method']) ? (string) $entity['method'] : null,
                 failureCode: isset($entity['error_code']) ? (string) $entity['error_code'] : null,
                 failureReason: isset($entity['error_description']) ? (string) $entity['error_description'] : null,
+                amountRefunded: isset($entity['amount_refunded']) ? (int) $entity['amount_refunded'] : null,
             ),
+            refund: $refund,
         );
     }
 
@@ -142,11 +155,60 @@ final class FakeGateway implements PaymentGateway
 
     public function deriveEventId(GatewayEvent $event, string $rawBody): string
     {
+        if ($event->refund !== null) {
+            return "{$event->type}:{$event->refund->id}";
+        }
+
         if ($event->payment !== null) {
             return "{$event->type}:{$event->payment->id}";
         }
 
         return "{$event->type}:".hash('sha256', $rawBody);
+    }
+
+    /**
+     * Build a Razorpay-shaped `refund.processed` webhook for a payment, signed
+     * as {@see self::verifyWebhookSignature()} will check it.
+     *
+     * `amount_refunded` on the payment entity is the CUMULATIVE total, as
+     * Razorpay reports it; `$refundAmount` is this one refund.
+     *
+     * @return array{event_id: string, body: string, signature: string}
+     */
+    public static function signedRefundPayload(
+        Order $order,
+        string $gatewayPaymentId,
+        string $gatewayRefundId,
+        int $refundAmount,
+        int $amountRefundedTotal,
+    ): array {
+        $body = json_encode([
+            'event' => 'refund.processed',
+            'payload' => [
+                'payment' => ['entity' => [
+                    'id' => $gatewayPaymentId,
+                    'order_id' => $order->gateway_order_id,
+                    'amount' => $order->amount_total,
+                    'currency' => $order->currency,
+                    'status' => $amountRefundedTotal >= $order->amount_total ? 'refunded' : 'captured',
+                    'method' => 'card',
+                    'amount_refunded' => $amountRefundedTotal,
+                ]],
+                'refund' => ['entity' => [
+                    'id' => $gatewayRefundId,
+                    'payment_id' => $gatewayPaymentId,
+                    'amount' => $refundAmount,
+                    'currency' => $order->currency,
+                    'status' => 'processed',
+                ]],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        return [
+            'event_id' => 'refund.processed:'.$gatewayRefundId,
+            'body' => $body,
+            'signature' => hash_hmac('sha256', $body, self::TEST_WEBHOOK_SECRET),
+        ];
     }
 
     /**

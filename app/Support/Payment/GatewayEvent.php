@@ -23,5 +23,6 @@ final readonly class GatewayEvent
     public function __construct(
         public string $type,
         public ?GatewayPayment $payment,
+        public ?GatewayRefund $refund = null,
     ) {}
 }
