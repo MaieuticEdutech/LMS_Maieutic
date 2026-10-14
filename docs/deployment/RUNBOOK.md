@@ -1,0 +1,241 @@
+# Production runbook — Hostinger VPS + Coolify
+
+Phase 16 deliverable (`phases.md`). Written from the repository and from the Coolify deployment
+log of 2026-10-13. **Anything marked ⚠ VERIFY could not be confirmed from the repo** and must be
+checked in the Coolify dashboard before this runbook is treated as true.
+
+Secrets never appear here. Variable names only; values live in Coolify's environment tab.
+
+---
+
+## 1. Where Phase 16 stands
+
+| Definition-of-Done item | State | Who |
+|---|---|---|
+| Production running | 🟢 live (Hostinger VPS, Mumbai, Coolify) | — |
+| Staging mirroring production | 🔴 not built | Dev team, Coolify |
+| Deployment documented | 🟢 this file | — |
+| Rollback documented | 🟢 §7 — **not yet rehearsed** | Dev team |
+| Backup **and restore** verified (AC-38) | 🔴 not done | Dev team |
+| AC-35 (HTTPS, HSTS, headers) in production | 🟡 headers shipped in Phase 14; verify live, §9 | Dev team |
+| Live Razorpay webhook verified | 🔴 blocked on PD-09 credentials | Owner |
+| Workers and scheduler confirmed running | 🔴 see §4 — no worker existed on 2026-10-08 | Dev team |
+| Production email, SPF/DKIM/DMARC (PD-07) | 🔴 not confirmed | Owner |
+
+Phase 16 stays 🟡 until every row is green (Rule 25).
+
+---
+
+## 2. Resources in Coolify
+
+One project, one environment per tier (`production`; add `staging` as a clone).
+
+| Resource | Purpose | Notes |
+|---|---|---|
+| **Web app** | Laravel, behind Coolify's Traefik proxy | Built from `MaieuticEdutech/LMS_Maieutic.git:main` |
+| **Queue worker** | Sends mail, grades attempts, issues certificates | Same repo and env as the web app. Must exist — mail is queued |
+| **Scheduler** | Runs `schedule:run` every minute | Coolify *Scheduled Tasks* on the web app, or a dedicated resource |
+| **PostgreSQL 17** | The database | Separate Coolify database resource |
+| **Redis** (optional) | Cache, session, queue | `.env.example` defaults to the `database` driver. Phase 16's text says Redis; the app works without it |
+
+The repository has **no Dockerfile, compose file or Nixpacks config**; Coolify builds the image
+itself. ⚠ VERIFY which build pack the web app uses (Settings → General → Build Pack) and write it here.
+
+---
+
+## 3. Persistent storage — read this before every redeploy
+
+A container's filesystem is discarded on each deploy. Student data lives on disk unless it is
+moved to a bucket, and **today most of it is not switchable to a bucket**:
+
+| Disk | Holds | Path | Can move to S3 by config? |
+|---|---|---|---|
+| `content` | Course videos, PDFs, slides | `storage/app/content` | **Yes** — `LMS_CONTENT_DISK=s3_content` |
+| `profile_documents` | Learner photo and Aadhaar scan (ciphertext) | `storage/app/profile-documents` | **No** — hard-wired `local` |
+| `public` | Course thumbnails, instructor photos | `storage/app/public` | **No** |
+| `temp` | In-flight uploads | `storage/app/temp` | No (transient) |
+
+So **mount one persistent volume on the app's `storage/app` directory** and back it up. One mount
+covers all four rows. ⚠ VERIFY in Coolify → web app → *Persistent Storage* that it exists. Find the
+absolute path inside the container with:
+
+```bash
+php artisan tinker --execute='echo storage_path("app");'
+```
+
+Mount the **worker** on the same volume, or it cannot read what the web app wrote.
+
+Moving `content` to a bucket (Cloudflare R2 per `HOSTING-COMPARISON.md` §4.3) is still the right
+long-term step for video, but it does **not** remove the need for the volume while
+`profile_documents` and `public` remain local. Making those two switchable is a code change
+(a new env-driven disk selection); it is listed in §10, not done.
+
+---
+
+## 4. Queue worker and scheduler
+
+Commands (run as the container start/`Command` of each resource):
+
+```bash
+# Worker — restarts itself hourly so a leak cannot grow forever
+php artisan queue:work --tries=3 --timeout=90 --max-time=3600 --sleep=3
+
+# Scheduler — Coolify Scheduled Task, frequency "* * * * *"
+php artisan schedule:run
+```
+
+The `--tries` value matches `LMS_MAIL_TRIES`. Scheduled commands registered in `routes/console.php`:
+`lms:orders:reconcile`, `lms:orders:cancel-abandoned`, `lms:attempts:expire`,
+`lms:enrollments:expire`, `queue:prune-failed`, `queue:prune-batches`, `auth:clear-resets`.
+
+**Confirm both are running** (a Phase 16 test requirement):
+- Admin → *Queue health* shows pending jobs, the age of the oldest pending job and failed jobs. A worker is running if the oldest-pending age stays near zero; if it keeps growing, nothing is consuming the queue. (It does not show a worker heartbeat.)
+- `php artisan schedule:list` lists the tasks; the next due time advances every minute.
+- Trigger a password reset to a mailbox you control; the mail arrives, and no job sits in `jobs`.
+
+`GET /up` does **not** check the worker or the scheduler — it checks only the database, the cache
+and the content disk. A green `/up` with a dead worker is possible.
+
+---
+
+## 5. Environment variables (names only)
+
+Set in Coolify on the **web app and the worker**.
+
+| Variable | Production value / note |
+|---|---|
+| `APP_ENV`, `APP_DEBUG` | `production`, `false` |
+| `APP_KEY` | Generate once; **never rotate casually** — encrypted profile documents depend on it |
+| `APP_URL` | `https://lms.maieutic.co.in` |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `DB_*` | Coolify's Postgres internal host/port, own user, strong password |
+| `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER` | `database` today; `redis` once Redis is provisioned |
+| `MAIL_*`, `MAIL_FROM_ADDRESS` | The production provider (PD-07) and a verified sending domain |
+| `LMS_CONTENT_DISK` | `content` (volume) or `s3_content` (bucket) |
+| `AWS_*` | Only if `s3_content`; for R2 add `AWS_ENDPOINT` and `AWS_USE_PATH_STYLE_ENDPOINT=true` |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Live keys — environment only, never committed |
+| `SENTRY_LARAVEL_DSN` | Set; confirm with `php artisan sentry:test` |
+| `LMS_MAIL_PREVIEW_ENABLED` | `false` |
+
+`APP_KEY` is called out because losing it makes every stored Aadhaar scan unreadable.
+
+---
+
+## 6. Deploy sequence
+
+Set as Coolify's **post-deployment command** on the web app:
+
+```bash
+php artisan storage:link --force      # NEW container has no public/storage link
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan queue:restart             # so the worker loads the new code
+```
+
+`storage:link` matters: without it, `public/storage` does not exist in a fresh container, and
+every thumbnail and instructor photo served from the `public` disk is a broken image. Nothing in
+the repository ran it before this runbook.
+
+Order of a normal release:
+1. CI green on the PR (lint, analyse, full test, build assets, dependency audit).
+2. Merge to `main`.
+3. Redeploy the **web app**, then the **worker** (it builds the emails).
+4. Run the smoke test (§8).
+
+Migrations are expand-then-contract: add columns and tables in one release, remove them in a
+later one, so the previous release keeps working against the new schema. Never renumber a merged
+migration.
+
+---
+
+## 7. Rollback
+
+**Code:** Coolify → web app → *Deployments* → pick the last known-good deployment → *Redeploy*
+(⚠ VERIFY the button name). Redeploy the worker to the same deployment.
+
+**Database:** a rollback of code does not undo migrations. Because migrations are additive, the
+previous code normally runs fine against the newer schema. If a migration was destructive or
+wrong:
+1. Put the site in maintenance mode: `php artisan down`.
+2. For a reversible migration: `php artisan migrate:rollback --step=1`.
+3. Otherwise restore from backup (§8.2) into a scratch database first, check it, then decide.
+4. `php artisan up`.
+
+**Rehearse this on staging before relying on it.** Record the date and result in §11.
+
+---
+
+## 8. Backups and restore (AC-38)
+
+### 8.1 Backups
+- **Database:** Coolify → Postgres resource → *Backups* → schedule nightly, retention 30 days,
+  destination an S3-compatible bucket (R2), **not** the VPS disk. The weekly Hostinger VPS
+  snapshot is a safety net, not the plan.
+- **Files:** the `storage/app` volume. Back it up to the same bucket (Coolify volume backup, or a
+  scheduled task running `rclone`/`aws s3 sync` ⚠ VERIFY which Coolify supports on your version).
+  Without this, student documents exist in exactly one place.
+
+### 8.2 Restore rehearsal (do this once, then record it)
+1. Create a scratch Postgres database (or the staging one).
+2. Download last night's dump from the bucket.
+3. `pg_restore --clean --if-exists --no-owner -d <scratch> <dump>`
+4. Point a throwaway app instance at it; log in as the super admin; open a course, a student and an
+   order.
+5. Check row counts against production for `users`, `courses`, `enrollments`, `orders`.
+6. Record the wall-clock time from "start" to "app usable" — that is your real recovery time.
+
+A backup that has never been restored is not a backup.
+
+---
+
+## 9. Verification checklist
+
+Run after every release.
+
+**Health**
+```bash
+curl -s https://lms.maieutic.co.in/up        # {"status":"ok", checks: database, cache, storage}
+```
+
+**AC-35 — headers and TLS**
+```bash
+curl -sI https://lms.maieutic.co.in/ | grep -iE "strict-transport|content-security|x-frame|x-content-type|referrer"
+curl -sI http://lms.maieutic.co.in/  | head -3          # must redirect to https
+```
+Expect `Strict-Transport-Security`, a `Content-Security-Policy` that names `checkout.razorpay.com`,
+`cdn.razorpay.com` and `api.razorpay.com`, and `X-Frame-Options: SAMEORIGIN`.
+
+**Smoke test** (PD-09 permitting, in Razorpay *test* mode on staging): register → browse → enrol
+(free during the promotion, or test-mode purchase) → activate → open a lesson → take a quiz → see
+progress and the certificate.
+
+**Webhook:** Razorpay dashboard → Webhooks → URL `https://lms.maieutic.co.in/webhooks/razorpay` (`POST webhooks/razorpay`, confirmed with `php artisan route:list --path=webhook`); send a test event; confirm it
+returns 200 and appears in Admin → *Webhook events*.
+
+**Mail:** send to a Gmail test address; *Show original* must show `SPF: PASS`, `DKIM: PASS`,
+`DMARC: PASS`.
+
+---
+
+## 10. Known gaps (not fixed here)
+
+| Gap | Impact | Suggested step |
+|---|---|---|
+| `profile_documents` and `public` disks cannot move to S3 | Student documents and thumbnails depend on the persistent volume and its backup | Env-driven disk selection, same pattern as `LMS_CONTENT_DISK` |
+| `/up` ignores worker and scheduler | A dead worker looks healthy | Add a queue heartbeat check, or alert on Queue health |
+| No `storage:link` in deploy (before this runbook) | Broken thumbnails and instructor photos | Add to post-deploy command (§6) |
+| Staging does not exist | Rollback and restore cannot be rehearsed safely | Clone the production environment in Coolify |
+| PD-07 and PD-09 unresolved | No verified sending domain; no live-payment proof | Owner to supply |
+
+---
+
+## 11. Rehearsal record
+
+| Date | Rehearsal | Environment | Result | By |
+|---|---|---|---|---|
+| — | Rollback | staging | not yet run | — |
+| — | Backup restore (time to usable) | scratch | not yet run | — |
+| — | Webhook end to end | production | blocked on PD-09 | — |
