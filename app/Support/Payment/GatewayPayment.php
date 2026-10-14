@@ -23,5 +23,7 @@ final readonly class GatewayPayment
         public ?string $method,
         public ?string $failureCode,
         public ?string $failureReason,
+        /** Cumulative paise refunded on this payment so far, when the gateway says. */
+        public ?int $amountRefunded = null,
     ) {}
 }

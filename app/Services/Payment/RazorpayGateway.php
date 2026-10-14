@@ -10,6 +10,7 @@ use App\Support\Money;
 use App\Support\Payment\GatewayEvent;
 use App\Support\Payment\GatewayOrder;
 use App\Support\Payment\GatewayPayment;
+use App\Support\Payment\GatewayRefund;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
 use Razorpay\Api\Order as RazorpayOrder;
@@ -97,14 +98,25 @@ final class RazorpayGateway implements PaymentGateway
     {
         $type = (string) ($payload['event'] ?? '');
         $entity = $payload['payload']['payment']['entity'] ?? null;
+        $refundEntity = $payload['payload']['refund']['entity'] ?? null;
+
+        $refund = is_array($refundEntity) && isset($refundEntity['id'], $refundEntity['payment_id'])
+            ? new GatewayRefund(
+                id: (string) $refundEntity['id'],
+                paymentId: (string) $refundEntity['payment_id'],
+                amount: (int) ($refundEntity['amount'] ?? 0),
+                status: (string) ($refundEntity['status'] ?? ''),
+            )
+            : null;
 
         if (! is_array($entity)) {
-            return new GatewayEvent(type: $type, payment: null);
+            return new GatewayEvent(type: $type, payment: null, refund: $refund);
         }
 
         return new GatewayEvent(
             type: $type,
             payment: $this->paymentFromArray($entity),
+            refund: $refund,
         );
     }
 
@@ -150,6 +162,14 @@ final class RazorpayGateway implements PaymentGateway
 
     public function deriveEventId(GatewayEvent $event, string $rawBody): string
     {
+        // A payment can be refunded more than once (partial refunds), so a
+        // refund event is identified by the REFUND, not the payment. Keyed on
+        // the payment, a second refund would collide with the first and be
+        // dropped as a duplicate delivery.
+        if ($event->refund !== null) {
+            return "{$event->type}:{$event->refund->id}";
+        }
+
         if ($event->payment !== null) {
             return "{$event->type}:{$event->payment->id}";
         }
@@ -175,6 +195,7 @@ final class RazorpayGateway implements PaymentGateway
             method: isset($attributes['method']) ? (string) $attributes['method'] : null,
             failureCode: isset($attributes['error_code']) ? (string) $attributes['error_code'] : null,
             failureReason: isset($attributes['error_description']) ? (string) $attributes['error_description'] : null,
+            amountRefunded: isset($attributes['amount_refunded']) ? (int) $attributes['amount_refunded'] : null,
         );
     }
 }
