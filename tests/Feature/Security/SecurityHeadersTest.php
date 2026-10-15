@@ -91,3 +91,39 @@ it('sends security headers on a 404', function (): void {
     $response->assertNotFound();
     expect($response->headers->get('Content-Security-Policy'))->not->toBeNull();
 });
+
+/*
+|--------------------------------------------------------------------------
+| HSTS (AC-35) — opt-in, HTTPS-only, no subdomain/preload commitment
+|--------------------------------------------------------------------------
+*/
+
+it('sends no HSTS header by default, even over https', function (): void {
+    $this->get('https://localhost/')
+        ->assertOk()
+        ->assertHeaderMissing('Strict-Transport-Security');
+});
+
+it('sends HSTS over https once a lifetime is configured', function (): void {
+    config()->set('security.hsts_max_age', 300);
+
+    $this->get('https://localhost/')
+        ->assertOk()
+        ->assertHeader('Strict-Transport-Security', 'max-age=300');
+});
+
+it('never sends HSTS over plain http, even when configured', function (): void {
+    config()->set('security.hsts_max_age', 31536000);
+
+    $this->get('http://localhost/')
+        ->assertHeaderMissing('Strict-Transport-Security');
+});
+
+it('does not commit subdomains or the preload list', function (): void {
+    config()->set('security.hsts_max_age', 31536000);
+
+    $header = (string) $this->get('https://localhost/')
+        ->headers->get('Strict-Transport-Security');
+
+    expect($header)->not->toContain('includeSubDomains')->not->toContain('preload');
+});

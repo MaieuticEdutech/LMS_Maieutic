@@ -59,6 +59,16 @@ final class SecurityHeaders
         // its own pages; nothing outside it ever should.
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
 
+        // HSTS (AC-35): only over HTTPS, and only once the deployment has
+        // opted in with a lifetime (config/security.php explains why it is
+        // off by default). Behind Coolify's proxy isSecure() is true because
+        // trustProxies() reads X-Forwarded-Proto.
+        $hstsMaxAge = config()->integer('security.hsts_max_age');
+
+        if ($hstsMaxAge > 0 && $request->isSecure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age='.$hstsMaxAge);
+        }
+
         return $response;
     }
 

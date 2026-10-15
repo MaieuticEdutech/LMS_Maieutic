@@ -130,6 +130,7 @@ Set in Coolify on the **web app and the worker**.
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Live keys — environment only, never committed |
 | `SENTRY_LARAVEL_DSN` | Set; confirm with `php artisan sentry:test` |
 | `LMS_MAIL_PREVIEW_ENABLED` | `false` |
+| `SECURITY_HSTS_MAX_AGE` | Seconds. **Off (0) by default.** Ramp up, confirming HTTPS is solid at each step: `300` → `86400` → `2592000` → `31536000`. Browsers remember it, so a broken certificate during the period locks visitors out. No `includeSubDomains`/`preload` is sent |
 
 `APP_KEY` is called out because losing it makes every stored Aadhaar scan unreadable.
 
@@ -219,7 +220,7 @@ curl -s https://lms.maieutic.co.in/up        # {"status":"ok", checks: database,
 curl -sI https://lms.maieutic.co.in/ | grep -iE "strict-transport|content-security|x-frame|x-content-type|referrer"
 curl -sI http://lms.maieutic.co.in/  | head -3          # must redirect to https
 ```
-Expect `Strict-Transport-Security`, a `Content-Security-Policy` that names `checkout.razorpay.com`,
+Expect `Strict-Transport-Security` (present only once `SECURITY_HSTS_MAX_AGE` is set; the header is sent over HTTPS only), a `Content-Security-Policy` that names `checkout.razorpay.com`,
 `cdn.razorpay.com` and `api.razorpay.com`, and `X-Frame-Options: SAMEORIGIN`.
 
 **Smoke test** (PD-09 permitting, in Razorpay *test* mode on staging): register → browse → enrol
