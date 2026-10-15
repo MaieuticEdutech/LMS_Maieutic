@@ -84,3 +84,23 @@ it('renders the student dashboard thumbnail without a lazy-load violation', func
         ->get(route('student.home'))
         ->assertOk();
 });
+
+it('does not draw the course illustration behind an uploaded thumbnail', function (): void {
+    // A transparent PNG (a logo, say) used to show the illustrated scene
+    // through it, because the art was always rendered and the image laid on
+    // top. The art is a fallback, not a backdrop.
+    ($this->attachThumbnail)($this->course);
+    $course = $this->course->load('thumbnail');
+
+    $this->blade('<x-store.course-art :course="$course" />', ['course' => $course])
+        ->assertSee('example-thumbnail.jpg', escape: false)
+        ->assertDontSee('<svg', escape: false);
+});
+
+it('draws the course illustration when there is no thumbnail', function (): void {
+    $course = $this->course->load('thumbnail');
+
+    $this->blade('<x-store.course-art :course="$course" />', ['course' => $course])
+        ->assertSee('<svg', escape: false)
+        ->assertDontSee('example-thumbnail.jpg', escape: false);
+});

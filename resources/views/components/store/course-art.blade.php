@@ -20,11 +20,14 @@
     $thumbnailUrl = $thumbnail !== null ? Storage::disk($thumbnail->disk)->url($thumbnail->path) : null;
 @endphp
 
-<div {{ $attributes->class('relative overflow-hidden bg-teal-900') }} style="aspect-ratio: {{ $ratio }}" aria-hidden="true">
-    {!! \App\Support\CourseArt::svg($course) !!}
-
+<div {{ $attributes->class(['relative overflow-hidden', $thumbnailUrl ? 'bg-neutral-100' : 'bg-teal-900']) }} style="aspect-ratio: {{ $ratio }}" aria-hidden="true">
+    {{-- The illustration is the FALLBACK, never a backdrop. Drawn behind an
+         uploaded image it shows through anything transparent (a logo PNG),
+         which is how a thumbnail ended up with a code editor behind it. --}}
     @if ($thumbnailUrl)
         <img src="{{ $thumbnailUrl }}" alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
+    @else
+        {!! \App\Support\CourseArt::svg($course) !!}
     @endif
 
     @if ($label && ! $thumbnailUrl)
