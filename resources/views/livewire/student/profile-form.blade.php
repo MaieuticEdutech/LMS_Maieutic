@@ -122,53 +122,77 @@
                 />
             </div>
 
-            {{-- Identity numbers. The inputs are ALWAYS empty — the stored
-                 number is never sent back to the browser, only its masked form
-                 in the hint. Blank keeps it; a new number replaces it; Remove
-                 clears it. See ProfileForm::$aadhaarNumber. --}}
-            <div class="grid gap-5 sm:grid-cols-2">
-                <div>
-                    <x-input
-                        label="Aadhaar number"
-                        name="aadhaarNumber"
-                        wire:model="aadhaarNumber"
-                        inputmode="numeric"
-                        autocomplete="off"
-                        maxlength="14"
-                        placeholder="{{ $maskedAadhaar ? 'Enter a new number to replace it' : 'XXXX XXXX XXXX' }}"
-                        :hint="$maskedAadhaar
-                            ? 'Saved as '.$maskedAadhaar.'. Leave blank to keep it.'
-                            : '12 digits. Stored encrypted and never shown in full.'"
-                    />
-                    @if ($maskedAadhaar)
-                        <button type="button" wire:click="removeAadhaar" wire:confirm="Remove your stored Aadhaar number?"
-                                class="mt-1.5 text-xs font-medium text-red-600 hover:underline">
-                            Remove Aadhaar number
-                        </button>
-                    @endif
-                </div>
+            @if (config('profile.collect_identity'))
+                {{-- Identity numbers. The inputs are ALWAYS empty — the stored
+                     number is never sent back to the browser, only its masked form
+                     in the hint. Blank keeps it; a new number replaces it; Remove
+                     clears it. See ProfileForm::$aadhaarNumber. --}}
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div>
+                        <x-input
+                            label="Aadhaar number"
+                            name="aadhaarNumber"
+                            wire:model="aadhaarNumber"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            maxlength="14"
+                            placeholder="{{ $maskedAadhaar ? 'Enter a new number to replace it' : 'XXXX XXXX XXXX' }}"
+                            :hint="$maskedAadhaar
+                                ? 'Saved as '.$maskedAadhaar.'. Leave blank to keep it.'
+                                : '12 digits. Stored encrypted and never shown in full.'"
+                        />
+                        @if ($maskedAadhaar)
+                            <button type="button" wire:click="removeAadhaar" wire:confirm="Remove your stored Aadhaar number?"
+                                    class="mt-1.5 text-xs font-medium text-red-600 hover:underline">
+                                Remove Aadhaar number
+                            </button>
+                        @endif
+                    </div>
 
-                <div>
-                    <x-input
-                        label="PAN"
-                        name="panNumber"
-                        wire:model="panNumber"
-                        autocomplete="off"
-                        maxlength="10"
-                        class="uppercase"
-                        placeholder="{{ $maskedPan ? 'Enter a new PAN to replace it' : 'ABCDE1234F' }}"
-                        :hint="$maskedPan
-                            ? 'Saved as '.$maskedPan.'. Leave blank to keep it.'
-                            : '10 characters. Stored encrypted and never shown in full.'"
-                    />
-                    @if ($maskedPan)
-                        <button type="button" wire:click="removePan" wire:confirm="Remove your stored PAN?"
-                                class="mt-1.5 text-xs font-medium text-red-600 hover:underline">
-                            Remove PAN
-                        </button>
-                    @endif
+                    <div>
+                        <x-input
+                            label="PAN"
+                            name="panNumber"
+                            wire:model="panNumber"
+                            autocomplete="off"
+                            maxlength="10"
+                            class="uppercase"
+                            placeholder="{{ $maskedPan ? 'Enter a new PAN to replace it' : 'ABCDE1234F' }}"
+                            :hint="$maskedPan
+                                ? 'Saved as '.$maskedPan.'. Leave blank to keep it.'
+                                : '10 characters. Stored encrypted and never shown in full.'"
+                        />
+                        @if ($maskedPan)
+                            <button type="button" wire:click="removePan" wire:confirm="Remove your stored PAN?"
+                                    class="mt-1.5 text-xs font-medium text-red-600 hover:underline">
+                                Remove PAN
+                            </button>
+                        @endif
+                    </div>
                 </div>
-            </div>
+            @elseif ($maskedAadhaar || $maskedPan)
+                {{-- Collection is switched off (config/profile.php). What a learner
+                     saved earlier is still shown, masked, and can still be deleted. --}}
+                <div class="rounded-control border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600">
+                    <p>We no longer collect Aadhaar or PAN numbers. You can delete what you saved earlier.</p>
+                    <div class="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                        @if ($maskedAadhaar)
+                            <span class="flex items-center gap-3">
+                                Aadhaar {{ $maskedAadhaar }}
+                                <button type="button" wire:click="removeAadhaar" wire:confirm="Remove your stored Aadhaar number?"
+                                        class="text-xs font-medium text-red-600 hover:underline">Remove</button>
+                            </span>
+                        @endif
+                        @if ($maskedPan)
+                            <span class="flex items-center gap-3">
+                                PAN {{ $maskedPan }}
+                                <button type="button" wire:click="removePan" wire:confirm="Remove your stored PAN?"
+                                        class="text-xs font-medium text-red-600 hover:underline">Remove</button>
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             {{-- Address — optional, same hairline treatment as Personal
                  details above. Country/state/district/city are plain text:

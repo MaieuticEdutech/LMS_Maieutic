@@ -7,6 +7,7 @@ namespace App\Actions\Profile;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Profile\ProfileDocumentStorage;
+use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,10 @@ final class UploadAadhaarDocument
 
     public function handle(User $user, UploadedFile $file): User
     {
+        if (! config()->boolean('profile.collect_identity')) {
+            throw new DomainException('Aadhaar collection is switched off.');
+        }
+
         $previousPath = $user->getAttributes()['aadhaar_document_path'] ?? null;
 
         $stored = $this->storage->store($file, 'aadhaar-documents/'.$user->getKey());
