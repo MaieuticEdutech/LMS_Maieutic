@@ -36,7 +36,7 @@
             <div role="status" aria-live="polite" class="m-motif relative mb-6 overflow-hidden rounded-hero bg-teal-900 p-7 text-white">
                 <div class="relative">
                     <p class="eyebrow text-white/55">Course complete</p>
-                    <h2 class="mt-2 font-serif text-xl font-semibold text-balance">
+                    <h2 class="mt-2 font-serif text-xl font-semibold text-balance text-white">
                         Congratulations, you completed {{ $course->title }}.
                     </h2>
                     <p class="mt-1 text-sm text-white/70">
