@@ -109,6 +109,8 @@ final class ProfileDocumentsForm extends Component
      */
     public function uploadAadhaarDocument(): void
     {
+        abort_unless(config()->boolean('profile.collect_identity'), 403);
+
         $this->validate([
             'aadhaarDocument' => ['required', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:10240'],
         ], attributes: ['aadhaarDocument' => 'Aadhaar card']);

@@ -62,6 +62,17 @@ final class UpdateProfile
             'graduation_university_name', 'graduation_degree_name', 'graduation_year_of_passing', 'graduation_result_status', 'graduation_marking_scheme', 'graduation_score',
         ]));
 
+        // Collection is switched off (config/profile.php): never store a NEW
+        // Aadhaar or PAN, whatever the caller sent. null still passes, because
+        // removing what a learner saved earlier must always work.
+        if (! config()->boolean('profile.collect_identity')) {
+            foreach (['aadhaar_number', 'pan_number'] as $identityKey) {
+                if (isset($changes[$identityKey])) {
+                    unset($changes[$identityKey]);
+                }
+            }
+        }
+
         if ($changes === []) {
             return $user;
         }

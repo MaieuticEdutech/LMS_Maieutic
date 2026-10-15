@@ -22,7 +22,7 @@
 <x-card>
     <x-slot:header>
         <h2 class="text-lg text-teal-600">Upload Documents</h2>
-        <p class="mt-1 text-sm text-neutral-500">A photo and an Aadhaar card scan.</p>
+        <p class="mt-1 text-sm text-neutral-500">{{ config('profile.collect_identity') ? 'A photo and an Aadhaar card scan.' : 'Your profile photo.' }}</p>
     </x-slot:header>
     <div class="space-y-6">
 
@@ -79,10 +79,18 @@
             </div>
         </div>
 
-        {{-- ══ AADHAAR CARD ══ --}}
+        {{-- ══ AADHAAR CARD ══
+             Shown when collection is on, or when a learner already has a scan
+             stored (so they can still preview and delete it). With collection
+             off there is no upload control: see config/profile.php. --}}
+        @if (config('profile.collect_identity') || $aadhaarDocumentOriginalName)
         <div class="border-t border-neutral-200 pt-6">
             <p class="text-sm font-medium text-neutral-900">Aadhaar card</p>
-            <p class="mt-1 text-xs text-neutral-500">Up to 10MB. JPEG, JPG, PNG or PDF.</p>
+            @if (config('profile.collect_identity'))
+                <p class="mt-1 text-xs text-neutral-500">Up to 10MB. JPEG, JPG, PNG or PDF.</p>
+            @else
+                <p class="mt-1 text-xs text-neutral-500">We no longer collect this. You can delete what you uploaded earlier.</p>
+            @endif
 
             @if ($aadhaarDocumentOriginalName)
                 <div class="mt-3 flex items-center gap-3 rounded-control border border-neutral-200 bg-neutral-50 p-3">
@@ -116,6 +124,7 @@
                 </div>
             @endif
 
+            @if (config('profile.collect_identity'))
             <div class="mt-3">
                 <x-file-drop-zone
                     name="aadhaarDocument"
@@ -127,6 +136,8 @@
                     <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+            @endif
         </div>
+        @endif
     </div>
 </x-card>

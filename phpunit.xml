@@ -99,6 +99,10 @@
         -->
         <env name="LMS_MAIL_PREVIEW_ENABLED" value="false" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!-- Off by default in config/profile.php; the suite runs with it ON so the
+             existing profile tests keep covering that behaviour. The switch-off
+             cases are in IdentityCollectionSwitchTest. -->
+        <env name="PROFILE_COLLECT_IDENTITY" value="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
