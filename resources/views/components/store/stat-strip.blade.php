@@ -9,7 +9,7 @@
     @foreach ($items as $item)
         <div class="flex flex-col-reverse gap-1 px-6 py-5 {{ $loop->first ? '' : 'md:border-l' }} {{ $loop->index >= 2 ? 'border-t md:border-t-0' : '' }} {{ $loop->index % 2 === 1 ? 'border-l' : '' }} border-neutral-200">
             <dt class="text-[12.5px] text-neutral-500">{{ $item['label'] }}</dt>
-            <dd class="font-serif text-[30px] leading-none text-neutral-900">{{ $item['value'] }}</dd>
+            <dd class="font-serif text-[30px] leading-none text-neutral-900 lining-nums">{{ $item['value'] }}</dd>
         </div>
     @endforeach
 </dl>
