@@ -36,7 +36,7 @@ One project, one environment per tier (`production`; add `staging` as a clone).
 | **Queue worker** | Sends mail, grades attempts, issues certificates | Same repo and env as the web app. Must exist — mail is queued |
 | **Scheduler** | Runs `schedule:run` every minute | Coolify *Scheduled Tasks* on the web app, or a dedicated resource |
 | **PostgreSQL 17** | The database | Separate Coolify database resource |
-| **Redis** (optional) | Cache, session, queue | `.env.example` defaults to the `database` driver. Phase 16's text says Redis; the app works without it |
+| **Redis** | Queue (and cache/session if set) | Provisioned in production per `planning.md` (2026-10-08). `.env.example` defaults to the `database` driver for local dev. With Redis, `/up` reports `checks.queue: unknown` and Admin → Queue health cannot show pending jobs: confirm the worker from its own logs (§4) |
 
 The repository has **no Dockerfile, compose file or Nixpacks config**; Coolify builds the image
 itself. ⚠ VERIFY which build pack the web app uses (Settings → General → Build Pack) and write it here.
@@ -79,21 +79,29 @@ disk is not switchable (it would also need the bucket's origin in the CSP `img-s
 Commands (run as the container start/`Command` of each resource):
 
 ```bash
-# Worker — restarts itself hourly so a leak cannot grow forever
-php artisan queue:work --tries=3 --timeout=90 --max-time=3600 --sleep=3
+# Worker — restarts itself hourly so a leak cannot grow forever.
+# --queue is REQUIRED: the app uses four named queues, and without it the
+# worker drains only `default`, so no email is ever sent and no payment
+# webhook is ever processed. Order is priority, left to right.
+php artisan queue:work --queue=critical,mail,default,low --tries=3 --timeout=60 --max-time=3600 --sleep=3
 
 # Scheduler — Coolify Scheduled Task, frequency "* * * * *"
 php artisan schedule:run
 ```
 
-The `--tries` value matches `LMS_MAIL_TRIES`. Scheduled commands registered in `routes/console.php`:
+The `--tries` value matches `LMS_MAIL_TRIES`; the command matches the README's. The queue names
+come from `config/lms.php` (`critical` payments and enrollment, `mail` every email, `default`
+progress and audit, `low` cleanup and exports). **A worker is a separate Coolify resource** from
+the web app, built from the same repo with the same environment variables. Scheduled commands
+registered in `routes/console.php`:
 `lms:orders:reconcile`, `lms:orders:cancel-abandoned`, `lms:attempts:expire`,
 `lms:enrollments:expire`, `queue:prune-failed`, `queue:prune-batches`, `auth:clear-resets`.
 
 **Confirm both are running** (a Phase 16 test requirement):
-- Admin → *Queue health* shows pending jobs, the age of the oldest pending job and failed jobs. A worker is running if the oldest-pending age stays near zero; if it keeps growing, nothing is consuming the queue. (It does not show a worker heartbeat.)
+- **Worker resource:** it exists in Coolify and shows *Running*. Its logs show `Processing: ...` / `DONE` lines. A worker that only prints "Waiting" while mail is queued is on the wrong queues (check `--queue=`).
+- **End to end (the real test):** trigger a password reset to a mailbox you control. The email arrives within a minute.
+- **Failed jobs:** Admin → *Queue health* lists them. With the **database** driver it also shows pending jobs and the age of the oldest; with **Redis** (production) it cannot, so rely on the two checks above.
 - `php artisan schedule:list` lists the tasks; the next due time advances every minute.
-- Trigger a password reset to a mailbox you control; the mail arrives, and no job sits in `jobs`.
 
 `GET /up` checks the database, the cache and the content disk (a failure returns 503). Once PR
 `phase/16-storage-health` is merged it also reports `checks.queue`: `ok`, `stalled` (oldest waiting
@@ -115,7 +123,7 @@ Set in Coolify on the **web app and the worker**.
 | `APP_URL` | `https://lms.maieutic.co.in` |
 | `SESSION_SECURE_COOKIE` | `true` |
 | `DB_*` | Coolify's Postgres internal host/port, own user, strong password |
-| `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER` | `database` today; `redis` once Redis is provisioned |
+| `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER` | `redis` in production (the Redis resource exists); `database` is the local-dev default. Confirm the actual values in Coolify |
 | `MAIL_*`, `MAIL_FROM_ADDRESS` | The production provider (PD-07) and a verified sending domain |
 | `LMS_CONTENT_DISK` | `content` (volume) or `s3_content` (bucket) |
 | `AWS_*` | Only if `s3_content`; for R2 add `AWS_ENDPOINT` and `AWS_USE_PATH_STYLE_ENDPOINT=true` |
