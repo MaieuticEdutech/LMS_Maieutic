@@ -6,6 +6,8 @@ use App\Actions\Payment\SettleCapturedPayment;
 use App\Enums\EnrollmentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\UserStatus;
+use App\Exceptions\PaymentAmountMismatchException;
+use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Order;
@@ -148,6 +150,43 @@ it('rejects a payment whose currency does not match the order', function (): voi
         ->toThrow(DomainException::class);
 
     expect(Enrollment::query()->where('course_id', $course->getKey())->count())->toBe(0);
+});
+
+/*
+| A mismatched amount is a possible tampering attempt, so it must leave an audit
+| trail. The entry used to be written INSIDE the transaction that the rejection
+| then rolled back, so it never persisted — found in an end-to-end run.
+*/
+it('audits a payment whose amount does not match, and the entry survives the rollback', function (): void {
+    $course = Course::factory()->published()->pricedAt(99900)->create();
+    $order = Order::factory()->for($course)->pending()->create(['amount_total' => 99900]);
+
+    expect(fn () => app(SettleCapturedPayment::class)->handle(gatewayPayment($order, 'pay_audit_mismatch', amount: 100)))
+        ->toThrow(PaymentAmountMismatchException::class, 'no enrollment granted');
+
+    $entry = AuditLog::query()->where('action', 'security.payment_amount_mismatch')->sole();
+
+    expect($entry->auditable_id)->toBe($order->getKey())
+        ->and($entry->description)->toContain('pay_audit_mismatch')->toContain('expecting 99900 INR');
+});
+
+it('audits a currency mismatch the same way', function (): void {
+    $course = Course::factory()->published()->pricedAt(99900)->create();
+    $order = Order::factory()->for($course)->pending()->create(['amount_total' => 99900, 'currency' => 'INR']);
+
+    expect(fn () => app(SettleCapturedPayment::class)->handle(gatewayPayment($order, 'pay_audit_currency', currency: 'USD')))
+        ->toThrow(PaymentAmountMismatchException::class);
+
+    expect(AuditLog::query()->where('action', 'security.payment_amount_mismatch')->count())->toBe(1);
+});
+
+it('writes no mismatch audit entry for a payment that matches', function (): void {
+    $course = Course::factory()->published()->pricedAt(99900)->create();
+    $order = Order::factory()->for($course)->pending()->create(['amount_total' => 99900]);
+
+    app(SettleCapturedPayment::class)->handle(gatewayPayment($order, 'pay_ok'));
+
+    expect(AuditLog::query()->where('action', 'security.payment_amount_mismatch')->count())->toBe(0);
 });
 
 it('rejects a payment for a gateway order this application never created', function (): void {
