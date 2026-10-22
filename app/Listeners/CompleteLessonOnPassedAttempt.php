@@ -7,8 +7,10 @@ namespace App\Listeners;
 use App\Actions\Student\RecordLessonProgress;
 use App\Enums\CompletionStrategy;
 use App\Events\AttemptGraded;
+use App\Models\Course;
 use App\Models\Lesson;
 use App\Services\Content\ContentTypeRegistry;
+use App\Services\Progress\ProgressCalculator;
 
 /**
  * A passed attempt completes the quiz lesson that hosts it (FR-PROG-04,
@@ -37,6 +39,7 @@ final class CompleteLessonOnPassedAttempt
     public function __construct(
         private readonly RecordLessonProgress $progress,
         private readonly ContentTypeRegistry $registry,
+        private readonly ProgressCalculator $calculator,
     ) {}
 
     public function handle(AttemptGraded $event): void
@@ -64,9 +67,21 @@ final class CompleteLessonOnPassedAttempt
         $lesson = $this->hostLesson($attempt->assessment?->assessable_type, $attempt->assessment?->assessable_id);
 
         if ($lesson === null) {
-            // A course-level final test hangs off the Course, not a Lesson.
-            // It gates course completion rather than completing a lesson —
-            // ProgressCalculator handles that, and there is nothing to do here.
+            // A course-level final test hangs off the Course, not a Lesson, so
+            // it completes no lesson — but passing it can be the LAST thing
+            // standing between the student and a finished course (AC-31).
+            //
+            // ProgressCalculator decides that, but it only runs when something
+            // asks it to. Lesson progress asks it; nothing asked after a test
+            // was passed, so a student who finished every lesson first and the
+            // test last (the natural order) was never marked complete and
+            // never got a certificate. Ask here. recalculateCourse() is
+            // idempotent and fires CourseCompleted only on the transition, so
+            // a replayed event or a test passed before the lessons is harmless.
+            if ($attempt->assessment?->assessable_type === Course::class) {
+                $this->calculator->recalculateCourse($enrollment);
+            }
+
             return;
         }
 
