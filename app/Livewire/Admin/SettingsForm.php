@@ -51,6 +51,19 @@ final class SettingsForm extends Component
      */
     public array $requiredStringKeys = [];
 
+    /**
+     * Settings that may be blanked again after they have held a value.
+     *
+     * The free-promotion date exists to be switched OFF: clearing it is how the
+     * owner ends the free period early. Under the "a set value must stay
+     * non-empty" rule it became required the moment it was first saved, so the
+     * form refused to clear it and the promotion could never be ended except by
+     * typing a date in the past.
+     *
+     * @var list<string>
+     */
+    private const OPTIONAL_STRING_KEYS = ['promotion.free_access_until'];
+
     public function mount(): void
     {
         $this->authorize('viewAny', Setting::class);
@@ -63,7 +76,10 @@ final class SettingsForm extends Component
         $this->types = $settings->mapWithKeys(static fn (Setting $setting): array => [$setting->key => $setting->type])->all();
 
         $this->requiredStringKeys = array_values($settings
-            ->filter(static fn (Setting $setting): bool => $setting->type === 'string' && $setting->value !== null && $setting->value !== '')
+            ->filter(static fn (Setting $setting): bool => $setting->type === 'string'
+                && $setting->value !== null
+                && $setting->value !== ''
+                && ! in_array($setting->key, self::OPTIONAL_STRING_KEYS, true))
             ->map(static fn (Setting $setting): string => $setting->key)
             ->all());
     }
