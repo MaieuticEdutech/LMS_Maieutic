@@ -11,6 +11,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Exceptions\PaymentAmountMismatchException;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -61,6 +62,23 @@ final class SettleCapturedPayment
 
     public function handle(GatewayPayment $gatewayPayment): Payment
     {
+        try {
+            return $this->settle($gatewayPayment);
+        } catch (PaymentAmountMismatchException $e) {
+            // Recorded AFTER the transaction in settle() has rolled back, so the
+            // entry persists (see the exception's docblock).
+            $this->audit->record(
+                action: 'security.payment_amount_mismatch',
+                subject: $e->order,
+                description: $e->auditDescription,
+            );
+
+            throw $e;
+        }
+    }
+
+    private function settle(GatewayPayment $gatewayPayment): Payment
+    {
         $existing = Payment::query()
             ->where('gateway_payment_id', $gatewayPayment->id)
             ->first();
@@ -89,10 +107,14 @@ final class SettleCapturedPayment
             }
 
             if ($gatewayPayment->amount !== $order->amount_total || $gatewayPayment->currency !== $order->currency) {
-                $this->audit->record(
-                    action: 'security.payment_amount_mismatch',
-                    subject: $order,
-                    description: sprintf(
+                // NOT audited here. This closure is a transaction and the throw
+                // below rolls it back, which would take an audit row written
+                // inside it down too, leaving a possible tampering attempt with
+                // no trace. handle() records it after the rollback.
+                throw new PaymentAmountMismatchException(
+                    "Amount/currency mismatch on order {$order->order_number}: no enrollment granted.",
+                    $order,
+                    sprintf(
                         'Payment %s reported %d %s against order %s expecting %d %s — rejected.',
                         $gatewayPayment->id,
                         $gatewayPayment->amount,
@@ -101,10 +123,6 @@ final class SettleCapturedPayment
                         $order->amount_total,
                         $order->currency,
                     ),
-                );
-
-                throw new DomainException(
-                    "Amount/currency mismatch on order {$order->order_number}: no enrollment granted.",
                 );
             }
 
