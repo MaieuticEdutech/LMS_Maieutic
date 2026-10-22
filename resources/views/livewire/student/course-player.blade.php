@@ -144,6 +144,13 @@
             </p>
         @endif
 
+        {{-- ══ FINAL TEST ══ the one way in when a course requires it (AC-31). --}}
+        @if ($finalTest && $allLessonsDone && $course->requires_final_test && ! $finalTestState['passed'])
+            <div class="mt-8">
+                @include('livewire.student.partials.final-test', ['assessment' => $finalTest, 'state' => $finalTestState, 'course' => $course, 'variant' => 'card'])
+            </div>
+        @endif
+
         {{-- ══ NAVIGATION ══ --}}
         <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -247,5 +254,9 @@
                 </ul>
             </div>
         @endforeach
+
+        @if ($finalTest)
+            @include('livewire.student.partials.final-test', ['assessment' => $finalTest, 'state' => $finalTestState, 'course' => $course, 'variant' => 'rail'])
+        @endif
     </aside>
 </div>

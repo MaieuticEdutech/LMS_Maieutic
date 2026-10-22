@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Livewire\Student;
 
 use App\Actions\Student\RecordLessonProgress;
+use App\Enums\AttemptStatus;
 use App\Enums\CompletionStrategy;
+use App\Models\Assessment;
+use App\Models\AssessmentAttempt;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -160,7 +163,34 @@ final class CoursePlayer extends Component
             ? null
             : Certificate::query()->where('enrollment_id', $enrollment->getKey())->first();
 
+        // The course-level final test (FR-STU-10). Without a way in, a course
+        // that requires one could never be completed (AC-31).
+        $finalTest = Assessment::query()
+            ->published()
+            ->where('assessable_type', $course->getMorphClass())
+            ->where('assessable_id', $course->getKey())
+            ->orderBy('id')
+            ->first();
+
+        $finalTestState = null;
+
+        if ($finalTest !== null) {
+            $attempts = AssessmentAttempt::query()
+                ->where('assessment_id', $finalTest->getKey())
+                ->where('user_id', $enrollment->user_id)
+                ->get(['id', 'status', 'is_passed']);
+
+            $finalTestState = [
+                'passed' => $attempts->contains(static fn (AssessmentAttempt $a): bool => $a->is_passed === true),
+                'attempts' => $attempts->where('status', AttemptStatus::Graded)->count(),
+                'inProgress' => $attempts->contains(static fn (AssessmentAttempt $a): bool => $a->status === AttemptStatus::InProgress),
+            ];
+        }
+
         return view('livewire.student.course-player', [
+            'finalTest' => $finalTest,
+            'finalTestState' => $finalTestState,
+            'allLessonsDone' => $totalCount > 0 && $completedCount === $totalCount,
             'course' => $course,
             'lesson' => $lesson,
             'curriculum' => $curriculum,
