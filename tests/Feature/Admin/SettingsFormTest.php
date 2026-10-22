@@ -145,3 +145,47 @@ it('does not alter a setting group, type or visibility through the form', functi
         ->and($setting->type)->toBe('integer')
         ->and($setting->is_public)->toBeFalse();
 });
+
+/*
+| The free-promotion date must be clearable once it has been set — clearing it is
+| how the owner ends the free period. Found in an end-to-end run: it became a
+| "required" field after the first save, so the form silently refused to clear it.
+*/
+it('lets the free-promotion date be cleared after it has been set', function (): void {
+    // The migration already seeds this row (blank); give it a value.
+    Setting::query()->updateOrCreate(['key' => 'promotion.free_access_until'], [
+        'group' => 'promotion',
+        'value' => '2099-01-01 00:00',
+        'type' => 'string',
+        'is_public' => true,
+    ]);
+
+    $this->actingAs(User::factory()->superAdmin()->create());
+
+    Livewire::test(SettingsForm::class)
+        ->set('values.promotion.free_access_until', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Setting::query()->where('key', 'promotion.free_access_until')->sole()->value)->toBe('');
+    expect(app(App\Services\Catalogue\Promotion::class)->active())->toBeFalse();
+});
+
+it('still requires the other text settings to stay non-empty', function (): void {
+    // The migration already seeds this row (blank); give it a value.
+    Setting::query()->updateOrCreate(['key' => 'promotion.free_access_until'], [
+        'group' => 'promotion',
+        'value' => '2099-01-01 00:00',
+        'type' => 'string',
+        'is_public' => true,
+    ]);
+
+    $this->actingAs(User::factory()->superAdmin()->create());
+
+    Livewire::test(SettingsForm::class)
+        ->set('values.promotion.free_access_until', '')
+        ->set('values.branding.organisation_name', '')
+        ->call('save')
+        ->assertHasErrors(['values.branding.organisation_name' => 'required'])
+        ->assertHasNoErrors(['values.promotion.free_access_until']);
+});
