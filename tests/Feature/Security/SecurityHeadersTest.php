@@ -127,3 +127,85 @@ it('does not commit subdomains or the preload list', function (): void {
 
     expect($header)->not->toContain('includeSubDomains')->not->toContain('preload');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Media from the content bucket must be allowed to load
+|--------------------------------------------------------------------------
+|
+| With a bucket as the content disk the player hands the <video> and the PDF
+| <iframe> a pre-signed link on the bucket's domain. default-src 'self' blocked
+| both, so every video and document would stop working the day files moved off
+| the server. Found while preparing the move to R2. Only the configured
+| bucket's origin may be added, and only for media and frames.
+*/
+
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function useBucketAsContentDisk(array $overrides = []): void
+{
+    config()->set('lms.disks.content', 's3_content');
+    config()->set('filesystems.disks.s3_content', array_merge([
+        'driver' => 's3',
+        'endpoint' => 'https://abc123.r2.cloudflarestorage.com',
+        'bucket' => 'lms-prod-content',
+        'region' => 'auto',
+        'use_path_style_endpoint' => true,
+    ], $overrides));
+}
+
+function csp(Tests\TestCase $test): string
+{
+    return (string) $test->get('/')->headers->get('Content-Security-Policy');
+}
+
+it('allows only our own origin for media when files are on the local disk', function (): void {
+    $policy = csp($this);
+
+    expect($policy)->toContain("media-src 'self';")
+        ->and($policy)->not->toContain('r2.cloudflarestorage.com');
+});
+
+it('allows the bucket origin for media and PDF frames (path-style R2 endpoint)', function (): void {
+    useBucketAsContentDisk();
+    $policy = csp($this);
+
+    expect($policy)->toContain("media-src 'self' https://abc123.r2.cloudflarestorage.com")
+        ->and($policy)->toContain('frame-src https://checkout.razorpay.com https://api.razorpay.com https://abc123.r2.cloudflarestorage.com')
+        // Path-style: the bucket is in the path, not the host.
+        ->and($policy)->not->toContain('https://lms-prod-content.abc123');
+});
+
+it('also allows the bucket-prefixed host for a virtual-hosted style endpoint', function (): void {
+    useBucketAsContentDisk(['use_path_style_endpoint' => false]);
+
+    expect(csp($this))->toContain('https://abc123.r2.cloudflarestorage.com https://lms-prod-content.abc123.r2.cloudflarestorage.com');
+});
+
+it('allows the regional AWS S3 hosts when there is no custom endpoint', function (): void {
+    useBucketAsContentDisk(['endpoint' => null, 'bucket' => 'my-bucket', 'region' => 'ap-south-1']);
+    $policy = csp($this);
+
+    expect($policy)->toContain('https://my-bucket.s3.ap-south-1.amazonaws.com')
+        ->and($policy)->toContain('https://s3.ap-south-1.amazonaws.com');
+});
+
+it('ignores an endpoint that is not https', function (): void {
+    useBucketAsContentDisk(['endpoint' => 'http://abc123.r2.cloudflarestorage.com']);
+
+    expect(csp($this))->toContain("media-src 'self';")->not->toContain('r2.cloudflarestorage.com');
+});
+
+it('never opens scripts, connections or a wildcard to the bucket', function (): void {
+    useBucketAsContentDisk();
+    $policy = csp($this);
+
+    foreach (explode('; ', $policy) as $directive) {
+        if (str_starts_with($directive, 'script-src') || str_starts_with($directive, 'connect-src') || str_starts_with($directive, 'default-src')) {
+            expect($directive)->not->toContain('r2.cloudflarestorage.com');
+        }
+    }
+
+    expect($policy)->not->toContain('media-src *')->not->toContain('frame-src *')->not->toContain('https://*.r2');
+});

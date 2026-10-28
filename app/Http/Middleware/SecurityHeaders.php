@@ -83,6 +83,18 @@ final class SecurityHeaders
         $font = ["'self'"];
         $image = ["'self'"];
         $connect = ["'self'", 'https://api.razorpay.com', 'https://lumberjack.razorpay.com'];
+        $media = ["'self'"];
+        $frame = ['https://checkout.razorpay.com', 'https://api.razorpay.com'];
+
+        // With a bucket as the content disk, the player hands the <video> and
+        // the PDF <iframe> a pre-signed link on the BUCKET's domain, not ours.
+        // Without this, default-src 'self' blocks every video and document the
+        // moment the files move off the server. Only the configured bucket's
+        // origin is added; never a wildcard.
+        foreach ($this->contentStorageOrigins() as $origin) {
+            $media[] = $origin;
+            $frame[] = $origin;
+        }
 
         // Vite's dev server serves unbuilt assets from its own origin and
         // pushes HMR updates over a websocket. Neither exists once assets
@@ -131,7 +143,8 @@ final class SecurityHeaders
             'font-src '.implode(' ', $font),
             'connect-src '.implode(' ', $connect),
             // Razorpay's hosted checkout renders inside its own iframe.
-            'frame-src https://checkout.razorpay.com https://api.razorpay.com',
+            'media-src '.implode(' ', $media),
+            'frame-src '.implode(' ', $frame),
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -139,5 +152,56 @@ final class SecurityHeaders
         ];
 
         return implode('; ', $directives);
+    }
+
+    /**
+     * The origin(s) a pre-signed link for the content disk can be served from,
+     * or none when files are on the local disk (those stream through this app).
+     *
+     * @return list<string>
+     */
+    private function contentStorageOrigins(): array
+    {
+        $disk = config('lms.disks.content');
+
+        if (! is_string($disk)) {
+            return [];
+        }
+
+        $config = config('filesystems.disks.'.$disk);
+
+        if (! is_array($config) || ($config['driver'] ?? null) !== 's3') {
+            return [];
+        }
+
+        $endpoint = $config['endpoint'] ?? null;
+        $bucket = $config['bucket'] ?? null;
+        $region = $config['region'] ?? null;
+        $pathStyle = (bool) ($config['use_path_style_endpoint'] ?? false);
+
+        if (is_string($endpoint) && $endpoint !== '') {
+            $parts = parse_url($endpoint);
+
+            if (! is_array($parts) || ! isset($parts['scheme'], $parts['host']) || $parts['scheme'] !== 'https') {
+                return [];
+            }
+
+            $origin = 'https://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+            $origins = [$origin];
+
+            // Virtual-hosted style puts the bucket in the host name.
+            if (! $pathStyle && is_string($bucket) && $bucket !== '') {
+                $origins[] = 'https://'.$bucket.'.'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+            }
+
+            return $origins;
+        }
+
+        // Plain AWS S3.
+        if (is_string($bucket) && $bucket !== '' && is_string($region) && $region !== '') {
+            return ['https://'.$bucket.'.s3.'.$region.'.amazonaws.com', 'https://s3.'.$region.'.amazonaws.com'];
+        }
+
+        return [];
     }
 }
