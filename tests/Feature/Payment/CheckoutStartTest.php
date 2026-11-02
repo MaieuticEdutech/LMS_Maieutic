@@ -73,3 +73,32 @@ it('refuses a guest checkout attempt on an unpublished course', function (): voi
 // No "free course" test here either: courses_price_positive_check makes a
 // zero-price course impossible to construct at all — see
 // InitiateCheckoutTest's identical note.
+
+/*
+| Found while launching: with missing or rejected Razorpay credentials the Buy
+| button returned a raw 500. The buyer should see a retryable message, and the
+| dead order must not linger as "created".
+*/
+it('shows a retryable message and closes the order when the gateway cannot create one', function (): void {
+    // The production failure itself: the real gateway with no credentials
+    // configured. It throws while being built, before any network call, so
+    // nothing here can reach Razorpay.
+    config()->set('lms.payments.razorpay.key_id', null);
+    config()->set('lms.payments.razorpay.key_secret', null);
+    $this->app->bind(App\Contracts\Payment\PaymentGateway::class, App\Services\Payment\RazorpayGateway::class);
+
+    $course = Course::factory()->published()->pricedAt(99900)->create();
+
+    Livewire::test(Start::class, ['course' => $course])
+        ->set('name', 'Guest Buyer')
+        ->set('email', 'guest@example.com')
+        ->call('submit')
+        ->assertHasErrors('course')
+        ->assertNotDispatched('checkout:open');
+
+    $order = Order::query()->where('course_id', $course->getKey())->sole();
+
+    expect($order->status)->toBe(OrderStatus::Failed)
+        ->and($order->gateway_order_id)->toBeNull()
+        ->and(App\Models\AuditLog::query()->where('action', 'order.gateway_order_failed')->count())->toBe(1);
+});

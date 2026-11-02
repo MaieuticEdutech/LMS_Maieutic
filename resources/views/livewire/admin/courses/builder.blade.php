@@ -68,7 +68,7 @@
                         @endforeach
                     </x-select>
 
-                    <x-input wire:model="priceRupees" type="number" step="0.01" min="0" label="Price (INR)" name="priceRupees" required />
+                    <x-input wire:model="priceRupees" type="number" step="0.01" min="1" label="Price (INR)" name="priceRupees" required />
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">

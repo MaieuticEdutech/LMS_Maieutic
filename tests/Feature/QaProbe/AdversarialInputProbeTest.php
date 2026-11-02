@@ -159,7 +159,7 @@ it('keeps a student created through the admin form out of the super admin role',
 | ═══════════ CRS-12 … CRS-19 — course price and level boundaries ═══════════
 */
 
-it('rejects a zero or negative course price', function (string $price): void {
+it('rejects a zero, negative or sub-rupee course price', function (string $price): void {
     Livewire::test(CourseBuilder::class)
         ->set('title', 'Priced course')
         ->set('level', 'beginner')
@@ -167,14 +167,15 @@ it('rejects a zero or negative course price', function (string $price): void {
         ->set('priceRupees', $price)
         ->call('save')
         ->assertHasErrors('priceRupees');
-})->with(['0', '-100', '0.00']);
+    // Under INR 1 Razorpay rejects the order, so the course could never be bought.
+})->with(['0', '-100', '0.00', '0.01', '0.99']);
 
 it('accepts the minimum legal course price', function (): void {
     Livewire::test(CourseBuilder::class)
         ->set('title', 'Cheap course')
         ->set('level', 'beginner')
         ->set('language', 'en')
-        ->set('priceRupees', '0.01')
+        ->set('priceRupees', '1')
         ->call('save')
         ->assertHasNoErrors('priceRupees');
 });

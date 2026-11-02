@@ -132,10 +132,14 @@ final class CourseBuilder extends Component
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'level' => ['required', Rule::enum(CourseLevel::class)],
             'language' => ['required', 'string', 'max:10'],
-            'priceRupees' => ['required', 'numeric', 'min:0.01'],
+            // INR 1.00, not 0.01: Razorpay refuses any order under one rupee, so a
+            // cheaper course could be saved but never bought (a raw error at checkout).
+            'priceRupees' => ['required', 'numeric', 'min:1'],
             'requires_final_test' => ['boolean'],
             'outcomes.*' => ['nullable', 'string', 'max:255'],
             'requirements.*' => ['nullable', 'string', 'max:255'],
+        ], [
+            'priceRupees.min' => 'The price must be at least ₹1 — the payment gateway does not accept less.',
         ]);
 
         $actor = auth()->user();
