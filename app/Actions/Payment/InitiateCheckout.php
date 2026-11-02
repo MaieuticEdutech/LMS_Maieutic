@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 /**
  * Start a purchase (architecture.md §11.2, steps 1-6).
@@ -92,7 +93,27 @@ final class InitiateCheckout
             return $order;
         });
 
-        $gatewayOrder = $this->gateway->createOrder($order);
+        try {
+            $gatewayOrder = $this->gateway->createOrder($order);
+        } catch (Throwable $e) {
+            // Missing or rejected gateway credentials, or the gateway being
+            // down. The buyer gets a retryable message, not a raw 500; the real
+            // cause goes to the log and the unusable order is closed so it never
+            // lingers as "created".
+            report($e);
+
+            $order->forceFill(['status' => OrderStatus::Failed])->save();
+
+            $this->audit->record(
+                action: 'order.gateway_order_failed',
+                subject: $order,
+                description: sprintf('Could not create the gateway order for %s: %s', $order->order_number, $e::class),
+            );
+
+            throw ValidationException::withMessages([
+                'course' => 'We could not start your payment just now. Please try again in a few minutes.',
+            ]);
+        }
 
         $order->forceFill([
             'gateway_order_id' => $gatewayOrder->id,

@@ -142,6 +142,59 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    /**
+     * Checkout: opens Razorpay's hosted modal with the order the server just
+     * created. Lives in the bundle, not an inline <script>: a page reached by
+     * wire:navigate keeps the PREVIOUS page's CSP, so a per-request nonce on an
+     * inline script never matches and the script is blocked. The checkout
+     * component was then missing, `open` fell through to window.open, and the
+     * buyer landed on /checkout/[object Object].
+     *
+     * The modal's success handler is informational only. It sends the buyer to
+     * the status page, which shows what the webhook actually settled; nothing
+     * is granted from the browser (architecture.md §11.2).
+     */
+    Alpine.data('checkoutForm', () => ({
+        open(detail) {
+            const launch = () => {
+                new window.Razorpay({
+                    key: detail.keyId,
+                    order_id: detail.gatewayOrderId,
+                    amount: detail.amount,
+                    currency: detail.currency,
+                    name: detail.courseTitle,
+                    description: 'Course purchase',
+                    prefill: {
+                        name: detail.name,
+                        email: detail.email,
+                        contact: detail.contact ?? '',
+                    },
+                    handler: () => {
+                        window.location.href = detail.statusUrl;
+                    },
+                    modal: {
+                        // Closing the modal without paying records nothing; the
+                        // order stays `pending` until a retry or the
+                        // reconciliation sweep resolves it.
+                        ondismiss: () => {},
+                    },
+                }).open();
+            };
+
+            if (window.Razorpay) {
+                launch();
+
+                return;
+            }
+
+            // Not present when this page was reached by an in-page navigation.
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = launch;
+            document.head.appendChild(script);
+        },
+    }));
 });
 
 /*

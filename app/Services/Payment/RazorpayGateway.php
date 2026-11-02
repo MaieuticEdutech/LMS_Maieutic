@@ -57,7 +57,14 @@ final class RazorpayGateway implements PaymentGateway
      * `$api->order`/`$api->payment`/`$api->utility` — same objects, same
      * statics, but a type the analyser can actually check.
      */
-    public function __construct()
+    /**
+     * Credentials are read when Razorpay is first called, not when this class is
+     * built. Building it throws if a key is missing, and that happens while the
+     * container resolves the checkout Action, before any error handling can run,
+     * so a missing key showed the buyer a raw 500 (and would break webhook
+     * signature checks, which need only the webhook secret).
+     */
+    private function authenticate(): void
     {
         new Api(
             config()->string('lms.payments.razorpay.key_id'),
@@ -67,6 +74,8 @@ final class RazorpayGateway implements PaymentGateway
 
     public function createOrder(Order $order): GatewayOrder
     {
+        $this->authenticate();
+
         $response = (new RazorpayOrder)->create([
             'amount' => $order->amount_total,
             'currency' => $order->currency,
@@ -122,6 +131,8 @@ final class RazorpayGateway implements PaymentGateway
 
     public function fetchPayment(string $gatewayPaymentId): GatewayPayment
     {
+        $this->authenticate();
+
         $response = (new RazorpayPayment)->fetch($gatewayPaymentId)->toArray();
 
         return $this->paymentFromArray($response);
@@ -129,6 +140,8 @@ final class RazorpayGateway implements PaymentGateway
 
     public function fetchOrder(string $gatewayOrderId): GatewayOrder
     {
+        $this->authenticate();
+
         $response = (new RazorpayOrder)->fetch($gatewayOrderId)->toArray();
 
         return new GatewayOrder(
@@ -141,6 +154,8 @@ final class RazorpayGateway implements PaymentGateway
 
     public function fetchOrderPayments(string $gatewayOrderId): array
     {
+        $this->authenticate();
+
         $response = (new RazorpayOrder)->fetch($gatewayOrderId)->payments()->toArray();
 
         $items = $response['items'] ?? [];
