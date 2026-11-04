@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -146,3 +148,16 @@ Schedule::command('lms:orders:cancel-abandoned')
  * would run each task, and "prune" running concurrently on two machines is a
  * race with no benefit.
  */
+
+/*
+ * Scheduler heartbeat. /up reads this to tell a running scheduler from a dead one,
+ * which otherwise looks identical (nothing fails loudly). One server writing it
+ * each minute is enough: the question /up answers is "is a scheduler running
+ * somewhere", and the cache is shared. Read by HealthController::schedulerState().
+ */
+Schedule::call(static function (): void {
+    Cache::put(HealthController::SCHEDULER_HEARTBEAT_KEY, now()->getTimestamp(), 3600);
+})
+    ->name('scheduler-heartbeat')
+    ->everyMinute()
+    ->onOneServer();

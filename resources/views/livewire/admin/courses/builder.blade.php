@@ -88,7 +88,7 @@
                     <div class="mt-1.5 space-y-2">
                         @foreach ($outcomes as $i => $outcome)
                             <div class="flex gap-2">
-                                <input wire:model="outcomes.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="e.g. Build a REST API from scratch">
+                                <input wire:model="outcomes.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="e.g. Build a REST API from scratch" aria-label="Learning outcome {{ $i + 1 }}">
                                 <button type="button" wire:click="removeOutcome({{ $i }})" class="shrink-0 rounded-control border border-neutral-200 px-2.5 text-neutral-500 hover:border-red-200 hover:text-red-600" aria-label="Remove">&times;</button>
                             </div>
                         @endforeach
@@ -101,7 +101,7 @@
                     <div class="mt-1.5 space-y-2">
                         @foreach ($requirements as $i => $requirement)
                             <div class="flex gap-2">
-                                <input wire:model="requirements.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="e.g. Basic JavaScript">
+                                <input wire:model="requirements.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="e.g. Basic JavaScript" aria-label="Requirement {{ $i + 1 }}">
                                 <button type="button" wire:click="removeRequirement({{ $i }})" class="shrink-0 rounded-control border border-neutral-200 px-2.5 text-neutral-500 hover:border-red-200 hover:text-red-600" aria-label="Remove">&times;</button>
                             </div>
                         @endforeach

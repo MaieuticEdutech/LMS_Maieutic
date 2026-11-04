@@ -10,7 +10,7 @@
         @foreach ($options as $i => $option)
             <div class="flex items-center gap-2">
                 <input wire:model="options.{{ $i }}.is_correct" type="checkbox" class="size-4 shrink-0 rounded-xs border-neutral-300 text-teal-600" aria-label="Mark option {{ $i + 1 }} correct">
-                <input wire:model="options.{{ $i }}.body" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="Option {{ $i + 1 }}">
+                <input wire:model="options.{{ $i }}.body" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="Option {{ $i + 1 }}" aria-label="Option {{ $i + 1 }} text">
                 <button type="button" wire:click="removeOption({{ $i }})" class="shrink-0 rounded-control border border-neutral-200 px-2.5 text-neutral-500 hover:border-red-200 hover:text-red-600" aria-label="Remove option">&times;</button>
             </div>
         @endforeach
