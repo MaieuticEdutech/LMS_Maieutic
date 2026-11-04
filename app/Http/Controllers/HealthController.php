@@ -28,6 +28,13 @@ use Throwable;
  * `unknown` means the queue is not the database driver, so its age cannot be
  * read here. That is reported honestly and does not degrade the status.
  *
+ * ADVISORY — the scheduler. Order reconciliation (the backstop for a missed
+ * payment webhook) and expiry run only if `schedule:run` is firing, and a dead
+ * scheduler otherwise looks healthy. The scheduler writes a heartbeat every
+ * minute (routes/console.php); `stalled` means it is more than five minutes old.
+ * `unknown` means no heartbeat has been seen, as right after a deploy or a cache
+ * flush, and does not degrade the status. Like the queue, never a 503.
+ *
  * SECURITY: the body reports only reachable/unreachable per dependency. It must
  * never leak connection strings, credentials, versions or exception messages —
  * this endpoint is typically unauthenticated (NFR-DATA-03).
@@ -39,6 +46,11 @@ final class HealthController extends Controller
      * stopped. Jobs here are mail, grading and reconciliation: seconds of work.
      */
     private const QUEUE_STALLED_AFTER_SECONDS = 300;
+
+    /** Cache key the scheduler refreshes every minute; see routes/console.php. */
+    public const SCHEDULER_HEARTBEAT_KEY = 'lms:scheduler:heartbeat';
+
+    private const SCHEDULER_STALLED_AFTER_SECONDS = 300;
 
     public function __invoke(QueueHealthService $queue): JsonResponse
     {
@@ -73,17 +85,39 @@ final class HealthController extends Controller
 
         $healthy = ! in_array(false, $checks, true);
         $queueState = $this->queueState($queue);
+        $schedulerState = $this->schedulerState();
 
         return response()->json([
-            'status' => $healthy && $queueState !== 'stalled' ? 'ok' : 'degraded',
+            'status' => $healthy && $queueState !== 'stalled' && $schedulerState !== 'stalled' ? 'ok' : 'degraded',
             'checks' => [
                 ...array_map(
                     static fn (bool $ok): string => $ok ? 'ok' : 'unreachable',
                     $checks,
                 ),
                 'queue' => $queueState,
+                'scheduler' => $schedulerState,
             ],
         ], $healthy ? 200 : 503);
+    }
+
+    /**
+     * @return 'ok'|'stalled'|'unknown'
+     */
+    private function schedulerState(): string
+    {
+        try {
+            $beat = Cache::get(self::SCHEDULER_HEARTBEAT_KEY);
+        } catch (Throwable $e) {
+            report($e);
+
+            return 'unknown';
+        }
+
+        if (! is_int($beat)) {
+            return 'unknown';
+        }
+
+        return now()->getTimestamp() - $beat > self::SCHEDULER_STALLED_AFTER_SECONDS ? 'stalled' : 'ok';
     }
 
     /**

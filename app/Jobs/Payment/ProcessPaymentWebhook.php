@@ -114,11 +114,10 @@ final class ProcessPaymentWebhook implements ShouldQueue
     /**
      * An event type this application does not act on — recorded, not
      * silently dropped (architecture.md §11.3 rule 5's "an unhandled event
-     * is recorded"; {@see WebhookStatus::Ignored}'s own docblock). Refunds
-     * (`refund.processed`) land here in V1: refunds are initiated manually
-     * in the Razorpay dashboard (A-14), so there is no automated settlement
-     * action for this application to call — only a record that the event
-     * arrived.
+     * is recorded"; {@see WebhookStatus::Ignored}'s own docblock). Refunds are
+     * initiated manually in the Razorpay dashboard (A-14) but their
+     * `refund.processed` event is handled by {@see ApplyRefund}, not ignored;
+     * anything else (for example `payment.authorized`) lands here.
      */
     private function ignore(WebhookEvent $webhookEvent, string $eventType): void
     {

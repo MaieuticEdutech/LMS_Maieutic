@@ -10,7 +10,7 @@
     <div class="space-y-2">
         @foreach ($accepted_answers as $i => $answer)
             <div class="flex gap-2">
-                <input wire:model="accepted_answers.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="Accepted answer">
+                <input wire:model="accepted_answers.{{ $i }}" type="text" class="block h-10 w-full rounded-control border border-neutral-200 px-3 text-sm text-neutral-900 hover:border-neutral-300" placeholder="Accepted answer" aria-label="Accepted answer {{ $i + 1 }}">
                 <button type="button" wire:click="removeAcceptedAnswer({{ $i }})" class="shrink-0 rounded-control border border-neutral-200 px-2.5 text-neutral-500 hover:border-red-200 hover:text-red-600" aria-label="Remove">&times;</button>
             </div>
         @endforeach

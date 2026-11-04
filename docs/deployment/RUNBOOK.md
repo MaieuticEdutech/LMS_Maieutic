@@ -16,7 +16,7 @@ Secrets never appear here. Variable names only; values live in Coolify's environ
 | Staging mirroring production | 🔴 not built | Dev team, Coolify |
 | Deployment documented | 🟢 this file | — |
 | Rollback documented | 🟢 §7 — **not yet rehearsed** | Dev team |
-| Backup **and restore** verified (AC-38) | 🔴 not done | Dev team |
+| Backup **and restore** verified (AC-38) | 🟢 database: nightly to R2, restore rehearsed 2026-10-29 (§8). Files volume backup still open | Dev team |
 | AC-35 (HTTPS, HSTS, headers) in production | 🟡 headers shipped in Phase 14; verify live, §9 | Dev team |
 | Live Razorpay webhook verified | 🔴 blocked on PD-09 credentials | Owner |
 | Workers and scheduler confirmed running | 🔴 see §4 — no worker existed on 2026-10-08 | Dev team |
@@ -65,8 +65,24 @@ php artisan tinker --execute='echo storage_path("app");'
 
 Mount the **worker** on the same volume, or it cannot read what the web app wrote.
 
-Moving `content` to a bucket (Cloudflare R2 per `HOSTING-COMPARISON.md` §4.3) is still the right
-long-term step for video, but it does **not** remove the need for the volume while the
+### 3.1 The four R2 buckets
+
+| Bucket | Used by | Where it is configured |
+|---|---|---|
+| `lms-prod-content` | Production course videos and documents (`content` disk) | Coolify env on the **web app and the worker**: `LMS_CONTENT_DISK=s3_content` plus the `AWS_*` variables |
+| `lms-prod-backups` | Nightly Postgres backups | Coolify → *S3 Storages* (`r2-prod-backups`), chosen on the Postgres resource's scheduled backup |
+| `lms-staging-content` | Staging, once it exists (§10) | Not used yet |
+| `lms-dev-content` | Developers' local `.env` | Never in Coolify |
+
+For every R2 bucket: `AWS_DEFAULT_REGION=auto`, `AWS_ENDPOINT=https://<account>.r2.cloudflarestorage.com`
+(the account host only, **no bucket name in the path**), `AWS_USE_PATH_STYLE_ENDPOINT=true`.
+Each file records the disk it was stored on (`media_files.disk`), so files uploaded before the
+switch keep working. The Content-Security-Policy adds the bucket's origin to `media-src` and
+`frame-src` automatically from this configuration. R2 charges for stored data and requests, not for
+data downloaded, so streaming does not add to the bill. Production moved to `lms-prod-content`
+on 2026-10-29.
+
+Moving `content` to a bucket (Cloudflare R2 per `HOSTING-COMPARISON.md` §4.3) does **not** remove the need for the volume while the
 `public` disk (thumbnails, instructor photos) stays local. `profile_documents` can move to a
 private bucket with `LMS_PROFILE_DOCUMENTS_DRIVER=s3` once that PR is merged; **copy existing
 files across before switching**, or documents already uploaded become unreachable. The `public`
@@ -125,6 +141,7 @@ Set in Coolify on the **web app and the worker**.
 | `DB_*` | Coolify's Postgres internal host/port, own user, strong password |
 | `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER` | `redis` in production (the Redis resource exists); `database` is the local-dev default. Confirm the actual values in Coolify |
 | `MAIL_*`, `MAIL_FROM_ADDRESS` | The production provider (PD-07) and a verified sending domain |
+| `LOG_STACK` | Optional. `single,stderr` also prints errors to Coolify's *Runtime Logs*; the default (`single`) writes only to `storage/logs/laravel.log`, which is hard to reach if the Coolify terminal is not working. Added 2026-11-02 to diagnose checkout |
 | `LMS_CONTENT_DISK` | `content` (volume) or `s3_content` (bucket) |
 | `AWS_*` | Only if `s3_content`; for R2 add `AWS_ENDPOINT` and `AWS_USE_PATH_STYLE_ENDPOINT=true` |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Live keys — environment only, never committed |
@@ -186,8 +203,9 @@ wrong:
 ## 8. Backups and restore (AC-38)
 
 ### 8.1 Backups
-- **Database:** Coolify → Postgres resource → *Backups* → schedule nightly, retention 30 days,
-  destination an S3-compatible bucket (R2), **not** the VPS disk. The weekly Hostinger VPS
+- **Database:** ✅ in place. Coolify → Postgres resource → *Backups*: cron `0 2 * * *` (UTC),
+  *Enable S3* with the `r2-prod-backups` storage (bucket `lms-prod-backups`), with a retention
+  limit so the bucket cannot grow without bound. Not the VPS disk. The weekly Hostinger VPS
   snapshot is a safety net, not the plan.
 - **Files:** the `storage/app` volume. Back it up to the same bucket (Coolify volume backup, or a
   scheduled task running `rclone`/`aws s3 sync` ⚠ VERIFY which Coolify supports on your version).
@@ -230,6 +248,22 @@ progress and the certificate.
 **Webhook:** Razorpay dashboard → Webhooks → URL `https://lms.maieutic.co.in/webhooks/razorpay` (`POST webhooks/razorpay`, confirmed with `php artisan route:list --path=webhook`); send a test event; confirm it
 returns 200 and appears in Admin → *Webhook events*.
 
+Razorpay dashboard settings that decide whether a paid order is ever settled (none can be seen from
+the code):
+- **Payment capture must be automatic.** The app acts only on `payment.captured`. A payment left
+  merely *authorized* grants nothing and is refunded by Razorpay after a few days.
+- **Subscribe the webhook to** `payment.captured`, `payment.failed` and `refund.processed`.
+- **The webhook secret** typed in the dashboard must equal `RAZORPAY_WEBHOOK_SECRET`. It is **not**
+  the API key secret. A wrong value makes every delivery fail with 400.
+- **Live keys need Razorpay's account verification (KYC) first**, so start it early.
+- **Razorpay refuses any order under ₹1.00.** The course form enforces a ₹1 minimum.
+
+Checkout smoke test: go through the normal clicks (course page → Buy → Pay), not by typing the
+checkout address. A page reached by an in-page navigation behaves differently from a direct load.
+
+A guest buyer (no account yet) is given access through an activation email, so a broken mail setup
+means a paying customer who cannot sign in. Confirm mail (below) **before** taking live payments.
+
 **Mail:** send to a Gmail test address; *Show original* must show `SPF: PASS`, `DKIM: PASS`,
 `DMARC: PASS`.
 
@@ -241,7 +275,8 @@ returns 200 and appears in Admin → *Webhook events*.
 |---|---|---|
 | `public` disk cannot move to S3 | Thumbnails and instructor photos depend on the persistent volume and its backup | Env-driven disk plus the bucket origin in the CSP `img-src` |
 | `profile_documents` → bucket needs a one-off copy | Switching the driver strands files already on the volume | Copy `storage/app/profile-documents` into the bucket under the `profile-documents/` prefix, then switch |
-| `/up` does not check the scheduler | A stopped scheduler looks healthy | Alert on `lms:` task output, or add a heartbeat the scheduler writes |
+| ~~`/up` does not check the scheduler~~ | Fixed: the scheduler writes a heartbeat every minute and `/up` reports `checks.scheduler` (`ok`, `stalled` after 5 minutes, or `unknown` before the first beat). A stalled scheduler makes `status` `degraded`, never a 503 | Point the uptime monitor at `status != ok`. Needs the Coolify scheduled task `* * * * *` (§4) |
+| No load test run yet | Capacity is unknown | `docs/deployment/load-test.k6.js` is a read-only script; run it against staging |
 | No `storage:link` in deploy (before this runbook) | Broken thumbnails and instructor photos | Add to post-deploy command (§6) |
 | Staging does not exist | Rollback and restore cannot be rehearsed safely | Clone the production environment in Coolify |
 | PD-07 and PD-09 unresolved | No verified sending domain; no live-payment proof | Owner to supply |
@@ -253,5 +288,5 @@ returns 200 and appears in Admin → *Webhook events*.
 | Date | Rehearsal | Environment | Result | By |
 |---|---|---|---|---|
 | — | Rollback | staging | not yet run | — |
-| — | Backup restore (time to usable) | scratch | not yet run | — |
+| 2026-10-29 | Backup restore | scratch database | restored from the R2 dump and checked; time to usable not recorded. Scratch database and dump deleted afterwards | Owner |
 | — | Webhook end to end | production | blocked on PD-09 | — |
