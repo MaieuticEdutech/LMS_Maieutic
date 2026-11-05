@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 use App\Actions\Profile\UpdateProfile;
-use App\Actions\Profile\UploadAadhaarDocument;
-use App\Livewire\Student\ProfileDocumentsForm;
 use App\Livewire\Student\ProfileForm;
 use App\Models\User;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Env;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 /*
@@ -30,8 +26,6 @@ use Livewire\Livewire;
 */
 
 beforeEach(function (): void {
-    Storage::fake('profile_documents');
-
     $this->student = User::factory()->student()->create();
     $this->actingAs($this->student);
 });
@@ -61,15 +55,11 @@ describe('with collection switched off', function (): void {
         config()->set('profile.collect_identity', false);
     });
 
-    it('shows no Aadhaar or PAN inputs and no Aadhaar upload', function (): void {
+    it('shows no Aadhaar or PAN inputs', function (): void {
         Livewire::test(ProfileForm::class)
             ->assertDontSee('XXXX XXXX XXXX')
             ->assertDontSee('ABCDE1234F');
 
-        Livewire::test(ProfileDocumentsForm::class)
-            ->assertDontSee('Choose your Aadhaar card')
-            ->assertDontSee('Aadhaar card')
-            ->assertSee('Your profile photo.');
     });
 
     it('does not store a number typed into a crafted request', function (): void {
@@ -102,19 +92,6 @@ describe('with collection switched off', function (): void {
             ->and($fresh->phone)->toBe('9876543210');
     });
 
-    it('refuses a new Aadhaar scan, in the component and in the action', function (): void {
-        Livewire::test(ProfileDocumentsForm::class)
-            ->set('aadhaarDocument', UploadedFile::fake()->create('aadhaar.pdf', 100, 'application/pdf'))
-            ->assertForbidden();
-
-        expect(fn () => app(UploadAadhaarDocument::class)->handle(
-            $this->student,
-            UploadedFile::fake()->create('aadhaar.pdf', 100, 'application/pdf'),
-        ))->toThrow(DomainException::class);
-
-        expect($this->student->refresh()->getAttributes()['aadhaar_document_path'])->toBeNull();
-    });
-
     it('still shows a saved number masked, and still lets the learner delete it', function (): void {
         $this->student->forceFill(['aadhaar_number' => '234123412346', 'pan_number' => 'ABCDE1234F'])->save();
 
@@ -130,22 +107,4 @@ describe('with collection switched off', function (): void {
             ->and($fresh->pan_number)->toBeNull();
     });
 
-    it('still lets the learner see and delete a scan uploaded earlier', function (): void {
-        config()->set('profile.collect_identity', true);
-        app(UploadAadhaarDocument::class)->handle(
-            $this->student,
-            UploadedFile::fake()->create('aadhaar.pdf', 100, 'application/pdf'),
-        );
-        config()->set('profile.collect_identity', false);
-
-        $name = $this->student->refresh()->getAttributes()['aadhaar_document_original_name'];
-
-        Livewire::test(ProfileDocumentsForm::class)
-            ->assertSee($name)
-            ->assertSee('We no longer collect this')
-            ->assertDontSee('Choose your Aadhaar card')
-            ->call('removeAadhaarDocument');
-
-        expect($this->student->refresh()->getAttributes()['aadhaar_document_path'])->toBeNull();
-    });
 });

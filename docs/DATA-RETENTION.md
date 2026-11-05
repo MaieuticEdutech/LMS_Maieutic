@@ -14,8 +14,7 @@ automated is worse than one that's honest about what's still manual.
 
 ## 1. What personal data this system collects
 
-Per NFR-DATA-01, deliberately narrow: **name, email, phone (optional), avatar
-(optional)**. Nothing beyond what a course-selling LMS needs to operate. No
+Per NFR-DATA-01, deliberately narrow: **name, email, phone (optional)**. Nothing beyond what a course-selling LMS needs to operate. No
 card or bank details are ever collected here — NFR-DATA-02: all payment
 instrument capture happens on Razorpay's hosted checkout, so there is no card
 number, CVV, or bank account anywhere in this database to retain or delete in
@@ -63,7 +62,7 @@ erasure request is a manual operator procedure:
    immediately removes it from every UI surface.
 3. Decide what can actually be scrubbed versus what's legally required to
    keep:
-   - **Can be scrubbed**: `name`, `email`, `phone`, `avatar_path` on the
+   - **Can be scrubbed**: `name`, `email`, `phone` on the
      `users` row — replace with an anonymized placeholder (e.g.
      `deleted-user-{id}@lms.invalid`, name `"Deleted user"`) rather than
      nulling them, since several columns are `NOT NULL`.

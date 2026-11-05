@@ -51,7 +51,6 @@ moved to a bucket, and **today most of it is not switchable to a bucket**:
 | Disk | Holds | Path | Can move to S3 by config? |
 |---|---|---|---|
 | `content` | Course videos, PDFs, slides | `storage/app/content` | **Yes** — `LMS_CONTENT_DISK=s3_content` |
-| `profile_documents` | Learner photo and Aadhaar scan (ciphertext) | `storage/app/profile-documents` | **Yes, once PR `phase/16-storage-health` is merged** — `LMS_PROFILE_DOCUMENTS_DRIVER=s3` (optional `LMS_PROFILE_DOCUMENTS_BUCKET`); until then hard-wired `local`. Existing files do **not** move by themselves |
 | `public` | Course thumbnails, instructor photos | `storage/app/public` | **No** |
 | `temp` | In-flight uploads | `storage/app/temp` | No (transient) |
 
@@ -83,9 +82,7 @@ data downloaded, so streaming does not add to the bill. Production moved to `lms
 on 2026-10-29.
 
 Moving `content` to a bucket (Cloudflare R2 per `HOSTING-COMPARISON.md` §4.3) does **not** remove the need for the volume while the
-`public` disk (thumbnails, instructor photos) stays local. `profile_documents` can move to a
-private bucket with `LMS_PROFILE_DOCUMENTS_DRIVER=s3` once that PR is merged; **copy existing
-files across before switching**, or documents already uploaded become unreachable. The `public`
+`public` disk (thumbnails, instructor photos) stays local. The `public`
 disk is not switchable (it would also need the bucket's origin in the CSP `img-src`) — §10.
 
 ---
@@ -274,7 +271,6 @@ means a paying customer who cannot sign in. Confirm mail (below) **before** taki
 | Gap | Impact | Suggested step |
 |---|---|---|
 | `public` disk cannot move to S3 | Thumbnails and instructor photos depend on the persistent volume and its backup | Env-driven disk plus the bucket origin in the CSP `img-src` |
-| `profile_documents` → bucket needs a one-off copy | Switching the driver strands files already on the volume | Copy `storage/app/profile-documents` into the bucket under the `profile-documents/` prefix, then switch |
 | ~~`/up` does not check the scheduler~~ | Fixed: the scheduler writes a heartbeat every minute and `/up` reports `checks.scheduler` (`ok`, `stalled` after 5 minutes, or `unknown` before the first beat). A stalled scheduler makes `status` `degraded`, never a 503 | Point the uptime monitor at `status != ok`. Needs the Coolify scheduled task `* * * * *` (§4) |
 | No load test run yet | Capacity is unknown | `docs/deployment/load-test.k6.js` is a read-only script; run it against staging |
 | No `storage:link` in deploy (before this runbook) | Broken thumbnails and instructor photos | Add to post-deploy command (§6) |

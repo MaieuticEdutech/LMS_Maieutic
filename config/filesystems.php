@@ -78,53 +78,6 @@ return [
         ],
 
         /*
-         * PROFILE DOCUMENTS — a learner's own photo and Aadhaar card scan
-         * (App\Services\Profile\ProfileDocumentStorage).
-         *
-         * A deliberately separate disk from `content` above: profile
-         * documents belong to a person, not a course, have a different owner
-         * and a different config surface, and were kept out of the
-         * media_files/MediaPurpose system on purpose when this was built.
-         *
-         * 'serve' is FALSE for the same reason `content` sets it false: the
-         * built-in local-disk serving route would hand out files with no
-         * authorisation check at all. Every read goes through
-         * ProfileDocumentController, which also decrypts — every byte written
-         * here is ciphertext, never the document itself.
-         */
-        'profile_documents' => env('LMS_PROFILE_DOCUMENTS_DRIVER', 'local') === 's3'
-            ? [
-                /*
-                 * Production on a bucket: LMS_PROFILE_DOCUMENTS_DRIVER=s3.
-                 * Same disk NAME as the local variant, so ProfileDocumentStorage
-                 * and its tests do not change. It needs a PRIVATE bucket: the
-                 * files are ciphertext, but the bucket must still never be
-                 * public. LMS_PROFILE_DOCUMENTS_BUCKET falls back to AWS_BUCKET
-                 * (the content bucket); the 'profile-documents' root keeps the
-                 * two apart if they share one.
-                 */
-                'driver' => 's3',
-                'key' => env('AWS_ACCESS_KEY_ID'),
-                'secret' => env('AWS_SECRET_ACCESS_KEY'),
-                'region' => env('AWS_DEFAULT_REGION'),
-                'bucket' => env('LMS_PROFILE_DOCUMENTS_BUCKET', env('AWS_BUCKET')),
-                'endpoint' => env('AWS_ENDPOINT'),
-                'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-                'root' => 'profile-documents',
-                'visibility' => 'private',
-                'throw' => true,
-                'report' => false,
-            ]
-            : [
-                'driver' => 'local',
-                'root' => storage_path('app/profile-documents'),
-                'serve' => false,
-                'visibility' => 'private',
-                'throw' => true,
-                'report' => false,
-            ],
-
-        /*
          * S3-compatible equivalent of the `content` disk, for production.
          * Same contract, different driver — selected by LMS_CONTENT_DISK.
          */
