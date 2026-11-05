@@ -8,22 +8,10 @@
     {{-- A deep-teal band behind the avatar, as on the storefront heroes. --}}
     <div class="absolute inset-x-0 top-0 h-20 bg-teal-900" aria-hidden="true"></div>
 
-    {{-- The uploaded photo once there is one (Upload Documents, elsewhere on
-         this page), the initials disc until then. Both are decorative here —
-         the name text beside it already identifies the account, so an empty
-         alt is correct, not an oversight. --}}
-    @if (($user->getAttributes()['avatar_path'] ?? null) !== null)
-        <img
-            src="{{ route('profile.photo') }}"
-            alt=""
-            class="relative mb-2 h-[76px] w-[76px] rounded-full border-4 border-white object-cover"
-        >
-    @else
-        <div class="relative mb-2 flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white bg-teal-600 text-2xl font-semibold text-white"
-             aria-hidden="true">
-            {{ $user->initials() }}
-        </div>
-    @endif
+    <div class="relative mb-2 flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white bg-teal-600 text-2xl font-semibold text-white"
+         aria-hidden="true">
+        {{ $user->initials() }}
+    </div>
 
     <div class="font-sans text-lg font-semibold tracking-normal text-neutral-900">{{ $user->name }}</div>
     <div class="text-[13.5px] text-neutral-500">{{ $user->email }}</div>

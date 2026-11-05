@@ -61,8 +61,7 @@ class InstructorProfile extends Model
      *
      * Stored through the same media pipeline as course thumbnails (purpose
      * `thumbnail`, public disk), so it gets the same type sniffing and
-     * extension rules. NOT the student profile photo: those are private and
-     * encrypted (ProfileDocumentStorage) and must never be served publicly.
+     * extension rules. Students have no profile photo.
      *
      * @return MorphMany<MediaFile, $this>
      */

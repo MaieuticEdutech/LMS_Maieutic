@@ -35,10 +35,7 @@
 
         <div class="grid items-start gap-6 lg:grid-cols-[300px_1fr]">
 
-            {{-- ══ IDENTITY ══ its own Livewire component, not inline markup —
-                 see ProfileIdentity's class docblock for why: it has to update
-                 the moment Upload Documents (elsewhere on this page) changes
-                 the photo, and this static page only ever renders once. --}}
+            {{-- ══ IDENTITY ══ --}}
             <livewire:student.profile-identity />
 
             {{-- ══ EDITABLE ══ --}}
@@ -46,9 +43,6 @@
                 {{-- Details and email, Phase 7. --}}
                 <livewire:student.profile-form />
 
-                {{-- Upload Documents — its own card, its own component: see
-                     ProfileDocumentsForm's class docblock. --}}
-                <livewire:student.profile-documents-form />
 
                 {{-- An x-card like the three above it, not a hand-built card:
                      this was the one section on the page with its own sans

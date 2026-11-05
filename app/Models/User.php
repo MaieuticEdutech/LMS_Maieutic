@@ -81,14 +81,6 @@ use Illuminate\Notifications\Notifiable;
  * @property AcademicResultStatus|null $graduation_result_status
  * @property MarkingScheme|null $graduation_marking_scheme
  * @property string|null $graduation_score Decimal string
- * @property string|null $avatar_path Not fillable — set only by App\Actions\Profile\UploadAvatar
- * @property string|null $avatar_original_name
- * @property string|null $avatar_mime_type
- * @property int|null $avatar_size_bytes
- * @property string|null $aadhaar_document_path Not fillable — set only by App\Actions\Profile\UploadAadhaarDocument
- * @property string|null $aadhaar_document_original_name
- * @property string|null $aadhaar_document_mime_type
- * @property int|null $aadhaar_document_size_bytes
  * @property CarbonImmutable|null $last_login_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -177,10 +169,6 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'graduation_result_status',
         'graduation_marking_scheme',
         'graduation_score',
-        // avatar_path, its metadata, and the aadhaar_document_* columns are
-        // NOT fillable — see their docblock entries above and the
-        // 2026_09_28_100500 migration. Each is set only by its own Action,
-        // from a file that action itself just validated and stored.
     ];
 
     /**
